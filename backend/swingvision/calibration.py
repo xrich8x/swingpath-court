@@ -1850,6 +1850,34 @@ def _refine_keypoint(frame, x, y, crop=40):
     return x, y
 
 
+def courtnet_decode(pred: np.ndarray, frame: np.ndarray,
+                    min_conf: float = 0.40) -> dict[str, tuple[float, float, float]]:
+    """CourtNet heatmaps (15, 360, 640) -> {landmark: (x, y, peak value)} in
+    full-frame pixels. A heatmap with no Hough peak falls back to its argmax,
+    kept only when that value reaches `min_conf` (detect_court_learned's 0.40).
+    The peak value is the heatmap at the returned 640x360 location."""
+    # Service-line points (far_sl_left/right, far_t) refine poorly — skip those.
+    no_refine = {8, 9, 12}
+    h_img, w_img = frame.shape[:2]
+    named: dict[str, tuple[float, float, float]] = {}
+    for i in range(14):
+        hm = pred[i]
+        cx, cy = _hough_peak((hm * 255).astype(np.uint8))  # sub-pixel via Hough
+        if cx is None:
+            py, px = np.unravel_index(int(hm.argmax()), hm.shape)
+            if hm[py, px] < min_conf:
+                continue
+            cx, cy = float(px), float(py)
+        conf = float(hm[min(int(round(cy)), hm.shape[0] - 1),
+                        min(int(round(cx)), hm.shape[1] - 1)])
+        x = cx * w_img / 640.0
+        y = cy * h_img / 360.0
+        if i not in no_refine:  # sub-pixel refine on the full-res frame
+            x, y = _refine_keypoint(frame, x, y)
+        named[COURT_KP_LANDMARKS[i]] = (float(x), float(y), conf)
+    return named
+
+
 def detect_court_learned(
     frame: np.ndarray,
     weights: str = "weights/court_detector.pt",
@@ -1897,22 +1925,7 @@ def detect_court_learned(
 
     import cv2
 
-    # Service-line points (far_sl_left/right, far_t) refine poorly — skip those.
-    no_refine = {8, 9, 12}
-    named: dict[str, tuple[float, float]] = {}
-    for i in range(14):
-        hm = pred[i]
-        cx, cy = _hough_peak((hm * 255).astype(np.uint8))  # sub-pixel via Hough
-        if cx is None:
-            py, px = np.unravel_index(int(hm.argmax()), hm.shape)
-            if hm[py, px] < 0.40:
-                continue
-            cx, cy = float(px), float(py)
-        x = cx * w_img / 640.0
-        y = cy * h_img / 360.0
-        if i not in no_refine:  # sub-pixel refine on the full-res frame
-            x, y = _refine_keypoint(frame, x, y)
-        named[COURT_KP_LANDMARKS[i]] = (float(x), float(y))
+    named = {n: (x, y) for n, (x, y, _c) in courtnet_decode(pred, frame, 0.40).items()}
 
     if len(named) < min_points:
         return None

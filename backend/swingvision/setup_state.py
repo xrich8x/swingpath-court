@@ -66,6 +66,7 @@ UI must not invent either answer.
 
 from __future__ import annotations
 
+import math
 from dataclasses import dataclass, field
 from typing import Any, Optional, Sequence
 
@@ -404,14 +405,67 @@ def normalize(raw: Any) -> dict[str, Any]:
     # the input would let a wrong claim outlive the evidence for it.
     eligible = (framing == FRAMING_CLEAR and calib == CALIB_USER_CONFIRMED)
 
-    return {"framing_status": framing,
-            "far_baseline_clearance_px_720": px,
-            "calibration_status": calib,
-            "metrics_eligible": eligible,
-            "reasons": reasons,
-            "framing_source": source,
-            "far_baseline_user_answer": answer,
-            "notice": notice_for(framing)}
+    out = {"framing_status": framing,
+           "far_baseline_clearance_px_720": px,
+           "calibration_status": calib,
+           "metrics_eligible": eligible,
+           "reasons": reasons,
+           "framing_source": source,
+           "far_baseline_user_answer": answer,
+           "notice": notice_for(framing)}
+    # The solved 3D camera (camera3d.CourtCamera.to_dict) is OPTIONAL and
+    # ADDITIVE: absent from older files, emitted only when it is readable, and it
+    # moves neither trust axis - an automatically solved camera is not a person's
+    # confirmation.
+    if "camera" in d:
+        cam = normalize_camera(d["camera"])
+        if cam is not None:
+            out["camera"] = cam
+        elif d["camera"] is not None:
+            reasons.append(CAMERA_UNREADABLE)
+    return out
+
+
+CAMERA_UNREADABLE = ("A 3D camera was attached to this match but could not be "
+                     "read, so it was ignored.")
+_CAMERA_VECTORS = {"image_wh": 2, "rvec": 3, "tvec": 3, "position_m": 3}
+
+
+def normalize_camera(raw: Any) -> Optional[dict[str, Any]]:
+    """A `setup.camera` block with its required fields type-checked, or None.
+    Unknown extra keys (solve provenance) pass through untouched."""
+    if not isinstance(raw, dict) or raw.get("model") != "pinhole":
+        return None
+    cam = dict(raw)
+    try:
+        for k, n in _CAMERA_VECTORS.items():
+            v = [float(x) for x in cam[k]]
+            if len(v) != n or not all(math.isfinite(x) for x in v):
+                return None
+            cam[k] = v
+        cam["image_wh"] = [int(x) for x in cam["image_wh"]]
+        for k in ("f_px", "cx", "cy", "hfov_deg"):
+            cam[k] = float(cam[k])
+            if not math.isfinite(cam[k]):
+                return None
+        if cam["f_px"] <= 0 or min(cam["image_wh"]) <= 0:
+            return None
+        lens = cam.get("lens", "none")
+        dist = [float(x) for x in cam.get("dist", [])]
+        if {"none": 0, "division": 1, "brown": 2}.get(lens) != len(dist):
+            return None
+        cam["lens"], cam["dist"] = lens, dist
+        cam["pinned_by"] = str(cam.get("pinned_by", ""))
+    except (KeyError, TypeError, ValueError):
+        return None
+    return cam
+
+
+def with_camera(state: Any, camera) -> dict[str, Any]:
+    """`state` (a setup dict) with a camera3d.CourtCamera attached."""
+    d = dict(state) if isinstance(state, dict) else {}
+    d["camera"] = camera.to_dict()
+    return normalize(d)
 
 
 def summary_line(state: dict[str, Any]) -> str:

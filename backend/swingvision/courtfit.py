@@ -26,7 +26,9 @@ from __future__ import annotations
 import json
 import math
 import os
+from dataclasses import dataclass, field
 from pathlib import Path
+from typing import Optional, Protocol
 
 import numpy as np
 
@@ -1203,3 +1205,181 @@ def fit_video_frames(frames, calibration, court, *, proposer=None, weights=None)
         if pts is not None:
             return pts, 1, "stack"
     return None, votes, None
+
+
+# --- keypoint detector interface (the 3D camera's first guess) ---------------
+# A detector finds named court keypoints; camera3d.solve_pnp_seed turns them
+# into a rough camera and paintfit places the court. Keypoints are only ever a
+# SEED: P8 C1 measured that a camera pinned by points misplaces the far lines by
+# metres unless each point is right to ~0.1 px (docs/evidence/court-map-ceiling.md).
+# A model trained on amateur / synthetic courts plugs in behind this Protocol.
+COURTNET_SPLIT_WEIGHTS = str(REPO / "backend" / "weights" / "courtnet_split.pt")
+
+
+@dataclass
+class KeypointSet:
+    """Named image points (pixels) with a per-point confidence in [0, 1].
+    Names are `court.LANDMARKS_3D` keys; `source` says which detector made them."""
+    px: dict
+    conf: dict = field(default_factory=dict)
+    source: str = "unknown"
+    image_wh: tuple = (0, 0)
+
+
+class KeypointDetector(Protocol):
+    def detect(self, frame) -> Optional[KeypointSet]: ...
+
+
+class CourtNetKeypoints:
+    """Every CourtNet heatmap peak with its value as confidence - including the
+    weak ones `detect_court_learned` drops below 0.40, since RANSAC in the PnP
+    solve decides which to keep. Defaults to the LEAK-CLEAN `courtnet_split.pt`
+    (courtnet_ft.pt trained on a pool overlapping the court gold, T06). Loads
+    its own model per checkpoint: `detect_court_learned`'s global cache ignores
+    a later `weights` argument, which is how the wrong checkpoint gets scored.
+    The upstream checkpoint finds 2-3 confident peaks on amateur footage
+    (docs/evidence/cnn-global-classical-local.md): an interface, not a remedy."""
+
+    _models: dict = {}
+
+    def __init__(self, weights: str | None = None, device: str = "cpu",
+                 min_conf: float = 0.0):
+        self.weights = weights or COURTNET_SPLIT_WEIGHTS
+        self.device, self.min_conf = device, min_conf
+
+    def _model(self):
+        key = (self.weights, self.device)
+        if key not in self._models:
+            import torch
+            from ._courtnet import CourtNet
+            m = CourtNet(out_channels=15)
+            m.load_state_dict(torch.load(self.weights, map_location=self.device))
+            self._models[key] = m.eval().to(self.device)
+        return self._models[key]
+
+    def detect(self, frame):
+        import cv2
+        import torch
+        from . import calibration
+        img = cv2.resize(frame, (640, 360)).astype(np.float32) / 255.0
+        inp = torch.from_numpy(np.rollaxis(img, 2, 0)).unsqueeze(0).float().to(self.device)
+        with torch.no_grad():
+            pred = torch.sigmoid(self._model()(inp)[0]).cpu().numpy()
+        got = calibration.courtnet_decode(pred, frame, self.min_conf)
+        if not got:
+            return None
+        h, w = frame.shape[:2]
+        return KeypointSet(px={n: (x, y) for n, (x, y, _c) in got.items()},
+                           conf={n: c for n, (_x, _y, c) in got.items()},
+                           source=f"courtnet:{os.path.basename(self.weights)}",
+                           image_wh=(w, h))
+
+
+class ClassicalKeypoints:
+    """The shipped line-fit path (`auto_fit_frame`) as a keypoint source: its
+    four doubles corners, and every OTHER ground keypoint projected from them.
+    Those extra points carry no information the four corners do not (the same
+    trap as the court gold's computed keypoints), and `autodetect` is the search
+    recorded CLOSED - this exists so today's behaviour can seed the 3D camera,
+    not as a recovery path. Confidence is 1.0: the fit's score is a diagnostic
+    only (see auto_fit_frame)."""
+
+    def __init__(self, proposer: str | None = None):
+        self.proposer = proposer
+
+    def detect(self, frame):
+        from . import calibration, court
+        corners = auto_fit_frame(frame, calibration, court, proposer=self.proposer)
+        if corners is None:
+            return None
+        H = calibration.compute_homography([court.LANDMARKS[k] for k in DBL],
+                                           [corners[k] for k in DBL])
+        names = [n for n, p in court.LANDMARKS_3D.items() if p[2] == 0.0]
+        xy = calibration.court_to_image(H, [court.LANDMARKS_3D[n][:2] for n in names])
+        h, w = frame.shape[:2]
+        return KeypointSet(px={n: (float(p[0]), float(p[1])) for n, p in zip(names, xy)},
+                           conf={n: 1.0 for n in names},
+                           source=f"classical:{resolved_proposer(self.proposer)}",
+                           image_wh=(w, h))
+
+
+# --- projective sanity: cross-ratios along painted lines ---------------------
+# Points on one straight line keep their cross-ratio under any camera: three of
+# them fix a 1-D projective map from court metres to image position along the
+# line, and that map predicts where every other point on the line must be. A
+# detection far from its prediction (along the line, or off it) is misplaced.
+# This is a GROSS-OUTLIER gate before the PnP solve, never an accuracy measure.
+# It holds for an undistorted image; pass `undistort` when the lens is known.
+# Tolerance, px @720 scaled by frame height (CLAUDE.md), set on a NOISE-ONLY
+# simulation (CP1's seed noise, sigma 14.78 px @1080, three camera poses, 300
+# draws each; docs/evidence/court-camera3d.md): 20 px falsely flags a good point
+# in 18-38% of detections, 60 px in 0.3%, and 60 px still names a near point
+# moved 1.5 m in 87-90%. Predicting a point from other noisy points amplifies
+# their noise, so the gate only ever catches GROSS errors; RANSAC does the rest.
+CROSS_TOL_PX_720 = 60.0
+
+
+def cross_ratio(a: float, b: float, c: float, d: float) -> float:
+    """(AC * BD) / (BC * AD) for four positions along one line."""
+    return ((c - a) * (d - b)) / ((c - b) * (d - a))
+
+
+def _line_coords(pts):
+    """Positions along, and residuals across, the best-fit line of `pts`."""
+    pts = np.asarray(pts, float)
+    ctr = pts.mean(0)
+    _, _, vt = np.linalg.svd(pts - ctr)
+    return (pts - ctr) @ vt[0], (pts - ctr) @ vt[1]
+
+
+def _held_out_px(world, img, i):
+    """Pixel miss of point i predicted from the others on its line: along the
+    line through the 1-D projective map, across it through the fitted line."""
+    rest = [k for k in range(len(world)) if k != i]
+    P = img[rest]
+    ctr = P.mean(0)
+    _, _, vt = np.linalg.svd(P - ctr)
+    u, n = vt[0], vt[1]
+    s = (P - ctr) @ u
+    x = np.asarray(world, float)[rest]
+    # s = (p x + q) / (r x + 1)  <=>  p x + q - r x s = s
+    A = np.column_stack([x, np.ones_like(x), -x * s])
+    p, q, r = np.linalg.lstsq(A, s, rcond=None)[0]
+    den = r * world[i] + 1.0
+    if abs(den) < 1e-12:
+        return math.inf
+    s_pred = (p * world[i] + q) / den
+    d = img[i] - ctr
+    return float(math.hypot(d @ u - s_pred, d @ n))
+
+
+def cross_ratio_check(px: dict, image_h: float, *, undistort=None,
+                      tol_px_720: float = CROSS_TOL_PX_720):
+    """-> (outliers, report). For every `court.COLLINEAR_SETS` line with >=4
+    detected points, predict each point from the others. A point is an OUTLIER
+    when its miss is the line's largest, above tolerance, and every other
+    point's miss is within tolerance once it is removed - so only a line with
+    >=5 points can name one (with 4, one bad point spoils every prediction).
+    `report` lists (line, n_points, worst miss px) for every line checked."""
+    from . import court
+    tol = tol_px_720 * image_h / 720.0
+    outliers, report = set(), []
+    for line, names in court.COLLINEAR_SETS.items():
+        have = [n for n in names if n in px]
+        if len(have) < 4:
+            continue
+        axis = 0 if line.endswith("baseline") else 1      # position along the line
+        img = np.array([px[n] for n in have], float)
+        if undistort is not None:
+            img = np.asarray(undistort(img), float)
+        world = [court.LANDMARKS_3D[n][axis] for n in have]
+        miss = [_held_out_px(world, img, i) for i in range(len(have))]
+        worst = int(np.argmax(miss))
+        report.append((line, len(have), float(miss[worst])))
+        if len(have) < 5 or miss[worst] <= tol:
+            continue
+        keep = [k for k in range(len(have)) if k != worst]
+        w2, i2 = [world[k] for k in keep], img[keep]
+        if all(_held_out_px(w2, i2, j) <= tol for j in range(len(keep))):
+            outliers.add(have[worst])
+    return outliers, report

@@ -161,3 +161,38 @@ def net_post_segments_3d() -> dict[str, tuple[tuple[float, float, float],
         name: ((x, y, 0.0), (x, y, NET_HEIGHT_POST))
         for name, (x, y) in NET_POST_BASES.items()
     }
+
+
+# --- 3D keypoints (camera solve) ---------------------------------------------
+# World frame for the 3D camera: the court frame above plus z UP, metres. The
+# 14 ground intersections, the two centre marks where they meet the baselines,
+# and four points OFF the ground plane (the doubles post tops and the net's
+# centre strap), which a single camera can use to pin its height. These are the
+# names a keypoint detector returns (courtfit.KeypointSet) and camera3d solves on.
+LANDMARKS_3D: dict[str, tuple[float, float, float]] = {
+    **{name: (x, y, 0.0) for name, (x, y) in LANDMARKS.items()},
+    "near_center_mark": (X_CENTER, Y_NEAR_BASELINE, 0.0),
+    "far_center_mark": (X_CENTER, Y_FAR_BASELINE, 0.0),
+    "net_post_left_base": (X_LEFT_POST, NET_Y, 0.0),
+    "net_post_right_base": (X_RIGHT_POST, NET_Y, 0.0),
+    "net_post_left_top": (X_LEFT_POST, NET_Y, NET_HEIGHT_POST),
+    "net_post_right_top": (X_RIGHT_POST, NET_Y, NET_HEIGHT_POST),
+    "net_center_top": (X_CENTER, NET_Y, NET_HEIGHT_CENTER),
+}
+
+KEYPOINTS_3D: tuple[str, ...] = tuple(LANDMARKS_3D)
+
+# Named points that lie on ONE straight painted line, in order along it. Any
+# four of them have a cross-ratio that perspective cannot change, so a detector
+# output that breaks it has a misplaced point (courtfit.cross_ratio_ok).
+COLLINEAR_SETS: dict[str, tuple[str, ...]] = {
+    "near_baseline": ("near_bl_doubles", "near_bl_singles", "near_center_mark",
+                      "near_br_singles", "near_br_doubles"),
+    "far_baseline": ("far_bl_doubles", "far_bl_singles", "far_center_mark",
+                     "far_br_singles", "far_br_doubles"),
+    "left_singles_sideline": ("near_bl_singles", "near_sl_left", "far_sl_left",
+                              "far_bl_singles"),
+    "right_singles_sideline": ("near_br_singles", "near_sl_right", "far_sl_right",
+                               "far_br_singles"),
+    "centre_line": ("near_center_mark", "near_t", "far_t", "far_center_mark"),
+}

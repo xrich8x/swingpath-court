@@ -1,0 +1,360 @@
+"""The court's 3D camera: intrinsics K, extrinsics (R, t), a lens model, and the
+two solves that produce it.
+
+    keypoints --solve_pnp_seed--> rough camera --fit_camera_on_paint--> the camera
+
+The keypoint PnP solve is only a FIRST GUESS. A camera pinned by points
+misplaces the far lines by metres unless each point is right to ~0.1 px (P8 C1,
+docs/evidence/court-map-ceiling.md); the whole-court fit to the painted lines
+(paintfit, CP1) is what places the court. Hard rule 5 applies to everything
+here: `pinned_by` names what fixed each camera, and a reprojection error is a
+diagnostic, never evidence that the court is right.
+
+World frame: court metres from `court.py` - x across (left doubles sideline =
+0), y along (near baseline = 0), z UP. Camera frame: OpenCV (x right, y down,
+z forward), x_cam = R @ X + t. The principal point is the image centre and is
+never fitted; pixels are square.
+
+Lens models (`lens`, `dist`):
+  "none"     - ()
+  "division" - (lam,)   paintfit's one-parameter model, radius normalised by
+                        half the image diagonal (what the paint fit solves)
+  "brown"    - (k1, k2) radius normalised by the focal length
+"""
+from __future__ import annotations
+
+import math
+from dataclasses import dataclass, field
+
+import numpy as np
+
+from . import court, paintfit
+
+LENS_MODELS = ("none", "division", "brown")
+PINNED_PNP = ("keypoint PnP: detected keypoints + regulation dimensions + "
+              "centred principal point, focal from the court homography")
+PINNED_PAINT = ("paint fit (R1): measured paint + regulation dimensions + flat court + "
+                "centred principal point + near-line blur and paint/step ratio")
+
+
+def _rot_to_rvec(R):
+    import cv2
+    return cv2.Rodrigues(np.asarray(R, float))[0].ravel()
+
+
+def _rvec_to_rot(rvec):
+    import cv2
+    return cv2.Rodrigues(np.asarray(rvec, float).reshape(3, 1))[0]
+
+
+@dataclass
+class CourtCamera:
+    f_px: float
+    rvec: np.ndarray
+    tvec: np.ndarray
+    image_wh: tuple
+    lens: str = "none"
+    dist: tuple = ()
+    pinned_by: str = ""
+    extra: dict = field(default_factory=dict)
+
+    def __post_init__(self):
+        self.rvec = np.asarray(self.rvec, float).reshape(3)
+        self.tvec = np.asarray(self.tvec, float).reshape(3)
+        self.image_wh = (int(self.image_wh[0]), int(self.image_wh[1]))
+        self.dist = tuple(float(v) for v in self.dist)
+        if self.lens not in LENS_MODELS:
+            raise ValueError(f"lens {self.lens!r} not one of {LENS_MODELS}")
+        need = {"none": 0, "division": 1, "brown": 2}[self.lens]
+        if len(self.dist) != need:
+            raise ValueError(f"lens {self.lens!r} takes {need} coefficients, got {self.dist}")
+        self._pf = None
+
+    # --- intrinsics / extrinsics
+    @property
+    def cx(self) -> float:
+        return self.image_wh[0] / 2.0
+
+    @property
+    def cy(self) -> float:
+        return self.image_wh[1] / 2.0
+
+    @property
+    def K(self) -> np.ndarray:
+        return np.array([[self.f_px, 0, self.cx], [0, self.f_px, self.cy], [0, 0, 1.0]])
+
+    @property
+    def R(self) -> np.ndarray:
+        return _rvec_to_rot(self.rvec)
+
+    def position_m(self) -> np.ndarray:
+        """Camera centre in court metres (x, y, height)."""
+        return -self.R.T @ self.tvec
+
+    def hfov_deg(self) -> float:
+        return math.degrees(2.0 * math.atan(self.image_wh[0] / (2.0 * self.f_px)))
+
+    # --- the paintfit camera does the lens and ray arithmetic
+    def to_paintfit(self) -> paintfit.Camera:
+        if self._pf is None:
+            R = self.R
+            yaw, pitch, roll = paintfit._angles_from_R(R)
+            brown = self.dist if self.lens == "brown" else None
+            lam = self.dist[0] if self.lens == "division" else 0.0
+            pf = paintfit.Camera(self.position_m(), yaw, pitch, roll, self.f_px,
+                                 self.cx, self.cy, brown, lam, wh=self.image_wh)
+            pf.R = R                     # exact, not re-derived from the angles
+            self._pf = pf
+        return self._pf
+
+    @classmethod
+    def from_paintfit(cls, cam: paintfit.Camera, pinned_by: str = PINNED_PAINT, **extra):
+        if cam.brown is not None:
+            lens, dist = "brown", tuple(cam.brown)
+        elif cam.lam != 0.0:
+            lens, dist = "division", (cam.lam,)
+        else:
+            lens, dist = "none", ()
+        if abs(cam.cx - cam.wh[0] / 2.0) > 1e-9 or abs(cam.cy - cam.wh[1] / 2.0) > 1e-9:
+            raise ValueError("CourtCamera fixes the principal point at the image centre")
+        R = np.asarray(cam.R, float)
+        return cls(cam.f, _rot_to_rvec(R), -R @ cam.C, cam.wh, lens, dist, pinned_by, dict(extra))
+
+    def project(self, xyz) -> np.ndarray:
+        """Court points (x, y, z metres) -> distorted image pixels. Rows behind
+        the camera come back NaN (perspective is meaningless there)."""
+        pf = self.to_paintfit()
+        uv, z = pf.to_undist(np.atleast_2d(np.asarray(xyz, float)))
+        out = pf.distort(uv)
+        out[z <= 1e-6] = np.nan
+        return out
+
+    def undistort(self, uv) -> np.ndarray:
+        return self.to_paintfit().undistort(np.atleast_2d(np.asarray(uv, float)))
+
+    def ray(self, uv):
+        """Pixels -> (camera centre, unit ray directions in court metres). The
+        single-camera inverse projection: a point on the ray is NOT located
+        until something else (a plane, a height, a physical model) pins it."""
+        d = self.to_paintfit().rays(np.atleast_2d(np.asarray(uv, float)))
+        return self.position_m(), d / np.linalg.norm(d, axis=1, keepdims=True)
+
+    def ground_point(self, uv) -> np.ndarray:
+        """Pixels -> court (x, y) where the ray meets z = 0; NaN above the horizon."""
+        return self.to_paintfit().ground(np.atleast_2d(np.asarray(uv, float)))
+
+    def ground_homography(self) -> np.ndarray:
+        """Court plane -> UNDISTORTED pixels, K [r1 r2 t], scaled so H[2,2] = 1.
+        The same as the old flat model only when `lens == "none"`; with a lens,
+        undistort pixels before using it."""
+        R = self.R
+        H = self.K @ np.column_stack([R[:, 0], R[:, 1], self.tvec])
+        return H / H[2, 2]
+
+    def reprojection_px(self, kps_px: dict) -> dict:
+        """Per-keypoint pixel residual. DIAGNOSTIC ONLY (rule 5)."""
+        names = [n for n in kps_px if n in court.LANDMARKS_3D]
+        if not names:
+            return {}
+        pred = self.project([court.LANDMARKS_3D[n] for n in names])
+        obs = np.array([kps_px[n] for n in names], float)
+        return {n: float(e) for n, e in zip(names, np.linalg.norm(pred - obs, axis=1))}
+
+    # --- serialisation (match.json `setup.camera`)
+    def to_dict(self) -> dict:
+        pos = self.position_m()
+        return {
+            "model": "pinhole",
+            "image_wh": list(self.image_wh),
+            "f_px": float(self.f_px),
+            "cx": self.cx, "cy": self.cy,
+            "lens": self.lens,
+            "dist": list(self.dist),
+            "rvec": [float(v) for v in self.rvec],
+            "tvec": [float(v) for v in self.tvec],
+            "position_m": [float(v) for v in pos],
+            "hfov_deg": self.hfov_deg(),
+            "pinned_by": self.pinned_by,
+            **{k: v for k, v in self.extra.items()},
+        }
+
+    @classmethod
+    def from_dict(cls, d: dict) -> "CourtCamera":
+        known = {"model", "image_wh", "f_px", "cx", "cy", "lens", "dist", "rvec", "tvec",
+                 "position_m", "hfov_deg", "pinned_by"}
+        if d.get("model") != "pinhole":
+            raise ValueError(f"unknown camera model {d.get('model')!r}")
+        return cls(d["f_px"], d["rvec"], d["tvec"], tuple(d["image_wh"]), d.get("lens", "none"),
+                   tuple(d.get("dist", ())), d.get("pinned_by", ""),
+                   {k: v for k, v in d.items() if k not in known})
+
+
+# ------------------------------------------------------------ PnP seed -----
+@dataclass
+class PnPSeed:
+    camera: CourtCamera
+    inliers: list
+    dropped_cross_ratio: list
+    rms_px: float            # over inliers; diagnostic only
+
+
+def _hfov_to_f(hfov_deg, w):
+    return (w / 2.0) / math.tan(math.radians(hfov_deg) / 2.0)
+
+
+def _focal_candidates(names, obj, img, wh, f_hint):
+    if f_hint is not None:
+        return [float(f_hint)]
+    import cv2
+
+    from . import calibration
+    cands = []
+    ground = [i for i, n in enumerate(names) if obj[i, 2] == 0.0]
+    if len(ground) >= 4:
+        Hm, _ = cv2.findHomography(obj[ground, :2], img[ground], cv2.RANSAC, 0.01 * max(wh))
+        if Hm is not None:
+            f = calibration.focal_from_homography(Hm, wh)
+            if f is not None:
+                cands.append(float(f))
+    cands += [_hfov_to_f(h, wh[0]) for h in range(40, 115, 5)]
+    return cands
+
+
+def _pnp_at_focal(obj, img, K, thr):
+    import cv2
+    ok, rvec, tvec, inl = cv2.solvePnPRansac(
+        obj, img, K, None, iterationsCount=300, reprojectionError=thr,
+        confidence=0.999, flags=cv2.SOLVEPNP_SQPNP)
+    if not ok or inl is None or len(inl) < 4:
+        return None
+    inl = inl.ravel()
+    rvec, tvec = cv2.solvePnPRefineLM(obj[inl], img[inl], K, None, rvec, tvec)
+    proj, _ = cv2.projectPoints(obj, rvec, tvec, K, None)
+    err = np.linalg.norm(proj.reshape(-1, 2) - img, axis=1)
+    return rvec.ravel(), tvec.ravel(), err
+
+
+def _joint_refine(obj, img, wh, f, rvec, tvec, thr):
+    """(rvec, tvec, f) least squares on the inliers, robust loss, principal
+    point held at the centre. Focal bounded to a 20-130 deg horizontal FOV."""
+    import cv2
+    from scipy import optimize
+    cx, cy = wh[0] / 2.0, wh[1] / 2.0
+
+    def res(p):
+        K = np.array([[p[6], 0, cx], [0, p[6], cy], [0, 0, 1.0]])
+        proj, _ = cv2.projectPoints(obj, p[:3], p[3:6], K, None)
+        return (proj.reshape(-1, 2) - img).ravel()
+    lo = [-np.inf] * 6 + [_hfov_to_f(130.0, wh[0])]
+    hi = [np.inf] * 6 + [_hfov_to_f(20.0, wh[0])]
+    x0 = np.concatenate([rvec, tvec, [np.clip(f, lo[6] * 1.0001, hi[6] * 0.9999)]])
+    sol = optimize.least_squares(res, x0, bounds=(lo, hi), loss="huber",
+                                 f_scale=max(thr / 3.0, 1.0), x_scale="jac", max_nfev=400)
+    return sol.x[:3], sol.x[3:6], float(sol.x[6])
+
+
+def solve_pnp_seed(kps, image_wh=None, f_hint: float | None = None, *,
+                   thr_px: float | None = None, min_points: int = 5,
+                   use_cross_ratio: bool = True) -> PnPSeed | None:
+    """Rough camera from named keypoints (a `courtfit.KeypointSet` or a plain
+    {name: (u, v)} dict) under the regulation 3D court. No lens.
+
+    Keypoints that break a line's cross-ratio are dropped first; RANSAC over
+    each focal candidate (device focal `f_hint`, else the court homography's
+    self-calibrated focal plus a 40-110 deg sweep) keeps the rest; the best
+    candidate is refined jointly with the focal length. `thr_px` defaults to
+    1% of the image width. Returns None if fewer than `min_points` usable
+    points or no solve places the court in front of a camera above the ground."""
+    from . import courtfit
+    px = getattr(kps, "px", kps)
+    wh = tuple(image_wh or getattr(kps, "image_wh", None) or ())
+    if len(wh) != 2 or wh[0] <= 0:
+        raise ValueError("image_wh is required")
+    dropped = []
+    if use_cross_ratio:
+        out, _ = courtfit.cross_ratio_check(px, wh[1])
+        dropped = sorted(out)
+    names = [n for n in px if n in court.LANDMARKS_3D and n not in dropped]
+    if len(names) < min_points:
+        return None
+    obj = np.array([court.LANDMARKS_3D[n] for n in names], float)
+    img = np.array([px[n] for n in names], float)
+    thr = thr_px if thr_px is not None else 0.01 * wh[0]
+
+    best = None
+    for f in _focal_candidates(names, obj, img, wh, f_hint):
+        K = np.array([[f, 0, wh[0] / 2.0], [0, f, wh[1] / 2.0], [0, 0, 1.0]])
+        got = _pnp_at_focal(obj, img, K, thr)
+        if got is None:
+            continue
+        rvec, tvec, err = got
+        R = _rvec_to_rot(rvec)
+        C = -R.T @ tvec
+        depth = (obj @ R.T + tvec)[:, 2]
+        if C[2] <= 0 or not np.all(depth > 0):
+            continue
+        score = float(np.sum(np.minimum(err, thr) ** 2))       # MSAC
+        if best is None or score < best[0]:
+            best = (score, f, rvec, tvec)
+    if best is None:
+        return None
+    _, f, rvec, tvec = best
+    if f_hint is None:
+        K = np.array([[f, 0, wh[0] / 2.0], [0, f, wh[1] / 2.0], [0, 0, 1.0]])
+        inl = _pnp_at_focal(obj, img, K, thr)[2] <= thr
+        rvec, tvec, f = _joint_refine(obj[inl], img[inl], wh, f, rvec, tvec, thr)
+    cam = CourtCamera(f, rvec, tvec, wh, "none", (), PINNED_PNP,
+                      {"seed_source": getattr(kps, "source", "keypoints")})
+    err = np.linalg.norm(cam.project(obj) - img, axis=1)
+    inl = err <= thr
+    if cam.position_m()[2] <= 0 or inl.sum() < 4:
+        return None
+    return PnPSeed(cam, [n for n, k in zip(names, inl) if k], dropped,
+                   float(np.sqrt(np.mean(err[inl] ** 2))))
+
+
+# ------------------------------------------------------------ paint fit ----
+@dataclass
+class PaintFitResult:
+    camera: CourtCamera
+    sigma_px: float
+    kappa: float | None
+    n_points: dict
+
+
+def grey_mean(frames) -> np.ndarray:
+    """One float grey image from a frame or a static window of frames
+    (averaging is what the paint fit was measured on)."""
+    import cv2
+    if isinstance(frames, np.ndarray):
+        frames = [frames]
+    acc, n = None, 0
+    for fr in frames:
+        g = fr if fr.ndim == 2 else cv2.cvtColor(fr, cv2.COLOR_BGR2GRAY)
+        g = g.astype(float)
+        acc = g if acc is None else acc + g
+        n += 1
+    if acc is None:
+        raise ValueError("no frames")
+    return acc / n
+
+
+def fit_camera_on_paint(frames, seed: CourtCamera, *, pose_only: bool = False,
+                        cfg=None) -> PaintFitResult:
+    """THE court camera: paintfit's R1 fit started from `seed`. Focal length
+    and one division coefficient are fitted unless `pose_only` (tracking a
+    phone whose zoom and lens did not change), which holds both at the seed's.
+    Raises if the fit cannot measure any line."""
+    img = grey_mean(frames)
+    wh = (img.shape[1], img.shape[0])
+    if tuple(seed.image_wh) != wh:
+        raise ValueError(f"seed camera is {seed.image_wh}, frames are {wh}")
+    if seed.lens == "brown":
+        raise ValueError("the paint fit models the lens as division; convert the seed first")
+    cam, meas, _lines, sig, kappa = paintfit.r1_fit(
+        img, None, cfg or paintfit.FitConfig, seed_cam=seed.to_paintfit(), pose_only=pose_only)
+    n_pts = {k: int(len(v["pts"])) for k, v in meas.items()}
+    out = CourtCamera.from_paintfit(
+        cam, PINNED_PAINT, seed_source=seed.extra.get("seed_source", "camera"),
+        paint_fit=True, paint_points=int(sum(n_pts.values())))
+    return PaintFitResult(out, float(sig), kappa, n_pts)
