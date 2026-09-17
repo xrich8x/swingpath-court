@@ -1,0 +1,33 @@
+{
+ "near_bl_doubles": [
+  85.05654315138682,
+  318.12326983645517
+ ],
+ "near_br_doubles": [
+  1137.2977922342316,
+  493.7304169831069
+ ],
+ "far_bl_doubles": [
+  304.5183471091534,
+  306.40986956304323
+ ],
+ "far_br_doubles": [
+  1070.1977841179503,
+  270.9621567973317
+ ],
+ "_audit": {
+  "tool": "validate_new_clip.py --stamp",
+  "date": "2026-08-03",
+  "verdict": "DEGENERATE",
+  "fit_residual_px": 48.3,
+  "camera_height_m": 7.09,
+  "img_wh": [
+   1280,
+   720
+  ],
+  "img_wh_source": "assumed",
+  "reasons": [
+   "corners are not a physical camera view (fit residual 48 px)"
+  ]
+ }
+}

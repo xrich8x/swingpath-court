@@ -1,0 +1,89 @@
+{
+ "clip": "am_ntrp40",
+ "kind": "court",
+ "video": "data/incoming/Hardcourt/yt_4apx6gd5Uxs.mp4",
+ "video_sha1": "15d75412e49e10f727e7e292d5e130bf96eb4f17",
+ "width": 640,
+ "height": 360,
+ "fps": 29.97002997002997,
+ "video_frames": 38808,
+ "created": "2026-07-09 19:57:03",
+ "params": {
+  "n": 18,
+  "sampling": "uniform"
+ },
+ "frames": [
+  {
+   "frame": 776,
+   "bucket": "court"
+  },
+  {
+   "frame": 2967,
+   "bucket": "court"
+  },
+  {
+   "frame": 5159,
+   "bucket": "court"
+  },
+  {
+   "frame": 7350,
+   "bucket": "court"
+  },
+  {
+   "frame": 9542,
+   "bucket": "court"
+  },
+  {
+   "frame": 11733,
+   "bucket": "court"
+  },
+  {
+   "frame": 13924,
+   "bucket": "court"
+  },
+  {
+   "frame": 16116,
+   "bucket": "court"
+  },
+  {
+   "frame": 18307,
+   "bucket": "court"
+  },
+  {
+   "frame": 20499,
+   "bucket": "court"
+  },
+  {
+   "frame": 22690,
+   "bucket": "court"
+  },
+  {
+   "frame": 24882,
+   "bucket": "court"
+  },
+  {
+   "frame": 27073,
+   "bucket": "court"
+  },
+  {
+   "frame": 29264,
+   "bucket": "court"
+  },
+  {
+   "frame": 31456,
+   "bucket": "court"
+  },
+  {
+   "frame": 33647,
+   "bucket": "court"
+  },
+  {
+   "frame": 35839,
+   "bucket": "court"
+  },
+  {
+   "frame": 38030,
+   "bucket": "court"
+  }
+ ]
+}

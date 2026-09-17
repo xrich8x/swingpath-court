@@ -1,0 +1,91 @@
+{
+ "clip": "am_wingfield_clay",
+ "kind": "court",
+ "video": "https://www.youtube.com/watch?v=5JllDa0tjlI",
+ "source": "youtube-stream",
+ "youtube_id": "5JllDa0tjlI",
+ "notes": "clay, elevated behind-baseline (Wingfield)",
+ "width": 640,
+ "height": 360,
+ "fps": 29.97,
+ "video_frames": 27607,
+ "created": "2026-07-12 18:36:39",
+ "params": {
+  "n": 18,
+  "sampling": "uniform"
+ },
+ "frames": [
+  {
+   "frame": 552,
+   "bucket": "court"
+  },
+  {
+   "frame": 2111,
+   "bucket": "court"
+  },
+  {
+   "frame": 3670,
+   "bucket": "court"
+  },
+  {
+   "frame": 5229,
+   "bucket": "court"
+  },
+  {
+   "frame": 6788,
+   "bucket": "court"
+  },
+  {
+   "frame": 8346,
+   "bucket": "court"
+  },
+  {
+   "frame": 9905,
+   "bucket": "court"
+  },
+  {
+   "frame": 11464,
+   "bucket": "court"
+  },
+  {
+   "frame": 13023,
+   "bucket": "court"
+  },
+  {
+   "frame": 14582,
+   "bucket": "court"
+  },
+  {
+   "frame": 16141,
+   "bucket": "court"
+  },
+  {
+   "frame": 17700,
+   "bucket": "court"
+  },
+  {
+   "frame": 19259,
+   "bucket": "court"
+  },
+  {
+   "frame": 20817,
+   "bucket": "court"
+  },
+  {
+   "frame": 22376,
+   "bucket": "court"
+  },
+  {
+   "frame": 23935,
+   "bucket": "court"
+  },
+  {
+   "frame": 25494,
+   "bucket": "court"
+  },
+  {
+   "frame": 27053,
+   "bucket": "court"
+  }
+ ]
+}

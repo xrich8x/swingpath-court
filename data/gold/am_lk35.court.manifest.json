@@ -1,0 +1,91 @@
+{
+ "clip": "am_lk35",
+ "kind": "court",
+ "video": "https://www.youtube.com/watch?v=Ln4RWFDsAhU",
+ "source": "youtube-stream",
+ "youtube_id": "Ln4RWFDsAhU",
+ "notes": "amateur LK / NTRP 3.5 full match",
+ "width": 640,
+ "height": 360,
+ "fps": 29.97,
+ "video_frames": 29230,
+ "created": "2026-07-12 18:37:20",
+ "params": {
+  "n": 18,
+  "sampling": "uniform"
+ },
+ "frames": [
+  {
+   "frame": 584,
+   "bucket": "court"
+  },
+  {
+   "frame": 2235,
+   "bucket": "court"
+  },
+  {
+   "frame": 3885,
+   "bucket": "court"
+  },
+  {
+   "frame": 5536,
+   "bucket": "court"
+  },
+  {
+   "frame": 7186,
+   "bucket": "court"
+  },
+  {
+   "frame": 8837,
+   "bucket": "court"
+  },
+  {
+   "frame": 10488,
+   "bucket": "court"
+  },
+  {
+   "frame": 12138,
+   "bucket": "court"
+  },
+  {
+   "frame": 13789,
+   "bucket": "court"
+  },
+  {
+   "frame": 15439,
+   "bucket": "court"
+  },
+  {
+   "frame": 17090,
+   "bucket": "court"
+  },
+  {
+   "frame": 18740,
+   "bucket": "court"
+  },
+  {
+   "frame": 20391,
+   "bucket": "court"
+  },
+  {
+   "frame": 22042,
+   "bucket": "court"
+  },
+  {
+   "frame": 23692,
+   "bucket": "court"
+  },
+  {
+   "frame": 25343,
+   "bucket": "court"
+  },
+  {
+   "frame": 26993,
+   "bucket": "court"
+  },
+  {
+   "frame": 28644,
+   "bucket": "court"
+  }
+ ]
+}

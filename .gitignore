@@ -1,0 +1,217 @@
+# Python
+backend/.venv/
+backend/.venv-train/
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# Model weights (large; download separately — see requirements-ml.txt)
+backend/weights/*.pt
+*.pt
+backend/yolo*.pt
+backend/weights/*.pth.tar
+# EXCEPT weights trained in-house on our GPU — these are NOT re-downloadable;
+# losing them means losing the training runs (see HANDOFF.md §4).
+!backend/weights/ballnet.pt
+!backend/weights/ballnet_v0.pt
+!backend/weights/ballnet_v2.pt
+!backend/weights/ballnet_pre_visweighted.pt
+!backend/weights/ballnet_v21.pt
+!backend/weights/ballnet_v3.pt
+!backend/weights/courtnet_ft.pt
+!backend/weights/courtnet_ft_v0_notready.pt
+# The LEAK-CLEAN court fine-tune (Aug 2026), trained on data/gold/court_split.json.
+# `external-research-reconciled.md` calls it "the ONLY eligible fine-tune" - every
+# other court checkpoint was trained on a pool that overlaps the gold set (trap T06).
+# It was untracked until 2026-09-11 and existed on exactly one disk; a cleanup pass
+# listed it for deletion as if it were a third-party download, which is how an
+# irreproducible training run nearly went. `court_detector.pt` beside it IS upstream's
+# Jun 2023 release and stays ignored.
+!backend/weights/courtnet_split.pt
+# Session I's two 15-epoch A/B arms. NOT SHIPPABLE — undertrained by design, and
+# they score 14-15 solid ghosts against ballnet_v21's 9. Kept because they were
+# trained BEFORE `--seed` existed, so they can never be reproduced, and every
+# number in data/output/session_i_ab/results.md is measured on these exact files.
+!backend/weights/ballnet_i_base.pt
+!backend/weights/ballnet_i_conf.pt
+
+# Session K's data-volume A/B arms (2026-08-13). Both `--seed 0` and recipe-stamped,
+# so unlike Session I's they ARE reproducible in principle — but only from
+# data/ball_dataset, which is gitignored and has no off-machine copy, and only at
+# 1h16m / 1h52m of GPU. `pool_new_s0` is the +57%-data arm and the highest detector
+# recall this project has recorded (82.2% on the legacy six vs v21's 69.4%); it is a
+# SHIPPING CANDIDATE, not shipped — the chain test has not been run. Every number in
+# data/output/pool_ab.md is measured on these exact files.
+!backend/weights/pool_old_s0.pt
+!backend/weights/pool_new_s0.pt
+
+# Exported mobile models (regenerate with v2/mobile/export_tracknet.py).
+# Path updated 2026-09-11 when mobile/ was shelved to v2/ - the old rule stopped
+# matching and a `git add -A` committed 73 MB of binaries that had been excluded
+# on purpose. Both spellings kept so an old checkout still ignores them.
+mobile/models/*.onnx
+mobile/models/*.onnx.data
+mobile/node_modules/
+v2/mobile/models/*.onnx
+v2/mobile/models/*.onnx.data
+v2/mobile/node_modules/
+
+# Node / frontend
+frontend/node_modules/
+frontend/dist/
+.vite/
+
+# Data & analysis output (keep the demo sample_match.json tracked)
+data/output/*
+!data/output/.gitkeep
+# EXCEPT JSON outputs — small, and they are the EVIDENCE for the unresolved
+# ball-track regression (HANDOFF.md §6): archived perception caches + match
+# outputs must be recoverable. Videos/images in data/output stay ignored.
+!data/output/*.json
+# ...EXCEPT the P0 resolution-sweep perception caches. The rule above was written
+# for caches that were small; these are 9-14 MB each, 74 MB across 23 files, and
+# git history cannot be slimmed afterwards without a rewrite. Their FINDINGS are
+# recorded (P0-2's downscaling failure, P0-3's upscale-factor lever); the per-frame
+# arrays are reproducible from the tools that made them. Regenerate, do not archive.
+data/output/p0_*.perception.json
+# Same reasoning for the eval-ladder .txt results. CLAUDE.md cites
+# data/output/gold_v21_e6.txt BY NAME (the Session F score sweep reproduces it
+# digit for digit), so leaving them out meant the repo cited a result it did not
+# contain. Small, text, and they are the evidence.
+!data/output/*.txt
+# ...and written-up results. data/output/court_consensus_bar.md is cited BY NAME in
+# CLAUDE.md, and the repo has already shipped one commit citing evidence it did not
+# contain. Same rule: a result nobody can reproduce isn't one.
+!data/output/*.md
+# Same rule one level down for the Session E1 fps-controlled experiment: the
+# swept perception caches ARE the evidence for the "fps buys precision, not
+# recall" result (HANDOFF.md §13) and must stay reproducible. Images still ignored.
+!data/output/fps/
+!data/output/fps/*.json
+# Same rule for the false-fire inspection: the per-model locks.json files ARE the
+# evidence (every lock's frame, image position, court position and class), they are
+# ~40 KB each, and data/output/false_fires.md cites them. The contact sheets and the
+# 5.8 MB viewer page are DERIVED — regenerate with tools/false_fire_viewer.py from
+# these JSONs plus data/gold/frames — so images stay ignored as everywhere else.
+!data/output/false_fires/
+!data/output/false_fires/*/
+!data/output/false_fires/*/*.json
+# NOTE the re-ignores below are load-bearing. `data/output/*` only matches ONE
+# level, so un-ignoring the false_fires directory makes git descend and pick up
+# EVERYTHING under it — the first attempt staged 59 MB of contact sheets and a
+# 5.8 MB viewer page. Un-ignoring a directory is not the same as un-ignoring a
+# file type inside it.
+data/output/false_fires/**/*.png
+data/output/false_fires/**/*.jpg
+data/output/false_fires/**/*.html
+data/output/false_fires/**/*.mp4
+data/output/fps/*.png
+# Re-including the fps/ directory above also un-ignored the rendered videos it
+# holds (46 MB of *.annotated.mp4). Videos stay ignored one level down too —
+# they are regenerable from the JSON caches with `run.py analyze --annotate`.
+data/output/fps/*.mp4
+# Session I's A/B evidence, same one-level-down rule as fps/ above. `data/output/*`
+# excludes the DIRECTORY, and git will not descend into an excluded directory, so the
+# `!data/output/*.json` negation never reaches files inside a subfolder of it.
+!data/output/session_i_ab/
+!data/output/session_i_ab/*.json
+!data/output/session_i_ab/*.md
+# Contact sheets stay out, same as fps/*.png: the classification is the evidence and
+# it lives in the JSON. Regenerate a sheet with inspect_false_locks --contact-sheet.
+data/output/session_i_ab/*.png
+# ...and the one evidence image from the 2026-07-05 regression investigation.
+!data/output/regression_diff.jpg
+data/*.mp4
+data/*.mov
+
+# Raw training media + derived datasets (large; regenerable — clips re-download
+# from YouTube ids in HANDOFF.md §4, datasets rebuild via the labeler scripts)
+data/train_clips/
+data/amateur_clips/
+# Videos promoted to the exam set. Same policy as the training clips: large,
+# and the repo tracks the LABELS and the calibration, never the media. Note
+# data/*.mp4 above does NOT cover a subdirectory, which is how 1.4 GB of
+# video nearly went in with a gold promotion.
+data/gold_clips/
+data/ball_dataset/
+data/court_dataset/
+# The COURT clips held out as TEST (data/gold/court_split.json). Same policy as
+# court_dataset: the frames are regenerable, the SPLIT MANIFEST is committed.
+data/court_testset/
+
+# Gold-label frame extracts (regenerable from the source video via
+# tools/select_gold_frames.py --extract-only; the manifest + labels JSON in
+# data/gold/ ARE committed — they are the human benchmark, HANDOFF §8 fix 1.4)
+data/gold/frames/
+# Same split for the TRAIN pool: the human CLICKS are the irreplaceable part and
+# are committed; the frame copies are not, because select_farcourt_labels.py
+# re-extracts them from the source videos in data/train_clips/ (which are
+# themselves untracked — see the backup note in SCOREBOARD).
+data/labels/frames/
+
+# Throwaway probe scripts from a working session (a real tool belongs in tools/)
+scratchpad/
+
+# Editor / OS
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# Downloaded full match/highlight videos (user-sourced test footage; ~GBs,
+# regenerable from YouTube by id in the filename - never belongs in git)
+data/highlights/
+data/output/synth/*.npz
+
+# Lab (tools/lab_server.py) job artifacts. Same policy as data/output: the JSON
+# evidence IS committed — an eval scored against human gold is a result, and a
+# result nobody can reproduce isn't one — but the raw subprocess logs are bulky
+# and regenerable, so they stay out. data/clips/ (the train-vs-gold declaration
+# for each clip) is deliberately NOT ignored: it is the record of which footage
+# is benchmark and which is training data.
+data/runs/*.log
+# Source videos (6.6 GB) stay out of git, but the layout README does NOT: it
+# records which files are GOLD test footage, and that is the only warning a human
+# gets now that gold videos sit beside training footage in the surface folders.
+# A directory rule would stop git descending, so exclude the CONTENTS and re-admit
+# the README.
+data/incoming/*
+!data/incoming/README.md
+
+# Per-rally highlight clips (run.py highlights) are generated artifacts, same
+# policy as data/output: the mp4s are ignored, the manifest is evidence.
+frontend/public/rallies/*
+!frontend/public/rallies/highlights.json
+
+# yt_match40 is a 6-min clip, so its perception cache is 11 MB — 3.5x the largest
+# cache otherwise tracked. Evidence caches ARE normally committed (CLAUDE.md), but
+# this clip is a highlights DEMO, not a tuning target: the 511 KB match.json is the
+# artifact anything downstream reads. Re-make it with `run.py analyze` if needed.
+data/output/yt_match40.perception.json
+
+# eval/ — the court-detection feedback loop. The harness and the drop-zone are
+# tracked; the rendered overlays are regenerable output (run eval/run_eval.py).
+eval/out/
+
+eval/sheets/
+eval/verdicts/
+
+# The extracted eval frames are regenerable output (eval/collect_frames.py is
+# deterministic: uniform positions, then the dominant-view cluster). The README
+# and eval/clip_classes.json - the human court-in-view verdicts - stay tracked.
+eval/frames/*/
+
+# Derived scratch from the eval harness. The `_` prefix is this repo's existing
+# convention for "regenerable, do not commit": extracted frame sets, clean-plate
+# galleries, fit caches, traces. eval/_shell_gallery alone is 22 MB of 4K JPEGs
+# that `tools/make_label_plates.py` rebuilds in one command, and eval/_candidates
+# is 25 MB of extracted frames. The evidence they produce (data/output/*.json,
+# *.md) IS committed - the intermediates are not.
+eval/_*
+data/output/_*
+
+# transient concurrent-agent slots (see .claude/hooks/agent-cap.sh)
+.claude/.agent-locks/
+.claude/.agent-queue/
+.claude/.agent-reservations/
+.claude/.agent-spend.log

@@ -1,0 +1,34 @@
+{
+ "near_bl_doubles": [
+  -192.9904761904762,
+  888.2095238095237
+ ],
+ "near_br_doubles": [
+  2151.390476190476,
+  897.2761904761904
+ ],
+ "far_br_doubles": [
+  1168.3047619047618,
+  579.9428571428571
+ ],
+ "far_bl_doubles": [
+  775.847619047619,
+  579.9428571428571
+ ],
+ "_exact": true,
+ "_audit": {
+  "tool": "validate_new_clip.py --stamp",
+  "date": "2026-08-11",
+  "verdict": "LOW-CAMERA",
+  "fit_residual_px": 0.0,
+  "camera_height_m": 1.76,
+  "img_wh": [
+   1920,
+   1080
+  ],
+  "img_wh_source": "clip",
+  "reasons": [
+   "low camera 1.76 m \u2014 measurable to court-y 8.0 m of 23.8 (34% of depth)"
+  ]
+ }
+}

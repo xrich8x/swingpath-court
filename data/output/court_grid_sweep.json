@@ -1,0 +1,509 @@
+{
+ "baseline": {
+  "accepted": [
+   "am_classB",
+   "am_college",
+   "am_fr_sud",
+   "am_grass1",
+   "am_ntrp30",
+   "am_ntrp40",
+   "am_ntrp45_courtlevel",
+   "am_rec30",
+   "am_usta40",
+   "am_usta45",
+   "am_usta60"
+  ],
+  "n": 11,
+  "median": 8.286765650164613,
+  "wrong": [],
+  "gate_pass": true,
+  "per_clip": {
+   "am_beginner": {
+    "votes": 4,
+    "accepted": false,
+    "err": 30.117284135541
+   },
+   "am_classB": {
+    "votes": 6,
+    "accepted": true,
+    "err": 8.286765650164613
+   },
+   "am_college": {
+    "votes": 8,
+    "accepted": true,
+    "err": 13.869385026309718
+   },
+   "am_fr_sud": {
+    "votes": 8,
+    "accepted": true,
+    "err": 10.885597005398374
+   },
+   "am_grass1": {
+    "votes": 6,
+    "accepted": true,
+    "err": 6.288790229872467
+   },
+   "am_indoor_hard1": {
+    "votes": 2,
+    "accepted": false,
+    "err": 24.86523236623564
+   },
+   "am_indoor_hard2": {
+    "votes": 4,
+    "accepted": false,
+    "err": 86.00059304868941
+   },
+   "am_lk35": {
+    "votes": 1,
+    "accepted": false,
+    "err": 15.604895883766591
+   },
+   "am_ntrp30": {
+    "votes": 8,
+    "accepted": true,
+    "err": 6.164801490921339
+   },
+   "am_ntrp40": {
+    "votes": 8,
+    "accepted": true,
+    "err": 7.9165644766310574
+   },
+   "am_ntrp45_courtlevel": {
+    "votes": 8,
+    "accepted": true,
+    "err": 12.370496501550981
+   },
+   "am_ntrp45w": {
+    "votes": 3,
+    "accepted": false,
+    "err": 110.95007068655437
+   },
+   "am_ntrp50": {
+    "votes": 5,
+    "accepted": false,
+    "err": 69.07810085421102
+   },
+   "am_rally32short": {
+    "votes": 0,
+    "accepted": false,
+    "err": null
+   },
+   "am_rec30": {
+    "votes": 7,
+    "accepted": true,
+    "err": 11.982453734615671
+   },
+   "am_usta40": {
+    "votes": 8,
+    "accepted": true,
+    "err": 5.744500322274162
+   },
+   "am_usta45": {
+    "votes": 7,
+    "accepted": true,
+    "err": 9.148875946270735
+   },
+   "am_usta45final": {
+    "votes": 1,
+    "accepted": false,
+    "err": null
+   },
+   "am_usta60": {
+    "votes": 6,
+    "accepted": true,
+    "err": 3.3603768142833865
+   },
+   "am_wingfield_clay": {
+    "votes": 1,
+    "accepted": false,
+    "err": null
+   }
+  }
+ },
+ "A_wf": {
+  "accepted": [
+   "am_beginner",
+   "am_classB",
+   "am_college",
+   "am_fr_sud",
+   "am_grass1",
+   "am_indoor_hard2",
+   "am_ntrp30",
+   "am_ntrp40",
+   "am_ntrp45_courtlevel",
+   "am_rec30",
+   "am_usta40",
+   "am_usta45",
+   "am_usta60"
+  ],
+  "n": 13,
+  "median": 9.96372284964964,
+  "wrong": [
+   [
+    "am_beginner",
+    26.1
+   ],
+   [
+    "am_indoor_hard2",
+    77.7
+   ]
+  ],
+  "gate_pass": false,
+  "per_clip": {
+   "am_beginner": {
+    "votes": 7,
+    "accepted": true,
+    "err": 26.05271990619422
+   },
+   "am_classB": {
+    "votes": 6,
+    "accepted": true,
+    "err": 8.500288089713841
+   },
+   "am_college": {
+    "votes": 8,
+    "accepted": true,
+    "err": 12.065170307492249
+   },
+   "am_fr_sud": {
+    "votes": 8,
+    "accepted": true,
+    "err": 12.079033485210502
+   },
+   "am_grass1": {
+    "votes": 8,
+    "accepted": true,
+    "err": 6.590717168401735
+   },
+   "am_indoor_hard1": {
+    "votes": 2,
+    "accepted": false,
+    "err": 42.25041297069733
+   },
+   "am_indoor_hard2": {
+    "votes": 6,
+    "accepted": true,
+    "err": 77.65528216370913
+   },
+   "am_lk35": {
+    "votes": 2,
+    "accepted": false,
+    "err": 54.10237768369307
+   },
+   "am_ntrp30": {
+    "votes": 8,
+    "accepted": true,
+    "err": 6.218035053644636
+   },
+   "am_ntrp40": {
+    "votes": 8,
+    "accepted": true,
+    "err": 7.9588029776279114
+   },
+   "am_ntrp45_courtlevel": {
+    "votes": 8,
+    "accepted": true,
+    "err": 12.171409720077202
+   },
+   "am_ntrp45w": {
+    "votes": 2,
+    "accepted": false,
+    "err": 126.46145631165152
+   },
+   "am_ntrp50": {
+    "votes": 4,
+    "accepted": false,
+    "err": 69.94636613608479
+   },
+   "am_rally32short": {
+    "votes": 0,
+    "accepted": false,
+    "err": null
+   },
+   "am_rec30": {
+    "votes": 7,
+    "accepted": true,
+    "err": 9.96372284964964
+   },
+   "am_usta40": {
+    "votes": 8,
+    "accepted": true,
+    "err": 5.843156559875396
+   },
+   "am_usta45": {
+    "votes": 7,
+    "accepted": true,
+    "err": 10.233862170209797
+   },
+   "am_usta45final": {
+    "votes": 1,
+    "accepted": false,
+    "err": null
+   },
+   "am_usta60": {
+    "votes": 6,
+    "accepted": true,
+    "err": 3.3603768142833865
+   },
+   "am_wingfield_clay": {
+    "votes": 1,
+    "accepted": false,
+    "err": null
+   }
+  }
+ },
+ "B_wn": {
+  "accepted": [
+   "am_beginner",
+   "am_classB",
+   "am_college",
+   "am_fr_sud",
+   "am_grass1",
+   "am_ntrp30",
+   "am_ntrp40",
+   "am_ntrp45_courtlevel",
+   "am_rec30",
+   "am_usta40",
+   "am_usta45",
+   "am_usta60"
+  ],
+  "n": 12,
+  "median": 8.342795508720329,
+  "wrong": [
+   [
+    "am_beginner",
+    25.3
+   ]
+  ],
+  "gate_pass": false,
+  "per_clip": {
+   "am_beginner": {
+    "votes": 6,
+    "accepted": true,
+    "err": 25.30254258218242
+   },
+   "am_classB": {
+    "votes": 7,
+    "accepted": true,
+    "err": 8.630051297772104
+   },
+   "am_college": {
+    "votes": 8,
+    "accepted": true,
+    "err": 12.00974529298974
+   },
+   "am_fr_sud": {
+    "votes": 8,
+    "accepted": true,
+    "err": 11.501213963030068
+   },
+   "am_grass1": {
+    "votes": 6,
+    "accepted": true,
+    "err": 7.53245752124793
+   },
+   "am_indoor_hard1": {
+    "votes": 2,
+    "accepted": false,
+    "err": 13.287733570340961
+   },
+   "am_indoor_hard2": {
+    "votes": 5,
+    "accepted": false,
+    "err": 74.6542032368854
+   },
+   "am_lk35": {
+    "votes": 1,
+    "accepted": false,
+    "err": 40.43389160705377
+   },
+   "am_ntrp30": {
+    "votes": 8,
+    "accepted": true,
+    "err": 5.872030059878494
+   },
+   "am_ntrp40": {
+    "votes": 8,
+    "accepted": true,
+    "err": 8.055539719668554
+   },
+   "am_ntrp45_courtlevel": {
+    "votes": 8,
+    "accepted": true,
+    "err": 13.149644607752517
+   },
+   "am_ntrp45w": {
+    "votes": 4,
+    "accepted": false,
+    "err": 147.31881079220105
+   },
+   "am_ntrp50": {
+    "votes": 3,
+    "accepted": false,
+    "err": 62.812372332101376
+   },
+   "am_rally32short": {
+    "votes": 0,
+    "accepted": false,
+    "err": null
+   },
+   "am_rec30": {
+    "votes": 7,
+    "accepted": true,
+    "err": 10.864807004759626
+   },
+   "am_usta40": {
+    "votes": 8,
+    "accepted": true,
+    "err": 5.5325862045096565
+   },
+   "am_usta45": {
+    "votes": 8,
+    "accepted": true,
+    "err": 7.323415477575563
+   },
+   "am_usta45final": {
+    "votes": 1,
+    "accepted": false,
+    "err": null
+   },
+   "am_usta60": {
+    "votes": 8,
+    "accepted": true,
+    "err": 2.909278673020709
+   },
+   "am_wingfield_clay": {
+    "votes": 1,
+    "accepted": false,
+    "err": 11.729751878942954
+   }
+  }
+ },
+ "C_both": {
+  "accepted": [
+   "am_beginner",
+   "am_classB",
+   "am_college",
+   "am_fr_sud",
+   "am_grass1",
+   "am_ntrp30",
+   "am_ntrp40",
+   "am_ntrp45_courtlevel",
+   "am_rec30",
+   "am_usta40",
+   "am_usta45",
+   "am_usta60"
+  ],
+  "n": 12,
+  "median": 8.407422920908692,
+  "wrong": [
+   [
+    "am_beginner",
+    25.5
+   ]
+  ],
+  "gate_pass": false,
+  "per_clip": {
+   "am_beginner": {
+    "votes": 7,
+    "accepted": true,
+    "err": 25.520915052263256
+   },
+   "am_classB": {
+    "votes": 7,
+    "accepted": true,
+    "err": 8.686042334212901
+   },
+   "am_college": {
+    "votes": 8,
+    "accepted": true,
+    "err": 11.452631831034997
+   },
+   "am_fr_sud": {
+    "votes": 8,
+    "accepted": true,
+    "err": 11.150941905551882
+   },
+   "am_grass1": {
+    "votes": 8,
+    "accepted": true,
+    "err": 6.9341587780893335
+   },
+   "am_indoor_hard1": {
+    "votes": 2,
+    "accepted": false,
+    "err": 42.25041297069733
+   },
+   "am_indoor_hard2": {
+    "votes": 4,
+    "accepted": false,
+    "err": 85.05076684743239
+   },
+   "am_lk35": {
+    "votes": 1,
+    "accepted": false,
+    "err": 40.43389160705377
+   },
+   "am_ntrp30": {
+    "votes": 8,
+    "accepted": true,
+    "err": 6.040668110682056
+   },
+   "am_ntrp40": {
+    "votes": 7,
+    "accepted": true,
+    "err": 8.072574377665767
+   },
+   "am_ntrp45_courtlevel": {
+    "votes": 8,
+    "accepted": true,
+    "err": 12.892699376739964
+   },
+   "am_ntrp45w": {
+    "votes": 4,
+    "accepted": false,
+    "err": 147.31881079220105
+   },
+   "am_ntrp50": {
+    "votes": 4,
+    "accepted": false,
+    "err": 49.09476793766178
+   },
+   "am_rally32short": {
+    "votes": 0,
+    "accepted": false,
+    "err": null
+   },
+   "am_rec30": {
+    "votes": 7,
+    "accepted": true,
+    "err": 9.350915833028521
+   },
+   "am_usta40": {
+    "votes": 8,
+    "accepted": true,
+    "err": 6.111163850603894
+   },
+   "am_usta45": {
+    "votes": 8,
+    "accepted": true,
+    "err": 8.128803507604482
+   },
+   "am_usta45final": {
+    "votes": 1,
+    "accepted": false,
+    "err": null
+   },
+   "am_usta60": {
+    "votes": 8,
+    "accepted": true,
+    "err": 2.909278673020709
+   },
+   "am_wingfield_clay": {
+    "votes": 1,
+    "accepted": false,
+    "err": 10.250292119748895
+   }
+  }
+ }
+}

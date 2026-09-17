@@ -1,0 +1,6 @@
+# Court detection: frames that each find the RIGHT court disagree about its WIDTH — a real effect, now subordinate to the row above
+
+> Evidence for the `court-detection-frames-that-each-find-the` row in [docs/STATE.md](../STATE.md) (Open).
+> Text preserved verbatim from SCOREBOARD.md at the 2026-08-26 split.
+
+**Nothing. Unblocked and unaddressed.** Measured 2026-08-24: the criteria recognise the correct court on **9 of 10** calibrated clips (scored inside the gate's own 20 px tolerance, not at the exact clicks — see Withdrawn figures) and the search produces one on **7 of 10**, but only 4 of 10 have two good locks that agree, so the vote fails and 2 of 10 accept. **On 13 of 18 clips the dominant disagreement between two correct locks is `w_near`/`w_far` — how wide the court is, not where it is** — and `_corner_dist` cannot weight that differently from position. Seven hypotheses across scoring, gating and cropping measured to zero (What has not worked). **Untested idea, not a result:** an agreement metric normalised in court terms rather than image pixels, which would be resolution-independent by construction and could weight width separately. `data/output/court_scoring_diagnosis.md` §8.

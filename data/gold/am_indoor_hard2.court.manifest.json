@@ -1,0 +1,91 @@
+{
+ "clip": "am_indoor_hard2",
+ "kind": "court",
+ "video": "https://www.youtube.com/watch?v=_Dbwk4bxr8U",
+ "source": "youtube-stream",
+ "youtube_id": "_Dbwk4bxr8U",
+ "notes": "indoor league match",
+ "width": 640,
+ "height": 360,
+ "fps": 29.97,
+ "video_frames": 16249,
+ "created": "2026-07-12 18:36:45",
+ "params": {
+  "n": 18,
+  "sampling": "uniform"
+ },
+ "frames": [
+  {
+   "frame": 324,
+   "bucket": "court"
+  },
+  {
+   "frame": 1242,
+   "bucket": "court"
+  },
+  {
+   "frame": 2159,
+   "bucket": "court"
+  },
+  {
+   "frame": 3077,
+   "bucket": "court"
+  },
+  {
+   "frame": 3994,
+   "bucket": "court"
+  },
+  {
+   "frame": 4912,
+   "bucket": "court"
+  },
+  {
+   "frame": 5830,
+   "bucket": "court"
+  },
+  {
+   "frame": 6747,
+   "bucket": "court"
+  },
+  {
+   "frame": 7665,
+   "bucket": "court"
+  },
+  {
+   "frame": 8582,
+   "bucket": "court"
+  },
+  {
+   "frame": 9500,
+   "bucket": "court"
+  },
+  {
+   "frame": 10417,
+   "bucket": "court"
+  },
+  {
+   "frame": 11335,
+   "bucket": "court"
+  },
+  {
+   "frame": 12253,
+   "bucket": "court"
+  },
+  {
+   "frame": 13170,
+   "bucket": "court"
+  },
+  {
+   "frame": 14088,
+   "bucket": "court"
+  },
+  {
+   "frame": 15005,
+   "bucket": "court"
+  },
+  {
+   "frame": 15923,
+   "bucket": "court"
+  }
+ ]
+}

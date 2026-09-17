@@ -1,0 +1,36 @@
+{
+ "near_bl_doubles": [
+  1555.865815712651,
+  -103.0951326629781
+ ],
+ "near_br_doubles": [
+  214.29528320482643,
+  65.63039632976583
+ ],
+ "far_bl_doubles": [
+  554.7787682877444,
+  278.78202468629615
+ ],
+ "far_br_doubles": [
+  763.8379216497281,
+  264.6390830624195
+ ],
+ "_audit": {
+  "tool": "validate_new_clip.py --stamp",
+  "date": "2026-08-03",
+  "verdict": "DEGENERATE",
+  "fit_residual_px": 90.9,
+  "camera_height_m": 3.33,
+  "img_wh": [
+   1280,
+   720
+  ],
+  "img_wh_source": "assumed",
+  "reasons": [
+   "corners are not a physical camera view (fit residual 91 px)",
+   "near baseline not below far in frame (near y=-103, far y=279)",
+   "near corners left/right swapped (bl x=1556 >= br x=214)",
+   "5/10 court lines cross the horizon / go off-frame"
+  ]
+ }
+}

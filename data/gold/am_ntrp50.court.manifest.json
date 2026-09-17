@@ -1,0 +1,91 @@
+{
+ "clip": "am_ntrp50",
+ "kind": "court",
+ "video": "https://www.youtube.com/watch?v=aOmoEClVnQw",
+ "source": "youtube-stream",
+ "youtube_id": "aOmoEClVnQw",
+ "notes": "NTRP 5.0 singles full set",
+ "width": 640,
+ "height": 360,
+ "fps": 29.97002997002997,
+ "video_frames": 32441,
+ "created": "2026-07-12 18:37:04",
+ "params": {
+  "n": 18,
+  "sampling": "uniform"
+ },
+ "frames": [
+  {
+   "frame": 648,
+   "bucket": "court"
+  },
+  {
+   "frame": 2480,
+   "bucket": "court"
+  },
+  {
+   "frame": 4312,
+   "bucket": "court"
+  },
+  {
+   "frame": 6144,
+   "bucket": "court"
+  },
+  {
+   "frame": 7976,
+   "bucket": "court"
+  },
+  {
+   "frame": 9808,
+   "bucket": "court"
+  },
+  {
+   "frame": 11640,
+   "bucket": "court"
+  },
+  {
+   "frame": 13472,
+   "bucket": "court"
+  },
+  {
+   "frame": 15304,
+   "bucket": "court"
+  },
+  {
+   "frame": 17135,
+   "bucket": "court"
+  },
+  {
+   "frame": 18967,
+   "bucket": "court"
+  },
+  {
+   "frame": 20799,
+   "bucket": "court"
+  },
+  {
+   "frame": 22631,
+   "bucket": "court"
+  },
+  {
+   "frame": 24463,
+   "bucket": "court"
+  },
+  {
+   "frame": 26295,
+   "bucket": "court"
+  },
+  {
+   "frame": 28127,
+   "bucket": "court"
+  },
+  {
+   "frame": 29959,
+   "bucket": "court"
+  },
+  {
+   "frame": 31791,
+   "bucket": "court"
+  }
+ ]
+}

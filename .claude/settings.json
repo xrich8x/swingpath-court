@@ -1,0 +1,120 @@
+{
+  "env": {
+    "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1"
+  },
+  "autoContinueAtUsageLimit": true,
+  "askUserQuestionTimeout": "10m",
+  "permissions": {
+    "deny": [
+      "Bash(cd ..*)",
+      "Bash(cd /*)",
+      "Read(../**)",
+      "Edit(../**)",
+      "Write(../**)"
+    ]
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "if": "Bash(git commit*)",
+            "command": "\"$CLAUDE_PROJECT_DIR/.claude/hooks/state-guard.sh\"",
+            "timeout": 10,
+            "statusMessage": "Checking docs/STATE.md is current"
+          },
+          {
+            "type": "command",
+            "if": "Bash(git commit*)",
+            "command": "\"$CLAUDE_PROJECT_DIR/.claude/hooks/docs-guard.sh\"",
+            "timeout": 10,
+            "statusMessage": "Checking the user-facing docs match the CLI"
+          },
+          {
+            "type": "command",
+            "if": "Bash(git commit*)",
+            "command": "\"$CLAUDE_PROJECT_DIR/.claude/hooks/withdrawn-guard.sh\"",
+            "timeout": 10,
+            "statusMessage": "Checking no withdrawn figure survives in a live doc"
+          },
+          {
+            "type": "command",
+            "if": "Bash(git commit*)",
+            "command": "\"$CLAUDE_PROJECT_DIR/.claude/hooks/claude-md-cap.sh\"",
+            "timeout": 10,
+            "statusMessage": "Checking CLAUDE.md is under its context cap"
+          }
+        ]
+      },
+      {
+        "matcher": "Agent|Task",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PROJECT_DIR/.claude/hooks/agent-cap.sh\"",
+            "timeout": 10,
+            "statusMessage": "Checking the project-wide concurrent-agent cap"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "agent",
+            "model": "opus",
+            "timeout": 90,
+            "prompt": "You are the PM gate for the SwingVision tennis-video-analysis project, reviewing the turn Claude Code just finished on behalf of a non-technical PM who cannot read code and relies entirely on this check. Decide whether the turn needs to pause and explain itself in plain English before it's allowed to end.\n\nFirst: if the hook input's stop_hook_active field is true, return {\"ok\": true} immediately and do nothing else (this is a repeat firing; never block twice in a row on the same turn).\n\nOtherwise, ground your judgment in what ACTUALLY happened, not what Claude said happened: run `git status` and `git diff` (and `git diff --cached`) in the project root to see real changes this turn, and skim CLAUDE.md's most recent Status entries + Gotchas section and docs/STATE.md's 'What has not worked' table for standing context. If the diff touches backend/swingvision/court.py, scoring.py, calibration.py, courtfit.py, ball.py, or schema.py, also open the changed section to see what actually moved.\n\nGround truth you must hold the diff to, because this project's whole discipline is not treating these as tunable: a tennis court is fixed regulation geometry (23.77m baseline-to-baseline, 10.97m doubles / 8.23m singles width, net at 11.885m, service line 6.40m from the net, mirrored in backend/swingvision/court.py and frontend/src/lib/court.js); a tennis ball is ~6.7cm; a racket is roughly 68cm; a real ball in flight follows gravity+drag(+Magnus), never a straight line or a still hover; standard scoring is deuce/ad/tiebreak-at-6/best-of-3 (backend/swingvision/scoring.py). You also need working knowledge of this project's actual ML/CV stack to judge technical claims: BallNet is a TrackNet-style heatmap CNN (small, fast, easily confused with racket heads/HUD graphics -- 'bright pixel tracking' onto the wrong bright pixel is this project's single most-fought failure mode), tracking is smoothed with a constant-acceleration Kalman/RTS filter that interpolates gaps but must never extrapolate blindly off-frame, and the core ML tension recorded in this repo is recall vs. false-positive rate, where detector-level precision gains have repeatedly failed to reach the rendered output (see SCOREBOARD 'What has not worked').\n\nBlock -- return {\"ok\": false, \"reason\": \"...\"} -- if ANY of the ACTIVE checks below is true for the turn just finished:\n\n1. Undisclosed product/threshold/default change: A tennis-domain or geometry assumption changed without saying so: a scoring rule, a court constant, a confidence threshold that decides what the dashboard tells the user is trustworthy (call_confident, speed_confident, the court-consensus vote bar, score_thresh, a gate radius), or the default detector/model file -- changed without explicitly flagging it as a decision made.\n2. Fix assumes something physically untrue: A proposed or applied fix treats a physical tennis fact as if it were tunable, or silently conflates a pixel-space heuristic with a real-world measurement (e.g. describing a threshold in pixels as if it were metres, or vice versa, without noting the difference).\n3. Re-proposes a measured dead end: An ML/CV change re-proposes something docs/STATE.md's 'What has not worked' table already measured and killed, without new evidence -- e.g. raising the score threshold, lowering the court-consensus bar, racquet-box negation, more training data alone, tightening a gate radius, pose-proximity mining.\n4. Unqualified number: A number is reported without stating what it was measured against. This project's #1 rule: never let a model grade its own homework -- a number measured against the model's own prior output, a pseudo-label, or training data is not accuracy and must be labeled as such.\n5. Scope creep: Claude did meaningfully more than was asked: an unrelated refactor, a bonus feature, or scope creep beyond the actual request.\n6. Unilateral product call: A product/design decision that belongs to the PM was made unilaterally: shipping a result already measured as a loss, changing what counts as a trustworthy measurement, changing match.json's shape (schema.py).\n7. Quietly weakened a guardrail after hitting a wall: Claude hit a wall (a test failed, a model underperformed, a calibration refused) and quietly narrowed scope or weakened a guardrail -- e.g. turned a refuse into a silent accept, loosened a warning into nothing -- instead of surfacing it plainly.\n\nIf NONE of the active checks above happened, return {\"ok\": true}. Do not invent a problem to justify blocking -- most turns are fine and should pass silently. When you do block, write the reason in plain English for someone who cannot read code: what happened, which file or decision it concerns, and why it matters, in 3-5 sentences, no jargon left unexplained.\n\nHook input: $ARGUMENTS"
+          }
+        ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PROJECT_DIR/.claude/hooks/agent-cap.sh\"",
+            "timeout": 10,
+            "statusMessage": "Checking for parked agent tasks"
+          }
+        ]
+      }
+    ],
+    "SubagentStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PROJECT_DIR/.claude/hooks/agent-cap.sh\"",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "SubagentStop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PROJECT_DIR/.claude/hooks/agent-cap.sh\"",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PROJECT_DIR/.claude/hooks/agent-cap.sh\"",
+            "timeout": 10,
+            "statusMessage": "Checking for agent slots held from a previous session"
+          }
+        ]
+      }
+    ]
+  }
+}

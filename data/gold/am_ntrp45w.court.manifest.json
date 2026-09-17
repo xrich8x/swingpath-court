@@ -1,0 +1,91 @@
+{
+ "clip": "am_ntrp45w",
+ "kind": "court",
+ "video": "https://www.youtube.com/watch?v=a6szrqcFT6c",
+ "source": "youtube-stream",
+ "youtube_id": "a6szrqcFT6c",
+ "notes": "NTRP 4.5/4.0 women's singles",
+ "width": 640,
+ "height": 360,
+ "fps": 29.97,
+ "video_frames": 24722,
+ "created": "2026-07-12 18:36:54",
+ "params": {
+  "n": 18,
+  "sampling": "uniform"
+ },
+ "frames": [
+  {
+   "frame": 494,
+   "bucket": "court"
+  },
+  {
+   "frame": 1890,
+   "bucket": "court"
+  },
+  {
+   "frame": 3286,
+   "bucket": "court"
+  },
+  {
+   "frame": 4682,
+   "bucket": "court"
+  },
+  {
+   "frame": 6078,
+   "bucket": "court"
+  },
+  {
+   "frame": 7474,
+   "bucket": "court"
+  },
+  {
+   "frame": 8870,
+   "bucket": "court"
+  },
+  {
+   "frame": 10266,
+   "bucket": "court"
+  },
+  {
+   "frame": 11662,
+   "bucket": "court"
+  },
+  {
+   "frame": 13058,
+   "bucket": "court"
+  },
+  {
+   "frame": 14454,
+   "bucket": "court"
+  },
+  {
+   "frame": 15850,
+   "bucket": "court"
+  },
+  {
+   "frame": 17246,
+   "bucket": "court"
+  },
+  {
+   "frame": 18642,
+   "bucket": "court"
+  },
+  {
+   "frame": 20038,
+   "bucket": "court"
+  },
+  {
+   "frame": 21434,
+   "bucket": "court"
+  },
+  {
+   "frame": 22830,
+   "bucket": "court"
+  },
+  {
+   "frame": 24226,
+   "bucket": "court"
+  }
+ ]
+}

@@ -1,0 +1,17 @@
+# Heavy ML dependencies for REAL video analysis (pose + ball tracking).
+# The demo + tests do NOT need these — install only when analyzing real footage.
+#
+# Install CPU-only torch from the PyTorch index (much smaller than the CUDA build;
+# use a CUDA build instead if you have a GPU):
+#   pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu
+#   pip install -r requirements-ml.txt
+#
+torch>=2.2            # ball TrackNet + backs ultralytics
+torchvision>=0.17
+ultralytics>=8.3      # YOLO-pose for players (pose.PoseEstimator)
+gdown>=5.0            # fetch the TrackNet checkpoint from Google Drive
+
+# Model weights (not pip-installable):
+#   - YOLO pose:  auto-downloads on first use (yolo11x-pose.pt / yolo11m-pose.pt)
+#   - TrackNet:   weights/tracknet.pt  (gdown 1XEYZ4myUN7QT-NeBYJI0xteLsvs-ZAOl)
+#                 architecture vendored from github.com/yastrebksv/TrackNet

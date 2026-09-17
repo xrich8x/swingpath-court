@@ -1,0 +1,122 @@
+[
+ {
+  "clip": "A7vXlWIlyrI",
+  "w": 1920,
+  "h": 1080,
+  "votes": 2,
+  "tag": "vote",
+  "accepted": false,
+  "err": 64.60523516574548,
+  "locked": 6,
+  "frames": 8,
+  "audit": "LOW-CAMERA"
+ },
+ {
+  "clip": "am_hard_utr",
+  "w": 1920,
+  "h": 1080,
+  "votes": 7,
+  "tag": "vote",
+  "accepted": true,
+  "err": 42.9095132719486,
+  "locked": 8,
+  "frames": 8,
+  "audit": "LOW-CAMERA"
+ },
+ {
+  "clip": "CYqapSq5llo",
+  "w": 1920,
+  "h": 1080,
+  "votes": 3,
+  "tag": "vote",
+  "accepted": false,
+  "err": 50.632805187707575,
+  "locked": 8,
+  "frames": 8,
+  "audit": "LOW-CAMERA"
+ },
+ {
+  "clip": "e8T34KoJzOw_s2",
+  "w": 1920,
+  "h": 1080,
+  "votes": 2,
+  "tag": "vote",
+  "accepted": false,
+  "err": 53.84717448619845,
+  "locked": 8,
+  "frames": 8,
+  "audit": "LOW-CAMERA"
+ },
+ {
+  "clip": "HoHxFSX_gLk_s1",
+  "w": 1920,
+  "h": 1080,
+  "votes": 1,
+  "tag": null,
+  "accepted": false,
+  "err": null,
+  "locked": 4,
+  "frames": 8,
+  "audit": "LOW-CAMERA"
+ },
+ {
+  "clip": "HoHxFSX_gLk_s2",
+  "w": 1920,
+  "h": 1080,
+  "votes": 3,
+  "tag": "vote",
+  "accepted": false,
+  "err": 98.45499910882224,
+  "locked": 8,
+  "frames": 8,
+  "audit": "LOW-CAMERA"
+ },
+ {
+  "clip": "sAjkpeRq4P4",
+  "w": 1920,
+  "h": 1080,
+  "votes": 6,
+  "tag": "vote",
+  "accepted": true,
+  "err": 6.969685779093987,
+  "locked": 8,
+  "frames": 8,
+  "audit": "PASS"
+ },
+ {
+  "clip": "tc8CGFxyRE8",
+  "w": 1920,
+  "h": 1080,
+  "votes": 3,
+  "tag": "vote",
+  "accepted": false,
+  "err": 178.74641407754342,
+  "locked": 7,
+  "frames": 8,
+  "audit": "PASS"
+ },
+ {
+  "clip": "UHf0LeMU2pg",
+  "w": 1920,
+  "h": 1080,
+  "votes": 3,
+  "tag": "vote",
+  "accepted": false,
+  "err": 164.92582804687103,
+  "locked": 7,
+  "frames": 8,
+  "audit": "PASS"
+ },
+ {
+  "clip": "uR5q2cSM6AY",
+  "w": 1920,
+  "h": 1080,
+  "votes": 3,
+  "tag": "vote",
+  "accepted": false,
+  "err": 62.42238266258136,
+  "locked": 8,
+  "frames": 8,
+  "audit": "PASS"
+ }
+]

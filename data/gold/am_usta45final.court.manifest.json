@@ -1,0 +1,91 @@
+{
+ "clip": "am_usta45final",
+ "kind": "court",
+ "video": "https://www.youtube.com/watch?v=PDBe5CuAA1Q",
+ "source": "youtube-stream",
+ "youtube_id": "PDBe5CuAA1Q",
+ "notes": "USTA 4.5 singles final, outdoor hard",
+ "width": 640,
+ "height": 360,
+ "fps": 23.976023976023978,
+ "video_frames": 38171,
+ "created": "2026-07-12 18:37:01",
+ "params": {
+  "n": 18,
+  "sampling": "uniform"
+ },
+ "frames": [
+  {
+   "frame": 763,
+   "bucket": "court"
+  },
+  {
+   "frame": 2918,
+   "bucket": "court"
+  },
+  {
+   "frame": 5074,
+   "bucket": "court"
+  },
+  {
+   "frame": 7229,
+   "bucket": "court"
+  },
+  {
+   "frame": 9385,
+   "bucket": "court"
+  },
+  {
+   "frame": 11540,
+   "bucket": "court"
+  },
+  {
+   "frame": 13696,
+   "bucket": "court"
+  },
+  {
+   "frame": 15851,
+   "bucket": "court"
+  },
+  {
+   "frame": 18007,
+   "bucket": "court"
+  },
+  {
+   "frame": 20162,
+   "bucket": "court"
+  },
+  {
+   "frame": 22318,
+   "bucket": "court"
+  },
+  {
+   "frame": 24473,
+   "bucket": "court"
+  },
+  {
+   "frame": 26629,
+   "bucket": "court"
+  },
+  {
+   "frame": 28784,
+   "bucket": "court"
+  },
+  {
+   "frame": 30940,
+   "bucket": "court"
+  },
+  {
+   "frame": 33095,
+   "bucket": "court"
+  },
+  {
+   "frame": 35251,
+   "bucket": "court"
+  },
+  {
+   "frame": 37406,
+   "bucket": "court"
+  }
+ ]
+}

@@ -1,0 +1,91 @@
+{
+ "clip": "am_fr_sud",
+ "kind": "court",
+ "video": "https://www.youtube.com/watch?v=Z_ns84WcgMo",
+ "source": "youtube-stream",
+ "youtube_id": "Z_ns84WcgMo",
+ "notes": "French amateur 'le Sud' (likely clay)",
+ "width": 640,
+ "height": 360,
+ "fps": 30.0,
+ "video_frames": 29542,
+ "created": "2026-07-12 18:37:29",
+ "params": {
+  "n": 18,
+  "sampling": "uniform"
+ },
+ "frames": [
+  {
+   "frame": 590,
+   "bucket": "court"
+  },
+  {
+   "frame": 2258,
+   "bucket": "court"
+  },
+  {
+   "frame": 3926,
+   "bucket": "court"
+  },
+  {
+   "frame": 5595,
+   "bucket": "court"
+  },
+  {
+   "frame": 7263,
+   "bucket": "court"
+  },
+  {
+   "frame": 8931,
+   "bucket": "court"
+  },
+  {
+   "frame": 10599,
+   "bucket": "court"
+  },
+  {
+   "frame": 12268,
+   "bucket": "court"
+  },
+  {
+   "frame": 13936,
+   "bucket": "court"
+  },
+  {
+   "frame": 15604,
+   "bucket": "court"
+  },
+  {
+   "frame": 17272,
+   "bucket": "court"
+  },
+  {
+   "frame": 18941,
+   "bucket": "court"
+  },
+  {
+   "frame": 20609,
+   "bucket": "court"
+  },
+  {
+   "frame": 22277,
+   "bucket": "court"
+  },
+  {
+   "frame": 23945,
+   "bucket": "court"
+  },
+  {
+   "frame": 25614,
+   "bucket": "court"
+  },
+  {
+   "frame": 27282,
+   "bucket": "court"
+  },
+  {
+   "frame": 28950,
+   "bucket": "court"
+  }
+ ]
+}

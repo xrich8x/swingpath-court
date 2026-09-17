@@ -1,0 +1,31 @@
+{
+ "far_bl_doubles": [
+  504,
+  222
+ ],
+ "far_br_doubles": [
+  743,
+  224
+ ],
+ "near_bl_doubles": [
+  -47,
+  561
+ ],
+ "near_br_doubles": [
+  1213,
+  537
+ ],
+ "_audit": {
+  "tool": "validate_new_clip.py --stamp",
+  "date": "2026-08-11",
+  "verdict": "PASS",
+  "fit_residual_px": 1.4,
+  "camera_height_m": 3.31,
+  "img_wh": [
+   1280,
+   720
+  ],
+  "img_wh_source": "clip",
+  "reasons": []
+ }
+}

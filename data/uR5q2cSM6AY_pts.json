@@ -1,0 +1,32 @@
+{
+ "near_bl_doubles": [
+  98.43809523809523,
+  913.7904761904762
+ ],
+ "near_br_doubles": [
+  1808.1523809523808,
+  782.9714285714285
+ ],
+ "far_br_doubles": [
+  1128.152380952381,
+  426.7809523809524
+ ],
+ "far_bl_doubles": [
+  756.4190476190475,
+  453.9809523809524
+ ],
+ "_exact": true,
+ "_audit": {
+  "tool": "validate_new_clip.py --stamp",
+  "date": "2026-08-12",
+  "verdict": "PASS",
+  "fit_residual_px": 9.3,
+  "camera_height_m": 3.32,
+  "img_wh": [
+   1920,
+   1080
+  ],
+  "img_wh_source": "clip",
+  "reasons": []
+ }
+}

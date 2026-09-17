@@ -1,0 +1,10 @@
+# Backend dependencies.
+# The demo + tests need only numpy and scipy. opencv is for the real video path
+# (frame reading, the manual calibration tool, overlay rendering).
+numpy>=1.26
+scipy>=1.11
+opencv-python>=4.8
+imageio-ffmpeg>=0.4   # bundled ffmpeg: transcode the --annotate video to browser-playable H.264
+
+# Real video analysis (pose + ball tracking) needs heavier ML deps —
+# see requirements-ml.txt (torch, torchvision, ultralytics, gdown).

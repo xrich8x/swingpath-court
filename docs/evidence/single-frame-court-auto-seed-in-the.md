@@ -1,0 +1,6 @@
+# Single-frame court auto-seed in the setup tool
+
+> Evidence for the `single-frame-court-auto-seed-in-the` row in [docs/STATE.md](../STATE.md) (What has not worked).
+> Text preserved verbatim from SCOREBOARD.md at the 2026-08-26 split.
+
+**MEASURED against 10 clips a human then calibrated by hand (2026-08-11): 2 seeds produced no lock and 5 were 174-438 px out** — a wrong RUNG (service line taken for the baseline, or the court next door), the remaining 3 still 107-128 px off. **7 of 10 were worse than starting from a blank rectangle**, and the user said so before it was measured. `verify_court` coverage does NOT separate them: the 221 px-wrong seed scored 61% of the template on real white paint and a 122 px-wrong one scored 94%, because a wrong-rung court still lies along real lines. **Only multi-frame consensus (>=6 of 8) tells the cases apart, and a single frame cannot run it** — so gallery mode now seeds ONLY clips consensus accepted. *(This row sat OUTSIDE both tables until 2026-08-15, formatted for "What has worked" and stranded below the Open table's rule, so the file's own dead-end list did not contain it. Its lesson had meanwhile recurred verbatim in `run.py check`, which was still doing single-frame court detection — see Trap T15.)*

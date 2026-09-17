@@ -1,0 +1,50 @@
+{
+  "_comment": [
+    "The one-way TEST/TRAIN declaration for COURT clips, mirroring the rule the ball",
+    "side already enforces. Before this file existed, 17 of the 20 hand-labelled court",
+    "gold clips were also in data/court_dataset/ and train_courtnet.py had no leak",
+    "guard, so every number in data/gold/court_scores.md was the model being scored on",
+    "its own training data.",
+    "",
+    "TEST clips are never trained on. Their .court.labels.json is a BENCHMARK.",
+    "TRAIN clips may also have .court.labels.json - those labels are TRAINING DATA and",
+    "must never be scored. tools/eval_court.py reads this file and scores TEST only.",
+    "",
+    "This choice is ONE-WAY. Moving a clip from TEST to TRAIN destroys the benchmark;",
+    "moving one from TRAIN to TEST invalidates every checkpoint trained before the move."
+  ],
+  "created": "2026-08-06",
+  "test": {
+    "_why": "8 clips chosen for surface and camera diversity, not for what was left over.",
+    "clips": {
+      "am_beginner": "never trained on",
+      "am_ntrp45_courtlevel": "never trained on; court-level camera, the hardest mount",
+      "am_rec30": "never trained on",
+      "am_wingfield_clay": "pulled from training - the only clay clip; clay breaks white-line assumptions",
+      "am_grass1": "pulled from training - the only grass clip",
+      "am_indoor_hard1": "pulled from training - indoor lighting",
+      "am_ntrp30": "pulled from training - currently scores 0.0% detect; the failure case must be visible",
+      "am_usta60": "pulled from training - a second outdoor hard court at a different level"
+    }
+  },
+  "train": {
+    "_why": "Everything else under data/court_dataset/. am_usta45final stays in TRAIN: it has only 3 labelled frames and is worthless as a test clip.",
+    "clips": [
+      "am_classB",
+      "am_college",
+      "am_fr_sud",
+      "am_indoor_hard2",
+      "am_lk35",
+      "am_ntrp40",
+      "am_ntrp45w",
+      "am_ntrp50",
+      "am_rally32short",
+      "am_usta40",
+      "am_usta45",
+      "am_usta45final",
+      "highangle",
+      "indoor_elev",
+      "indoor_low"
+    ]
+  }
+}

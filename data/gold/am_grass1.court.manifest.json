@@ -1,0 +1,91 @@
+{
+ "clip": "am_grass1",
+ "kind": "court",
+ "video": "https://www.youtube.com/watch?v=hzU462In0Tk",
+ "source": "youtube-stream",
+ "youtube_id": "hzU462In0Tk",
+ "notes": "grass court, amateur",
+ "width": 640,
+ "height": 360,
+ "fps": 29.97002997002997,
+ "video_frames": 32163,
+ "created": "2026-07-12 18:37:43",
+ "params": {
+  "n": 18,
+  "sampling": "uniform"
+ },
+ "frames": [
+  {
+   "frame": 643,
+   "bucket": "court"
+  },
+  {
+   "frame": 2459,
+   "bucket": "court"
+  },
+  {
+   "frame": 4275,
+   "bucket": "court"
+  },
+  {
+   "frame": 6092,
+   "bucket": "court"
+  },
+  {
+   "frame": 7908,
+   "bucket": "court"
+  },
+  {
+   "frame": 9724,
+   "bucket": "court"
+  },
+  {
+   "frame": 11540,
+   "bucket": "court"
+  },
+  {
+   "frame": 13356,
+   "bucket": "court"
+  },
+  {
+   "frame": 15172,
+   "bucket": "court"
+  },
+  {
+   "frame": 16989,
+   "bucket": "court"
+  },
+  {
+   "frame": 18805,
+   "bucket": "court"
+  },
+  {
+   "frame": 20621,
+   "bucket": "court"
+  },
+  {
+   "frame": 22437,
+   "bucket": "court"
+  },
+  {
+   "frame": 24253,
+   "bucket": "court"
+  },
+  {
+   "frame": 26069,
+   "bucket": "court"
+  },
+  {
+   "frame": 27886,
+   "bucket": "court"
+  },
+  {
+   "frame": 29702,
+   "bucket": "court"
+  },
+  {
+   "frame": 31518,
+   "bucket": "court"
+  }
+ ]
+}

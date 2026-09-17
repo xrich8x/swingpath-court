@@ -1,0 +1,2132 @@
+[
+ {
+  "path": "data/incoming/Clay/CYqapSq5llo.mp4",
+  "surface": "Clay",
+  "width": 1920,
+  "height": 1080,
+  "r_fps": 60.0,
+  "avg_fps": 60.0,
+  "codec": "av1",
+  "dur_s": 1692.014
+ },
+ {
+  "path": "data/incoming/Clay/DY6WVsuHqFs.mp4",
+  "surface": "Clay",
+  "width": 1280,
+  "height": 720,
+  "r_fps": 25.0,
+  "avg_fps": 25.0,
+  "codec": "av1",
+  "dur_s": 785.28
+ },
+ {
+  "path": "data/incoming/Clay/e2e_EQSfL7bwJ_I.mp4",
+  "surface": "Clay",
+  "width": 1280,
+  "height": 720,
+  "r_fps": 24.0,
+  "avg_fps": 24.0,
+  "codec": "mpeg4",
+  "dur_s": 75.0
+ },
+ {
+  "path": "data/incoming/Clay/e2e_l6o8FOoy3MY.mp4",
+  "surface": "Clay",
+  "width": 1280,
+  "height": 720,
+  "r_fps": 24.0,
+  "avg_fps": 24.0,
+  "codec": "mpeg4",
+  "dur_s": 75.0
+ },
+ {
+  "path": "data/incoming/Clay/e2e_SgZpQtiTG1A.mp4",
+  "surface": "Clay",
+  "width": 1280,
+  "height": 720,
+  "r_fps": 24.0,
+  "avg_fps": 24.0,
+  "codec": "mpeg4",
+  "dur_s": 75.0
+ },
+ {
+  "path": "data/incoming/Clay/gold_clay.mp4",
+  "surface": "Clay",
+  "width": 1280,
+  "height": 720,
+  "r_fps": 59.94006309148265,
+  "avg_fps": 59.94006309148265,
+  "codec": "h264",
+  "dur_s": 180.029156
+ },
+ {
+  "path": "data/incoming/Clay/sAjkpeRq4P4.mp4",
+  "surface": "Clay",
+  "width": 1920,
+  "height": 1080,
+  "r_fps": 59.94005994005994,
+  "avg_fps": 59.94004713968222,
+  "codec": "vp9",
+  "dur_s": 1756.014
+ },
+ {
+  "path": "data/incoming/Clay/tennis_sample.mp4",
+  "surface": "Clay",
+  "width": 1920,
+  "height": 1080,
+  "r_fps": 30.0,
+  "avg_fps": 30.0,
+  "codec": "h264",
+  "dur_s": 4.099967
+ },
+ {
+  "path": "data/incoming/Clay/yt_tnxkujogch4.mp4",
+  "surface": "Clay",
+  "width": 640,
+  "height": 360,
+  "r_fps": 29.97,
+  "avg_fps": 29.97,
+  "codec": "h264",
+  "dur_s": 54.474014
+ },
+ {
+  "path": "data/incoming/Grass/eala_segment.mp4",
+  "surface": "Grass",
+  "width": 1280,
+  "height": 720,
+  "r_fps": 60.0,
+  "avg_fps": 60.0,
+  "codec": "mpeg4",
+  "dur_s": 15.0
+ },
+ {
+  "path": "data/incoming/Grass/eala_swiatek.mp4",
+  "surface": "Grass",
+  "width": 1280,
+  "height": 720,
+  "r_fps": 60.0,
+  "avg_fps": 60.0,
+  "codec": "av1",
+  "dur_s": 490.6
+ },
+ {
+  "path": "data/incoming/Grass/J8__TwOgTY0.mp4",
+  "surface": "Grass",
+  "width": 1280,
+  "height": 720,
+  "r_fps": 25.0,
+  "avg_fps": 25.0,
+  "codec": "av1",
+  "dur_s": 504.6
+ },
+ {
+  "path": "data/incoming/Grass/U5Af1jGgYqA.mp4",
+  "surface": "Grass",
+  "width": 1280,
+  "height": 720,
+  "r_fps": 25.0,
+  "avg_fps": 25.0,
+  "codec": "av1",
+  "dur_s": 254.52
+ },
+ {
+  "path": "data/incoming/Hardcourt/45VdNMtbulA.mp4",
+  "surface": "Hardcourt",
+  "width": 1280,
+  "height": 720,
+  "r_fps": 25.0,
+  "avg_fps": 25.0,
+  "codec": "h264",
+  "dur_s": 1485.04
+ },
+ {
+  "path": "data/incoming/Hardcourt/6jp23ghDY9Q.mp4",
+  "surface": "Hardcourt",
+  "width": 1280,
+  "height": 720,
+  "r_fps": 60.0,
+  "avg_fps": 60.0,
+  "codec": "av1",
+  "dur_s": 759.216667
+ },
+ {
+  "path": "data/incoming/Hardcourt/8-BkpjFFIhQ.mp4",
+  "surface": "Hardcourt",
+  "width": 1280,
+  "height": 720,
+  "r_fps": 25.0,
+  "avg_fps": 25.0,
+  "codec": "h264",
+  "dur_s": 557.08
+ },
+ {
+  "path": "data/incoming/Hardcourt/9gUvgm23qMU.mp4",
+  "surface": "Hardcourt",
+  "width": 1280,
+  "height": 720,
+  "r_fps": 25.0,
+  "avg_fps": 25.0,
+  "codec": "av1",
+  "dur_s": 1445.8
+ },
+ {
+  "path": "data/incoming/Hardcourt/A7vXlWIlyrI.mp4",
+  "surface": "Hardcourt",
+  "width": 1920,
+  "height": 1080,
+  "r_fps": 60.0,
+  "avg_fps": 60.0,
+  "codec": "av1",
+  "dur_s": 1456.014
+ },
+ {
+  "path": "data/incoming/Hardcourt/am_hard_utr.mp4",
+  "surface": "Hardcourt",
+  "width": 1920,
+  "height": 1080,
+  "r_fps": 59.94005994005994,
+  "avg_fps": 59.94005994005994,
+  "codec": "h264",
+  "dur_s": 483.8133
+ },
+ {
+  "path": "data/incoming/Hardcourt/bump_ntrp30.mp4",
+  "surface": "Hardcourt",
+  "width": 600,
+  "height": 298,
+  "r_fps": 29.97,
+  "avg_fps": 29.97,
+  "codec": "mpeg4",
+  "dur_s": 30.03003
+ },
+ {
+  "path": "data/incoming/Hardcourt/bump_ntrp30b.mp4",
+  "surface": "Hardcourt",
+  "width": 640,
+  "height": 338,
+  "r_fps": 29.97,
+  "avg_fps": 29.97,
+  "codec": "mpeg4",
+  "dur_s": 30.03003
+ },
+ {
+  "path": "data/incoming/Hardcourt/BwLUgip8OSI.mp4",
+  "surface": "Hardcourt",
+  "width": 854,
+  "height": 468,
+  "r_fps": 25.0,
+  "avg_fps": 25.0,
+  "codec": "av1",
+  "dur_s": 18320.12
+ },
+ {
+  "path": "data/incoming/Hardcourt/col_hard_zheng.mp4",
+  "surface": "Hardcourt",
+  "width": 1920,
+  "height": 1080,
+  "r_fps": 60.0,
+  "avg_fps": 60.0,
+  "codec": "h264",
+  "dur_s": 483.475
+ },
+ {
+  "path": "data/incoming/Hardcourt/demo30.mp4",
+  "surface": "Hardcourt",
+  "width": 1280,
+  "height": 720,
+  "r_fps": 29.0,
+  "avg_fps": 29.0,
+  "codec": "h264",
+  "dur_s": 30.0
+ },
+ {
+  "path": "data/incoming/Hardcourt/e8T34KoJzOw_s1.mp4",
+  "surface": "Hardcourt",
+  "width": 1920,
+  "height": 1080,
+  "r_fps": 60.0,
+  "avg_fps": 60.0,
+  "codec": "av1",
+  "dur_s": 432.014
+ },
+ {
+  "path": "data/incoming/Hardcourt/e8T34KoJzOw_s2.mp4",
+  "surface": "Hardcourt",
+  "width": 1920,
+  "height": 1080,
+  "r_fps": 60.0,
+  "avg_fps": 60.0,
+  "codec": "av1",
+  "dur_s": 188.014
+ },
+ {
+  "path": "data/incoming/Hardcourt/ewqSn18xdsY.mp4",
+  "surface": "Hardcourt",
+  "width": 1280,
+  "height": 720,
+  "r_fps": 60.0,
+  "avg_fps": 60.0,
+  "codec": "av1",
+  "dur_s": 208.766667
+ },
+ {
+  "path": "data/incoming/Hardcourt/gold_am.mp4",
+  "surface": "Hardcourt",
+  "width": 1280,
+  "height": 720,
+  "r_fps": 30.0,
+  "avg_fps": 30.0,
+  "codec": "h264",
+  "dur_s": 180.007
+ },
+ {
+  "path": "data/incoming/Hardcourt/hc1_1.mp4",
+  "surface": "Hardcourt",
+  "width": 1920,
+  "height": 1080,
+  "r_fps": 30.0,
+  "avg_fps": 30.0,
+  "codec": "h264",
+  "dur_s": 17.879002
+ },
+ {
+  "path": "data/incoming/Hardcourt/hc1_2/hc1_2-1.mp4",
+  "surface": "Hardcourt",
+  "width": 1920,
+  "height": 1080,
+  "r_fps": 30.0,
+  "avg_fps": 30.0,
+  "codec": "h264",
+  "dur_s": 13.211995
+ },
+ {
+  "path": "data/incoming/Hardcourt/hc1_3/hc1_3-1.mp4",
+  "surface": "Hardcourt",
+  "width": 1920,
+  "height": 1080,
+  "r_fps": 30.0,
+  "avg_fps": 30.0,
+  "codec": "h264",
+  "dur_s": 12.585011
+ },
+ {
+  "path": "data/incoming/Hardcourt/hc1_4/hc1_4-1.mp4",
+  "surface": "Hardcourt",
+  "width": 1920,
+  "height": 1080,
+  "r_fps": 30.0,
+  "avg_fps": 30.0,
+  "codec": "h264",
+  "dur_s": 9.079002
+ },
+ {
+  "path": "data/incoming/Hardcourt/hc1_5/hc1_5-1.mp4",
+  "surface": "Hardcourt",
+  "width": 1920,
+  "height": 1080,
+  "r_fps": 30.0,
+  "avg_fps": 30.0,
+  "codec": "h264",
+  "dur_s": 11.935011
+ },
+ {
+  "path": "data/incoming/Hardcourt/hc1_6/hc1_6-1.mp4",
+  "surface": "Hardcourt",
+  "width": 1920,
+  "height": 1080,
+  "r_fps": 30.0,
+  "avg_fps": 30.0,
+  "codec": "h264",
+  "dur_s": 18.808005
+ },
+ {
+  "path": "data/incoming/Hardcourt/hc1_7/hc1_7-1.mp4",
+  "surface": "Hardcourt",
+  "width": 1920,
+  "height": 1080,
+  "r_fps": 30.0,
+  "avg_fps": 30.0,
+  "codec": "h264",
+  "dur_s": 15.789002
+ },
+ {
+  "path": "data/incoming/Hardcourt/hc1_8/hc1_8-1.mp4",
+  "surface": "Hardcourt",
+  "width": 1920,
+  "height": 1080,
+  "r_fps": 30.0,
+  "avg_fps": 30.0,
+  "codec": "h264",
+  "dur_s": 25.82
+ },
+ {
+  "path": "data/incoming/Hardcourt/hc2_1/hc2_1-1.mp4",
+  "surface": "Hardcourt",
+  "width": 1920,
+  "height": 1080,
+  "r_fps": 30.0,
+  "avg_fps": 30.0,
+  "codec": "h264",
+  "dur_s": 5.270998
+ },
+ {
+  "path": "data/incoming/Hardcourt/hc2_10/hc2_10-1.mp4",
+  "surface": "Hardcourt",
+  "width": 1920,
+  "height": 1080,
+  "r_fps": 30.0,
+  "avg_fps": 30.0,
+  "codec": "h264",
+  "dur_s": 30.255011
+ },
+ {
+  "path": "data/incoming/Hardcourt/hc2_11/hc2_11-1.mp4",
+  "surface": "Hardcourt",
+  "width": 1920,
+  "height": 1080,
+  "r_fps": 30.0,
+  "avg_fps": 30.0,
+  "codec": "h264",
+  "dur_s": 10.842993
+ },
+ {
+  "path": "data/incoming/Hardcourt/hc2_12/hc2_12-1.mp4",
+  "surface": "Hardcourt",
+  "width": 1920,
+  "height": 1080,
+  "r_fps": 30.0,
+  "avg_fps": 30.0,
+  "codec": "h264",
+  "dur_s": 6.316009
+ },
+ {
+  "path": "data/incoming/Hardcourt/hc2_13/hc2_13-1.mp4",
+  "surface": "Hardcourt",
+  "width": 1920,
+  "height": 1080,
+  "r_fps": 30.0,
+  "avg_fps": 30.0,
+  "codec": "h264",
+  "dur_s": 19.643991
+ },
+ {
+  "path": "data/incoming/Hardcourt/hc2_14/hc2_14-1.mp4",
+  "surface": "Hardcourt",
+  "width": 1920,
+  "height": 1080,
+  "r_fps": 30.0,
+  "avg_fps": 30.0,
+  "codec": "h264",
+  "dur_s": 21.339002
+ },
+ {
+  "path": "data/incoming/Hardcourt/hc2_15/hc2_15-1.mp4",
+  "surface": "Hardcourt",
+  "width": 1920,
+  "height": 1080,
+  "r_fps": 30.0,
+  "avg_fps": 30.0,
+  "codec": "h264",
+  "dur_s": 7.5
+ },
+ {
+  "path": "data/incoming/Hardcourt/hc2_16/hc2_16-1.mp4",
+  "surface": "Hardcourt",
+  "width": 1920,
+  "height": 1080,
+  "r_fps": 30.0,
+  "avg_fps": 30.0,
+  "codec": "h264",
+  "dur_s": 17.717007
+ },
+ {
+  "path": "data/incoming/Hardcourt/hc2_17/hc2_17-1.mp4",
+  "surface": "Hardcourt",
+  "width": 1920,
+  "height": 1080,
+  "r_fps": 30.0,
+  "avg_fps": 30.0,
+  "codec": "h264",
+  "dur_s": 10.750998
+ },
+ {
+  "path": "data/incoming/Hardcourt/hc2_18/hc2_18-1.mp4",
+  "surface": "Hardcourt",
+  "width": 1920,
+  "height": 1080,
+  "r_fps": 30.0,
+  "avg_fps": 30.0,
+  "codec": "h264",
+  "dur_s": 18.506009
+ },
+ {
+  "path": "data/incoming/Hardcourt/hc2_19/hc2_19-1.mp4",
+  "surface": "Hardcourt",
+  "width": 1920,
+  "height": 1080,
+  "r_fps": 30.0,
+  "avg_fps": 30.0,
+  "codec": "h264",
+  "dur_s": 5.085011
+ },
+ {
+  "path": "data/incoming/Hardcourt/hc2_2/hc2_2-1.mp4",
+  "surface": "Hardcourt",
+  "width": 1920,
+  "height": 1080,
+  "r_fps": 30.0,
+  "avg_fps": 30.0,
+  "codec": "h264",
+  "dur_s": 45.533991
+ },
+ {
+  "path": "data/incoming/Hardcourt/hc2_20/hc2_20-1.mp4",
+  "surface": "Hardcourt",
+  "width": 1920,
+  "height": 1080,
+  "r_fps": 30.0,
+  "avg_fps": 30.0,
+  "codec": "h264",
+  "dur_s": 4.411995
+ },
+ {
+  "path": "data/incoming/Hardcourt/hc2_21/hc2_21-1.mp4",
+  "surface": "Hardcourt",
+  "width": 1920,
+  "height": 1080,
+  "r_fps": 30.0,
+  "avg_fps": 30.0,
+  "codec": "h264",
+  "dur_s": 9.101995
+ },
+ {
+  "path": "data/incoming/Hardcourt/hc2_22/hc2_22-1.mp4",
+  "surface": "Hardcourt",
+  "width": 1920,
+  "height": 1080,
+  "r_fps": 30.0,
+  "avg_fps": 30.0,
+  "codec": "h264",
+  "dur_s": 4.969002
+ },
+ {
+  "path": "data/incoming/Hardcourt/hc2_23/hc2_23-1.mp4",
+  "surface": "Hardcourt",
+  "width": 1920,
+  "height": 1080,
+  "r_fps": 30.0,
+  "avg_fps": 30.0,
+  "codec": "h264",
+  "dur_s": 3.436009
+ },
+ {
+  "path": "data/incoming/Hardcourt/hc2_24/hc2_24-1.mp4",
+  "surface": "Hardcourt",
+  "width": 1920,
+  "height": 1080,
+  "r_fps": 30.0,
+  "avg_fps": 30.0,
+  "codec": "h264",
+  "dur_s": 15.069002
+ },
+ {
+  "path": "data/incoming/Hardcourt/hc2_25/hc2_25-1.mp4",
+  "surface": "Hardcourt",
+  "width": 1920,
+  "height": 1080,
+  "r_fps": 30.0,
+  "avg_fps": 30.0,
+  "codec": "h264",
+  "dur_s": 8.8
+ },
+ {
+  "path": "data/incoming/Hardcourt/hc2_26/hc2_26-1.mp4",
+  "surface": "Hardcourt",
+  "width": 1920,
+  "height": 1080,
+  "r_fps": 30.0,
+  "avg_fps": 30.0,
+  "codec": "h264",
+  "dur_s": 4.876009
+ },
+ {
+  "path": "data/incoming/Hardcourt/hc2_27/hc2_27-1.mp4",
+  "surface": "Hardcourt",
+  "width": 1920,
+  "height": 1080,
+  "r_fps": 30.0,
+  "avg_fps": 30.0,
+  "codec": "h264",
+  "dur_s": 45.533991
+ },
+ {
+  "path": "data/incoming/Hardcourt/hc2_3/hc2_3-1.mp4",
+  "surface": "Hardcourt",
+  "width": 1920,
+  "height": 1080,
+  "r_fps": 30.0,
+  "avg_fps": 30.0,
+  "codec": "h264",
+  "dur_s": 10.588005
+ },
+ {
+  "path": "data/incoming/Hardcourt/hc2_4/hc2_4-1.mp4",
+  "surface": "Hardcourt",
+  "width": 1920,
+  "height": 1080,
+  "r_fps": 30.0,
+  "avg_fps": 30.0,
+  "codec": "h264",
+  "dur_s": 24.983991
+ },
+ {
+  "path": "data/incoming/Hardcourt/hc2_5/hc2_5-1.mp4",
+  "surface": "Hardcourt",
+  "width": 1920,
+  "height": 1080,
+  "r_fps": 30.0,
+  "avg_fps": 30.0,
+  "codec": "h264",
+  "dur_s": 5.200998
+ },
+ {
+  "path": "data/incoming/Hardcourt/hc2_6/hc2_6-1.mp4",
+  "surface": "Hardcourt",
+  "width": 1920,
+  "height": 1080,
+  "r_fps": 30.0,
+  "avg_fps": 30.0,
+  "codec": "h264",
+  "dur_s": 8.683991
+ },
+ {
+  "path": "data/incoming/Hardcourt/hc2_7/hc2_7-1.mp4",
+  "surface": "Hardcourt",
+  "width": 1920,
+  "height": 1080,
+  "r_fps": 30.0,
+  "avg_fps": 30.0,
+  "codec": "h264",
+  "dur_s": 26.308005
+ },
+ {
+  "path": "data/incoming/Hardcourt/hc2_8/hc2_8-1.mp4",
+  "surface": "Hardcourt",
+  "width": 1920,
+  "height": 1080,
+  "r_fps": 30.0,
+  "avg_fps": 30.0,
+  "codec": "h264",
+  "dur_s": 18.018005
+ },
+ {
+  "path": "data/incoming/Hardcourt/hc2_9/hc2_9-1.mp4",
+  "surface": "Hardcourt",
+  "width": 1920,
+  "height": 1080,
+  "r_fps": 30.0,
+  "avg_fps": 30.0,
+  "codec": "h264",
+  "dur_s": 10.912993
+ },
+ {
+  "path": "data/incoming/Hardcourt/hc3_/hc3_-1.mp4",
+  "surface": "Hardcourt",
+  "width": 1920,
+  "height": 1080,
+  "r_fps": 30.0,
+  "avg_fps": 30.0,
+  "codec": "h264",
+  "dur_s": 21.037007
+ },
+ {
+  "path": "data/incoming/Hardcourt/hc3_1/hc3_1-1.mp4",
+  "surface": "Hardcourt",
+  "width": 1920,
+  "height": 1080,
+  "r_fps": 30.0,
+  "avg_fps": 30.0,
+  "codec": "h264",
+  "dur_s": 13.537007
+ },
+ {
+  "path": "data/incoming/Hardcourt/hc3_10/hc3_10-1.mp4",
+  "surface": "Hardcourt",
+  "width": 1920,
+  "height": 1080,
+  "r_fps": 30.0,
+  "avg_fps": 30.0,
+  "codec": "h264",
+  "dur_s": 16.068005
+ },
+ {
+  "path": "data/incoming/Hardcourt/hc3_11/hc3_11-1.mp4",
+  "surface": "Hardcourt",
+  "width": 1920,
+  "height": 1080,
+  "r_fps": 30.0,
+  "avg_fps": 30.0,
+  "codec": "h264",
+  "dur_s": 6.919002
+ },
+ {
+  "path": "data/incoming/Hardcourt/hc3_12/hc3_12-1.mp4",
+  "surface": "Hardcourt",
+  "width": 1920,
+  "height": 1080,
+  "r_fps": 30.0,
+  "avg_fps": 30.0,
+  "codec": "h264",
+  "dur_s": 15.789002
+ },
+ {
+  "path": "data/incoming/Hardcourt/hc3_13/hc3_13-1.mp4",
+  "surface": "Hardcourt",
+  "width": 1920,
+  "height": 1080,
+  "r_fps": 30.0,
+  "avg_fps": 30.0,
+  "codec": "h264",
+  "dur_s": 26.447007
+ },
+ {
+  "path": "data/incoming/Hardcourt/hc3_14/hc3_14-1.mp4",
+  "surface": "Hardcourt",
+  "width": 1920,
+  "height": 1080,
+  "r_fps": 30.0,
+  "avg_fps": 30.0,
+  "codec": "h264",
+  "dur_s": 13.189002
+ },
+ {
+  "path": "data/incoming/Hardcourt/hc3_15/hc3_15-1.mp4",
+  "surface": "Hardcourt",
+  "width": 1920,
+  "height": 1080,
+  "r_fps": 30.0,
+  "avg_fps": 30.0,
+  "codec": "h264",
+  "dur_s": 5.711995
+ },
+ {
+  "path": "data/incoming/Hardcourt/hc3_16/hc3_16-1.mp4",
+  "surface": "Hardcourt",
+  "width": 1920,
+  "height": 1080,
+  "r_fps": 30.0,
+  "avg_fps": 30.0,
+  "codec": "h264",
+  "dur_s": 9.612993
+ },
+ {
+  "path": "data/incoming/Hardcourt/hc3_17/hc3_17-1.mp4",
+  "surface": "Hardcourt",
+  "width": 1920,
+  "height": 1080,
+  "r_fps": 30.0,
+  "avg_fps": 30.0,
+  "codec": "h264",
+  "dur_s": 11.656009
+ },
+ {
+  "path": "data/incoming/Hardcourt/hc3_18/hc3_18-1.mp4",
+  "surface": "Hardcourt",
+  "width": 1920,
+  "height": 1080,
+  "r_fps": 30.0,
+  "avg_fps": 30.0,
+  "codec": "h264",
+  "dur_s": 22.709002
+ },
+ {
+  "path": "data/incoming/Hardcourt/hc3_19/hc3_19-1.mp4",
+  "surface": "Hardcourt",
+  "width": 1920,
+  "height": 1080,
+  "r_fps": 30.0,
+  "avg_fps": 30.0,
+  "codec": "h264",
+  "dur_s": 9.915011
+ },
+ {
+  "path": "data/incoming/Hardcourt/hc3_2/hc3_2-1.mp4",
+  "surface": "Hardcourt",
+  "width": 1920,
+  "height": 1080,
+  "r_fps": 30.0,
+  "avg_fps": 30.0,
+  "codec": "h264",
+  "dur_s": 10.471995
+ },
+ {
+  "path": "data/incoming/Hardcourt/hc3_20/hc3_20-1.mp4",
+  "surface": "Hardcourt",
+  "width": 1920,
+  "height": 1080,
+  "r_fps": 30.0,
+  "avg_fps": 30.0,
+  "codec": "h264",
+  "dur_s": 5.549002
+ },
+ {
+  "path": "data/incoming/Hardcourt/hc3_21/hc3_21-1.mp4",
+  "surface": "Hardcourt",
+  "width": 1920,
+  "height": 1080,
+  "r_fps": 30.0,
+  "avg_fps": 30.0,
+  "codec": "h264",
+  "dur_s": 14.302993
+ },
+ {
+  "path": "data/incoming/Hardcourt/hc3_22/hc3_22-1.mp4",
+  "surface": "Hardcourt",
+  "width": 1920,
+  "height": 1080,
+  "r_fps": 30.0,
+  "avg_fps": 30.0,
+  "codec": "h264",
+  "dur_s": 7.268005
+ },
+ {
+  "path": "data/incoming/Hardcourt/hc3_23/hc3_23-1.mp4",
+  "surface": "Hardcourt",
+  "width": 1920,
+  "height": 1080,
+  "r_fps": 30.0,
+  "avg_fps": 30.0,
+  "codec": "h264",
+  "dur_s": 21.919002
+ },
+ {
+  "path": "data/incoming/Hardcourt/hc3_24/hc3_24-1.mp4",
+  "surface": "Hardcourt",
+  "width": 1920,
+  "height": 1080,
+  "r_fps": 30.0,
+  "avg_fps": 30.0,
+  "codec": "h264",
+  "dur_s": 10.147007
+ },
+ {
+  "path": "data/incoming/Hardcourt/hc3_25/hc3_25-1.mp4",
+  "surface": "Hardcourt",
+  "width": 1920,
+  "height": 1080,
+  "r_fps": 30.0,
+  "avg_fps": 30.0,
+  "codec": "h264",
+  "dur_s": 11.54
+ },
+ {
+  "path": "data/incoming/Hardcourt/hc3_26/hc3_26-1.mp4",
+  "surface": "Hardcourt",
+  "width": 1920,
+  "height": 1080,
+  "r_fps": 30.0,
+  "avg_fps": 30.0,
+  "codec": "h264",
+  "dur_s": 7.918005
+ },
+ {
+  "path": "data/incoming/Hardcourt/hc3_27/hc3_27-1.mp4",
+  "surface": "Hardcourt",
+  "width": 1920,
+  "height": 1080,
+  "r_fps": 30.0,
+  "avg_fps": 30.0,
+  "codec": "h264",
+  "dur_s": 20.248005
+ },
+ {
+  "path": "data/incoming/Hardcourt/hc3_28/hc3_28-1.mp4",
+  "surface": "Hardcourt",
+  "width": 1920,
+  "height": 1080,
+  "r_fps": 30.0,
+  "avg_fps": 30.0,
+  "codec": "h264",
+  "dur_s": 40.610998
+ },
+ {
+  "path": "data/incoming/Hardcourt/hc3_29/hc3_29-1.mp4",
+  "surface": "Hardcourt",
+  "width": 1920,
+  "height": 1080,
+  "r_fps": 30.0,
+  "avg_fps": 30.0,
+  "codec": "h264",
+  "dur_s": 9.45
+ },
+ {
+  "path": "data/incoming/Hardcourt/hc3_30/hc3_30-1.mp4",
+  "surface": "Hardcourt",
+  "width": 1920,
+  "height": 1080,
+  "r_fps": 30.0,
+  "avg_fps": 30.0,
+  "codec": "h264",
+  "dur_s": 23.683991
+ },
+ {
+  "path": "data/incoming/Hardcourt/hc3_31/hc3_31-1.mp4",
+  "surface": "Hardcourt",
+  "width": 1920,
+  "height": 1080,
+  "r_fps": 30.0,
+  "avg_fps": 30.0,
+  "codec": "h264",
+  "dur_s": 19.852993
+ },
+ {
+  "path": "data/incoming/Hardcourt/hc3_32/hc3_32-1.mp4",
+  "surface": "Hardcourt",
+  "width": 1920,
+  "height": 1080,
+  "r_fps": 30.0,
+  "avg_fps": 30.0,
+  "codec": "h264",
+  "dur_s": 27.306009
+ },
+ {
+  "path": "data/incoming/Hardcourt/hc3_33/hc3_33-1.mp4",
+  "surface": "Hardcourt",
+  "width": 1920,
+  "height": 1080,
+  "r_fps": 30.0,
+  "avg_fps": 30.0,
+  "codec": "h264",
+  "dur_s": 7.477007
+ },
+ {
+  "path": "data/incoming/Hardcourt/hc3_34/hc3_34-1.mp4",
+  "surface": "Hardcourt",
+  "width": 1920,
+  "height": 1080,
+  "r_fps": 30.0,
+  "avg_fps": 30.0,
+  "codec": "h264",
+  "dur_s": 14.302993
+ },
+ {
+  "path": "data/incoming/Hardcourt/hc3_35/hc3_35-1.mp4",
+  "surface": "Hardcourt",
+  "width": 1920,
+  "height": 1080,
+  "r_fps": 30.0,
+  "avg_fps": 30.0,
+  "codec": "h264",
+  "dur_s": 23.986009
+ },
+ {
+  "path": "data/incoming/Hardcourt/hc3_36/hc3_36-1.mp4",
+  "surface": "Hardcourt",
+  "width": 1920,
+  "height": 1080,
+  "r_fps": 30.0,
+  "avg_fps": 30.0,
+  "codec": "h264",
+  "dur_s": 18.738005
+ },
+ {
+  "path": "data/incoming/Hardcourt/hc3_37/hc3_37-1.mp4",
+  "surface": "Hardcourt",
+  "width": 1920,
+  "height": 1080,
+  "r_fps": 30.0,
+  "avg_fps": 30.0,
+  "codec": "h264",
+  "dur_s": 12.539002
+ },
+ {
+  "path": "data/incoming/Hardcourt/hc3_38/hc3_38-1.mp4",
+  "surface": "Hardcourt",
+  "width": 1920,
+  "height": 1080,
+  "r_fps": 30.0,
+  "avg_fps": 30.0,
+  "codec": "h264",
+  "dur_s": 20.433333
+ },
+ {
+  "path": "data/incoming/Hardcourt/hc3_39/hc3_39-1.mp4",
+  "surface": "Hardcourt",
+  "width": 1920,
+  "height": 1080,
+  "r_fps": 30.0,
+  "avg_fps": 30.0,
+  "codec": "h264",
+  "dur_s": 31.277007
+ },
+ {
+  "path": "data/incoming/Hardcourt/hc3_4/hc3_4-1.mp4",
+  "surface": "Hardcourt",
+  "width": 1920,
+  "height": 1080,
+  "r_fps": 30.0,
+  "avg_fps": 30.0,
+  "codec": "h264",
+  "dur_s": 19.946009
+ },
+ {
+  "path": "data/incoming/Hardcourt/hc3_40/hc3_40-1.mp4",
+  "surface": "Hardcourt",
+  "width": 1920,
+  "height": 1080,
+  "r_fps": 30.0,
+  "avg_fps": 30.0,
+  "codec": "h264",
+  "dur_s": 20.270998
+ },
+ {
+  "path": "data/incoming/Hardcourt/hc3_41/hc3_41-1.mp4",
+  "surface": "Hardcourt",
+  "width": 1920,
+  "height": 1080,
+  "r_fps": 30.0,
+  "avg_fps": 30.0,
+  "codec": "h264",
+  "dur_s": 19.667007
+ },
+ {
+  "path": "data/incoming/Hardcourt/hc3_42/hc3_42-1.mp4",
+  "surface": "Hardcourt",
+  "width": 1920,
+  "height": 1080,
+  "r_fps": 30.0,
+  "avg_fps": 30.0,
+  "codec": "h264",
+  "dur_s": 10.867007
+ },
+ {
+  "path": "data/incoming/Hardcourt/hc3_43/hc3_43-1.mp4",
+  "surface": "Hardcourt",
+  "width": 1920,
+  "height": 1080,
+  "r_fps": 30.0,
+  "avg_fps": 30.0,
+  "codec": "h264",
+  "dur_s": 16.416009
+ },
+ {
+  "path": "data/incoming/Hardcourt/hc3_44/hc3_44-1.mp4",
+  "surface": "Hardcourt",
+  "width": 1920,
+  "height": 1080,
+  "r_fps": 30.0,
+  "avg_fps": 30.0,
+  "codec": "h264",
+  "dur_s": 19.782993
+ },
+ {
+  "path": "data/incoming/Hardcourt/hc3_45/hc3_45-1.mp4",
+  "surface": "Hardcourt",
+  "width": 1920,
+  "height": 1080,
+  "r_fps": 30.0,
+  "avg_fps": 30.0,
+  "codec": "h264",
+  "dur_s": 21.919002
+ },
+ {
+  "path": "data/incoming/Hardcourt/hc3_46/hc3_46-1.mp4",
+  "surface": "Hardcourt",
+  "width": 1920,
+  "height": 1080,
+  "r_fps": 30.0,
+  "avg_fps": 30.0,
+  "codec": "h264",
+  "dur_s": 22.779002
+ },
+ {
+  "path": "data/incoming/Hardcourt/hc3_47/hc3_47-1.mp4",
+  "surface": "Hardcourt",
+  "width": 1920,
+  "height": 1080,
+  "r_fps": 30.0,
+  "avg_fps": 30.0,
+  "codec": "h264",
+  "dur_s": 30.07
+ },
+ {
+  "path": "data/incoming/Hardcourt/hc3_48/hc3_48-1.mp4",
+  "surface": "Hardcourt",
+  "width": 1920,
+  "height": 1080,
+  "r_fps": 30.0,
+  "avg_fps": 30.0,
+  "codec": "h264",
+  "dur_s": 9.915011
+ },
+ {
+  "path": "data/incoming/Hardcourt/hc3_49/hc3_49-1.mp4",
+  "surface": "Hardcourt",
+  "width": 1920,
+  "height": 1080,
+  "r_fps": 30.0,
+  "avg_fps": 30.0,
+  "codec": "h264",
+  "dur_s": 17.971995
+ },
+ {
+  "path": "data/incoming/Hardcourt/hc3_5/hc3_5-1.mp4",
+  "surface": "Hardcourt",
+  "width": 1920,
+  "height": 1080,
+  "r_fps": 30.0,
+  "avg_fps": 30.0,
+  "codec": "h264",
+  "dur_s": 8.475011
+ },
+ {
+  "path": "data/incoming/Hardcourt/hc3_6/hc3_6-1.mp4",
+  "surface": "Hardcourt",
+  "width": 1920,
+  "height": 1080,
+  "r_fps": 30.0,
+  "avg_fps": 30.0,
+  "codec": "h264",
+  "dur_s": 4.643991
+ },
+ {
+  "path": "data/incoming/Hardcourt/hc3_7/hc3_7-1.mp4",
+  "surface": "Hardcourt",
+  "width": 1920,
+  "height": 1080,
+  "r_fps": 30.0,
+  "avg_fps": 30.0,
+  "codec": "h264",
+  "dur_s": 4.969002
+ },
+ {
+  "path": "data/incoming/Hardcourt/hc3_8/hc3_8-1.mp4",
+  "surface": "Hardcourt",
+  "width": 1920,
+  "height": 1080,
+  "r_fps": 30.0,
+  "avg_fps": 30.0,
+  "codec": "h264",
+  "dur_s": 9.915011
+ },
+ {
+  "path": "data/incoming/Hardcourt/hc3_9/hc3_9-1.mp4",
+  "surface": "Hardcourt",
+  "width": 1920,
+  "height": 1080,
+  "r_fps": 30.0,
+  "avg_fps": 30.0,
+  "codec": "h264",
+  "dur_s": 7.709002
+ },
+ {
+  "path": "data/incoming/Hardcourt/HoHxFSX_gLk_s1.mp4",
+  "surface": "Hardcourt",
+  "width": 1920,
+  "height": 1080,
+  "r_fps": 59.94005994005994,
+  "avg_fps": 59.94005994005994,
+  "codec": "av1",
+  "dur_s": 53.014
+ },
+ {
+  "path": "data/incoming/Hardcourt/HoHxFSX_gLk_s2.mp4",
+  "surface": "Hardcourt",
+  "width": 1920,
+  "height": 1080,
+  "r_fps": 59.94005994005994,
+  "avg_fps": 59.94005994005994,
+  "codec": "av1",
+  "dur_s": 379.014
+ },
+ {
+  "path": "data/incoming/Hardcourt/HoHxFSX_gLk_s3.mp4",
+  "surface": "Hardcourt",
+  "width": 1920,
+  "height": 1080,
+  "r_fps": 59.94005994005994,
+  "avg_fps": 59.94005994005994,
+  "codec": "av1",
+  "dur_s": 49.014
+ },
+ {
+  "path": "data/incoming/Hardcourt/L73ep7JHiJ4.mp4",
+  "surface": "Hardcourt",
+  "width": 1920,
+  "height": 1080,
+  "r_fps": 59.94005994005994,
+  "avg_fps": 59.940090888508934,
+  "codec": "vp9",
+  "dur_s": 694.014
+ },
+ {
+  "path": "data/incoming/Hardcourt/nQan0M5JDM8.mp4",
+  "surface": "Hardcourt",
+  "width": 1280,
+  "height": 720,
+  "r_fps": 60.0,
+  "avg_fps": 60.0,
+  "codec": "h264",
+  "dur_s": 493.766667
+ },
+ {
+  "path": "data/incoming/Hardcourt/rz4T0-VALNw.mp4",
+  "surface": "Hardcourt",
+  "width": 1280,
+  "height": 720,
+  "r_fps": 59.94005994005994,
+  "avg_fps": 59.94005994005994,
+  "codec": "av1",
+  "dur_s": 961.026733
+ },
+ {
+  "path": "data/incoming/Hardcourt/tC0z7FYvMks.mp4",
+  "surface": "Hardcourt",
+  "width": 1280,
+  "height": 720,
+  "r_fps": 60.0,
+  "avg_fps": 60.0,
+  "codec": "h264",
+  "dur_s": 701.016667
+ },
+ {
+  "path": "data/incoming/Hardcourt/tc8CGFxyRE8.mp4",
+  "surface": "Hardcourt",
+  "width": 1920,
+  "height": 1080,
+  "r_fps": 59.94005994005994,
+  "avg_fps": 59.940052021174935,
+  "codec": "vp9",
+  "dur_s": 820.014
+ },
+ {
+  "path": "data/incoming/Hardcourt/tennis_sample_short.mp4",
+  "surface": "Hardcourt",
+  "width": 1920,
+  "height": 1080,
+  "r_fps": 30.0,
+  "avg_fps": 30.0,
+  "codec": "h264",
+  "dur_s": 3.135979
+ },
+ {
+  "path": "data/incoming/Hardcourt/TilAFMPc0yg.mp4",
+  "surface": "Hardcourt",
+  "width": 1280,
+  "height": 720,
+  "r_fps": 60.0,
+  "avg_fps": 60.0,
+  "codec": "h264",
+  "dur_s": 229.716667
+ },
+ {
+  "path": "data/incoming/Hardcourt/UHf0LeMU2pg.mp4",
+  "surface": "Hardcourt",
+  "width": 1920,
+  "height": 1080,
+  "r_fps": 60.0,
+  "avg_fps": 60.0,
+  "codec": "h264",
+  "dur_s": 124.016667
+ },
+ {
+  "path": "data/incoming/Hardcourt/uOy8ow5yoQ4.mp4",
+  "surface": "Hardcourt",
+  "width": 1280,
+  "height": 720,
+  "r_fps": 50.0,
+  "avg_fps": 50.0,
+  "codec": "av1",
+  "dur_s": 778.52
+ },
+ {
+  "path": "data/incoming/Hardcourt/uR5q2cSM6AY.mp4",
+  "surface": "Hardcourt",
+  "width": 1920,
+  "height": 1080,
+  "r_fps": 60.0,
+  "avg_fps": 60.0,
+  "codec": "h264",
+  "dur_s": 356.016667
+ },
+ {
+  "path": "data/incoming/Hardcourt/VZWi6Vf-sX0.mp4",
+  "surface": "Hardcourt",
+  "width": 1280,
+  "height": 720,
+  "r_fps": 60.0,
+  "avg_fps": 60.0,
+  "codec": "h264",
+  "dur_s": 1010.033333
+ },
+ {
+  "path": "data/incoming/Hardcourt/WjHZrIYteDA.mp4",
+  "surface": "Hardcourt",
+  "width": 1280,
+  "height": 720,
+  "r_fps": 60.0,
+  "avg_fps": 60.0,
+  "codec": "av1",
+  "dur_s": 920.333333
+ },
+ {
+  "path": "data/incoming/Hardcourt/yt_0genZFgM61E.mp4",
+  "surface": "Hardcourt",
+  "width": 640,
+  "height": 360,
+  "r_fps": 30.0,
+  "avg_fps": 30.0,
+  "codec": "h264",
+  "dur_s": 470.320181
+ },
+ {
+  "path": "data/incoming/Hardcourt/yt_4apx6gd5Uxs.mp4",
+  "surface": "Hardcourt",
+  "width": 640,
+  "height": 360,
+  "r_fps": 29.97002997002997,
+  "avg_fps": 29.97002997002997,
+  "codec": "h264",
+  "dur_s": 1294.907211
+ },
+ {
+  "path": "data/incoming/Hardcourt/yt_5VUiurUhSRY.mp4",
+  "surface": "Hardcourt",
+  "width": 640,
+  "height": 360,
+  "r_fps": 30.0,
+  "avg_fps": 30.0,
+  "codec": "h264",
+  "dur_s": 1341.741859
+ },
+ {
+  "path": "data/incoming/Hardcourt/yt_deNCnfQjfoU.mp4",
+  "surface": "Hardcourt",
+  "width": 640,
+  "height": 338,
+  "r_fps": 29.97002997002997,
+  "avg_fps": 29.97002997002997,
+  "codec": "h264",
+  "dur_s": 1363.916916
+ },
+ {
+  "path": "data/incoming/Hardcourt/yt_ihXS4IDvF0A.mp4",
+  "surface": "Hardcourt",
+  "width": 640,
+  "height": 360,
+  "r_fps": 30.0,
+  "avg_fps": 30.0,
+  "codec": "h264",
+  "dur_s": 776.243084
+ },
+ {
+  "path": "data/incoming/Hardcourt/yt_match40.mp4",
+  "surface": "Hardcourt",
+  "width": 1280,
+  "height": 720,
+  "r_fps": 29.0,
+  "avg_fps": 29.0,
+  "codec": "h264",
+  "dur_s": 354.068966
+ },
+ {
+  "path": "data/incoming/Hardcourt/yt_QsO90orMfWM.mp4",
+  "surface": "Hardcourt",
+  "width": 640,
+  "height": 360,
+  "r_fps": 29.97,
+  "avg_fps": 29.97,
+  "codec": "h264",
+  "dur_s": 1703.671293
+ },
+ {
+  "path": "data/incoming/Hardcourt/yt_rally.mp4",
+  "surface": "Hardcourt",
+  "width": 1280,
+  "height": 720,
+  "r_fps": 60.0,
+  "avg_fps": 60.0,
+  "codec": "h264",
+  "dur_s": 14.066667
+ },
+ {
+  "path": "data/incoming/Raw - Do Not Process/7 UTR vs 8 UTR [UHf0LeMU2pg].mp4",
+  "surface": "Raw - Do Not Process",
+  "width": 1920,
+  "height": 1080,
+  "r_fps": 60.0,
+  "avg_fps": 60.0,
+  "codec": "h264",
+  "dur_s": 125.054
+ },
+ {
+  "path": "data/incoming/Raw - Do Not Process/Almost 50, Out Of Shape & SUPER GOOD!! \uff5c UTR 9 vs UTR 9 \uff5c (15\u29f81 vs 15 Ex 1\u29f86) [A7vXlWIlyrI].mp4",
+  "surface": "Raw - Do Not Process",
+  "width": 1920,
+  "height": 1080,
+  "r_fps": 60.0,
+  "avg_fps": 60.0,
+  "codec": "av1",
+  "dur_s": 1574.574
+ },
+ {
+  "path": "data/incoming/Raw - Do Not Process/Amateur Tennis - Full Match  - LK 13.4 vs LK 15.8 (NTRP 4.0 vs NTRP 4.0) [sAjkpeRq4P4].mp4",
+  "surface": "Raw - Do Not Process",
+  "width": 1920,
+  "height": 1080,
+  "r_fps": 59.94005994005994,
+  "avg_fps": 59.9400576657549,
+  "codec": "vp9",
+  "dur_s": 1757.054
+ },
+ {
+  "path": "data/incoming/Raw - Do Not Process/Doubles Match at Hillsborough feat. Toby, Raisa & Abby! [o5uCLE930FU].mp4",
+  "surface": "Raw - Do Not Process",
+  "width": 3840,
+  "height": 2160,
+  "r_fps": 30.0,
+  "avg_fps": 30.000016607626556,
+  "codec": "vp9",
+  "dur_s": 1204.294
+ },
+ {
+  "path": "data/incoming/Raw - Do Not Process/Flexi League 2024 - Singles Class B - Franz vs. John [l4CAptCem88].mp4",
+  "surface": "Raw - Do Not Process",
+  "width": 3840,
+  "height": 2160,
+  "r_fps": 30.0,
+  "avg_fps": 30.000004285531233,
+  "codec": "vp9",
+  "dur_s": 2333.454
+ },
+ {
+  "path": "data/incoming/Raw - Do Not Process/Flexi League 2024 - Singles Class B - Joy vs. John [71sXQ2mCbCo].mp4",
+  "surface": "Raw - Do Not Process",
+  "width": 3840,
+  "height": 2160,
+  "r_fps": 30.0,
+  "avg_fps": 30.0,
+  "codec": "vp9",
+  "dur_s": 1525.314
+ },
+ {
+  "path": "data/incoming/Raw - Do Not Process/I Challenged a 12 UTR to Slice Only Against Me.. You won't believe what happened [HoHxFSX_gLk].mp4",
+  "surface": "Raw - Do Not Process",
+  "width": 1920,
+  "height": 1080,
+  "r_fps": 59.94005994005994,
+  "avg_fps": 59.94005994005994,
+  "codec": "av1",
+  "dur_s": 669.574
+ },
+ {
+  "path": "data/incoming/Raw - Do Not Process/INSANE Point Play! 12 UTR vs 13 Year Old Top Junior Madhav Binu! [uR5q2cSM6AY].mp4",
+  "surface": "Raw - Do Not Process",
+  "width": 1920,
+  "height": 1080,
+  "r_fps": 60.0,
+  "avg_fps": 60.0,
+  "codec": "h264",
+  "dur_s": 356.534
+ },
+ {
+  "path": "data/incoming/Raw - Do Not Process/Mixed Doubles at Manila Polo Club feat. Ditto & Stef vs. Maxine & Me! [kYI7HjYBwC0].mp4",
+  "surface": "Raw - Do Not Process",
+  "width": 3840,
+  "height": 2160,
+  "r_fps": 30.0,
+  "avg_fps": 30.0,
+  "codec": "vp9",
+  "dur_s": 1501.834
+ },
+ {
+  "path": "data/incoming/Raw - Do Not Process/My Opponent Hits & Acts CRAZY!! \uff5c UTR 9 vs 10 (15\u29f81 vs 15) [CYqapSq5llo].mp4",
+  "surface": "Raw - Do Not Process",
+  "width": 1920,
+  "height": 1080,
+  "r_fps": 60.0,
+  "avg_fps": 60.0,
+  "codec": "av1",
+  "dur_s": 1788.094
+ },
+ {
+  "path": "data/incoming/Raw - Do Not Process/Tuesday Tennis at MPC - Rob \u29f8 Rookie vs. John \u29f8 Ean [NL57h6vMKPQ].mp4",
+  "surface": "Raw - Do Not Process",
+  "width": 3840,
+  "height": 2160,
+  "r_fps": 30.0,
+  "avg_fps": 30.000013686762028,
+  "codec": "vp9",
+  "dur_s": 1461.274
+ },
+ {
+  "path": "data/incoming/Raw - Do Not Process/USTA 4.5 vs UTR 12.5! [e8T34KoJzOw].mp4",
+  "surface": "Raw - Do Not Process",
+  "width": 1920,
+  "height": 1080,
+  "r_fps": 60.0,
+  "avg_fps": 60.0,
+  "codec": "av1",
+  "dur_s": 1110.594
+ },
+ {
+  "path": "data/incoming/Raw - Do Not Process/USTA 5.5 vs USTA 5.0 or UTR 12 vs UTR 10 [tc8CGFxyRE8].mp4",
+  "surface": "Raw - Do Not Process",
+  "width": 1920,
+  "height": 1080,
+  "r_fps": 59.94005994005994,
+  "avg_fps": 59.940019798580494,
+  "codec": "vp9",
+  "dur_s": 821.294
+ },
+ {
+  "path": "data/incoming/Raw - Do Not Process/UTR 10 vs UTR 10 Singles Practice Match [1st Set] [L73ep7JHiJ4].mp4",
+  "surface": "Raw - Do Not Process",
+  "width": 1920,
+  "height": 1080,
+  "r_fps": 59.94005994005994,
+  "avg_fps": 59.94002866214391,
+  "codec": "vp9",
+  "dur_s": 702.694
+ },
+ {
+  "path": "data/incoming/Shell/am_dbl_classb.mp4",
+  "surface": "Shell",
+  "width": 1920,
+  "height": 1080,
+  "r_fps": 30.0,
+  "avg_fps": 30.0,
+  "codec": "h264",
+  "dur_s": 304.080338
+ },
+ {
+  "path": "data/incoming/Shell/flexi_franz_p01.mp4",
+  "surface": "Shell",
+  "width": 3840,
+  "height": 2160,
+  "r_fps": 30.0,
+  "avg_fps": 30.0,
+  "codec": "h264",
+  "dur_s": 6.0
+ },
+ {
+  "path": "data/incoming/Shell/flexi_franz_p02.mp4",
+  "surface": "Shell",
+  "width": 3840,
+  "height": 2160,
+  "r_fps": 30.0,
+  "avg_fps": 30.0,
+  "codec": "h264",
+  "dur_s": 7.4
+ },
+ {
+  "path": "data/incoming/Shell/flexi_franz_p03.mp4",
+  "surface": "Shell",
+  "width": 3840,
+  "height": 2160,
+  "r_fps": 30.0,
+  "avg_fps": 30.0,
+  "codec": "h264",
+  "dur_s": 10.2
+ },
+ {
+  "path": "data/incoming/Shell/flexi_franz_p04.mp4",
+  "surface": "Shell",
+  "width": 3840,
+  "height": 2160,
+  "r_fps": 30.0,
+  "avg_fps": 30.0,
+  "codec": "h264",
+  "dur_s": 6.0
+ },
+ {
+  "path": "data/incoming/Shell/flexi_franz_p05.mp4",
+  "surface": "Shell",
+  "width": 3840,
+  "height": 2160,
+  "r_fps": 30.0,
+  "avg_fps": 30.0,
+  "codec": "h264",
+  "dur_s": 6.0
+ },
+ {
+  "path": "data/incoming/Shell/flexi_franz_p06.mp4",
+  "surface": "Shell",
+  "width": 3840,
+  "height": 2160,
+  "r_fps": 30.0,
+  "avg_fps": 30.0,
+  "codec": "h264",
+  "dur_s": 13.8
+ },
+ {
+  "path": "data/incoming/Shell/flexi_franz_p07.mp4",
+  "surface": "Shell",
+  "width": 3840,
+  "height": 2160,
+  "r_fps": 30.0,
+  "avg_fps": 30.0,
+  "codec": "h264",
+  "dur_s": 7.8
+ },
+ {
+  "path": "data/incoming/Shell/flexi_franz_p08.mp4",
+  "surface": "Shell",
+  "width": 3840,
+  "height": 2160,
+  "r_fps": 30.0,
+  "avg_fps": 30.0,
+  "codec": "h264",
+  "dur_s": 6.0
+ },
+ {
+  "path": "data/incoming/Shell/flexi_franz_p09.mp4",
+  "surface": "Shell",
+  "width": 3840,
+  "height": 2160,
+  "r_fps": 30.0,
+  "avg_fps": 30.0,
+  "codec": "h264",
+  "dur_s": 6.0
+ },
+ {
+  "path": "data/incoming/Shell/flexi_franz_p10.mp4",
+  "surface": "Shell",
+  "width": 3840,
+  "height": 2160,
+  "r_fps": 30.0,
+  "avg_fps": 30.0,
+  "codec": "h264",
+  "dur_s": 6.2
+ },
+ {
+  "path": "data/incoming/Shell/flexi_franz_p11.mp4",
+  "surface": "Shell",
+  "width": 3840,
+  "height": 2160,
+  "r_fps": 30.0,
+  "avg_fps": 30.0,
+  "codec": "h264",
+  "dur_s": 6.8
+ },
+ {
+  "path": "data/incoming/Shell/flexi_franz_p12.mp4",
+  "surface": "Shell",
+  "width": 3840,
+  "height": 2160,
+  "r_fps": 30.0,
+  "avg_fps": 30.0,
+  "codec": "h264",
+  "dur_s": 6.0
+ },
+ {
+  "path": "data/incoming/Shell/flexi_joy_p01.mp4",
+  "surface": "Shell",
+  "width": 3840,
+  "height": 2160,
+  "r_fps": 30.0,
+  "avg_fps": 30.0,
+  "codec": "h264",
+  "dur_s": 6.8
+ },
+ {
+  "path": "data/incoming/Shell/flexi_joy_p02.mp4",
+  "surface": "Shell",
+  "width": 3840,
+  "height": 2160,
+  "r_fps": 30.0,
+  "avg_fps": 30.0,
+  "codec": "h264",
+  "dur_s": 6.0
+ },
+ {
+  "path": "data/incoming/Shell/flexi_joy_p03.mp4",
+  "surface": "Shell",
+  "width": 3840,
+  "height": 2160,
+  "r_fps": 30.0,
+  "avg_fps": 30.0,
+  "codec": "h264",
+  "dur_s": 6.0
+ },
+ {
+  "path": "data/incoming/Shell/flexi_joy_p04.mp4",
+  "surface": "Shell",
+  "width": 3840,
+  "height": 2160,
+  "r_fps": 30.0,
+  "avg_fps": 30.0,
+  "codec": "h264",
+  "dur_s": 6.0
+ },
+ {
+  "path": "data/incoming/Shell/flexi_joy_p05.mp4",
+  "surface": "Shell",
+  "width": 3840,
+  "height": 2160,
+  "r_fps": 30.0,
+  "avg_fps": 30.0,
+  "codec": "h264",
+  "dur_s": 8.6
+ },
+ {
+  "path": "data/incoming/Shell/flexi_joy_p06.mp4",
+  "surface": "Shell",
+  "width": 3840,
+  "height": 2160,
+  "r_fps": 30.0,
+  "avg_fps": 30.0,
+  "codec": "h264",
+  "dur_s": 6.0
+ },
+ {
+  "path": "data/incoming/Shell/flexi_joy_p07.mp4",
+  "surface": "Shell",
+  "width": 3840,
+  "height": 2160,
+  "r_fps": 30.0,
+  "avg_fps": 30.0,
+  "codec": "h264",
+  "dur_s": 6.0
+ },
+ {
+  "path": "data/incoming/Shell/flexi_joy_p08.mp4",
+  "surface": "Shell",
+  "width": 3840,
+  "height": 2160,
+  "r_fps": 30.0,
+  "avg_fps": 30.0,
+  "codec": "h264",
+  "dur_s": 6.0
+ },
+ {
+  "path": "data/incoming/Shell/flexi_joy_p09.mp4",
+  "surface": "Shell",
+  "width": 3840,
+  "height": 2160,
+  "r_fps": 30.0,
+  "avg_fps": 30.0,
+  "codec": "h264",
+  "dur_s": 8.4
+ },
+ {
+  "path": "data/incoming/Shell/flexi_joy_p10.mp4",
+  "surface": "Shell",
+  "width": 3840,
+  "height": 2160,
+  "r_fps": 30.0,
+  "avg_fps": 30.0,
+  "codec": "h264",
+  "dur_s": 6.0
+ },
+ {
+  "path": "data/incoming/Shell/flexi_joy_p11.mp4",
+  "surface": "Shell",
+  "width": 3840,
+  "height": 2160,
+  "r_fps": 30.0,
+  "avg_fps": 30.0,
+  "codec": "h264",
+  "dur_s": 6.0
+ },
+ {
+  "path": "data/incoming/Shell/flexi_joy_p12.mp4",
+  "surface": "Shell",
+  "width": 3840,
+  "height": 2160,
+  "r_fps": 30.0,
+  "avg_fps": 30.0,
+  "codec": "h264",
+  "dur_s": 6.6
+ },
+ {
+  "path": "data/incoming/Shell/gold_shell.mp4",
+  "surface": "Shell",
+  "width": 1280,
+  "height": 720,
+  "r_fps": 30.0,
+  "avg_fps": 30.0,
+  "codec": "h264",
+  "dur_s": 180.007
+ },
+ {
+  "path": "data/incoming/Shell/hillsborough_p02.mp4",
+  "surface": "Shell",
+  "width": 3840,
+  "height": 2160,
+  "r_fps": 30.0,
+  "avg_fps": 30.0,
+  "codec": "h264",
+  "dur_s": 6.0
+ },
+ {
+  "path": "data/incoming/Shell/hillsborough_p03.mp4",
+  "surface": "Shell",
+  "width": 3840,
+  "height": 2160,
+  "r_fps": 30.0,
+  "avg_fps": 30.0,
+  "codec": "h264",
+  "dur_s": 6.0
+ },
+ {
+  "path": "data/incoming/Shell/hillsborough_p04.mp4",
+  "surface": "Shell",
+  "width": 3840,
+  "height": 2160,
+  "r_fps": 30.0,
+  "avg_fps": 30.0,
+  "codec": "h264",
+  "dur_s": 30.0
+ },
+ {
+  "path": "data/incoming/Shell/hillsborough_p05.mp4",
+  "surface": "Shell",
+  "width": 3840,
+  "height": 2160,
+  "r_fps": 30.0,
+  "avg_fps": 30.0,
+  "codec": "h264",
+  "dur_s": 6.0
+ },
+ {
+  "path": "data/incoming/Shell/hillsborough_p06.mp4",
+  "surface": "Shell",
+  "width": 3840,
+  "height": 2160,
+  "r_fps": 30.0,
+  "avg_fps": 30.0,
+  "codec": "h264",
+  "dur_s": 6.0
+ },
+ {
+  "path": "data/incoming/Shell/hillsborough_p07.mp4",
+  "surface": "Shell",
+  "width": 3840,
+  "height": 2160,
+  "r_fps": 30.0,
+  "avg_fps": 30.0,
+  "codec": "h264",
+  "dur_s": 9.2
+ },
+ {
+  "path": "data/incoming/Shell/hillsborough_p08.mp4",
+  "surface": "Shell",
+  "width": 3840,
+  "height": 2160,
+  "r_fps": 30.0,
+  "avg_fps": 30.0,
+  "codec": "h264",
+  "dur_s": 6.2
+ },
+ {
+  "path": "data/incoming/Shell/hillsborough_p09.mp4",
+  "surface": "Shell",
+  "width": 3840,
+  "height": 2160,
+  "r_fps": 30.0,
+  "avg_fps": 30.0,
+  "codec": "h264",
+  "dur_s": 6.0
+ },
+ {
+  "path": "data/incoming/Shell/hillsborough_p10.mp4",
+  "surface": "Shell",
+  "width": 3840,
+  "height": 2160,
+  "r_fps": 30.0,
+  "avg_fps": 30.0,
+  "codec": "h264",
+  "dur_s": 6.2
+ },
+ {
+  "path": "data/incoming/Shell/hillsborough_p11.mp4",
+  "surface": "Shell",
+  "width": 3840,
+  "height": 2160,
+  "r_fps": 30.0,
+  "avg_fps": 30.0,
+  "codec": "h264",
+  "dur_s": 6.0
+ },
+ {
+  "path": "data/incoming/Shell/hillsborough_p12.mp4",
+  "surface": "Shell",
+  "width": 3840,
+  "height": 2160,
+  "r_fps": 30.0,
+  "avg_fps": 30.0,
+  "codec": "h264",
+  "dur_s": 6.2
+ },
+ {
+  "path": "data/incoming/Shell/mpc_mixed_p02.mp4",
+  "surface": "Shell",
+  "width": 3840,
+  "height": 2160,
+  "r_fps": 30.0,
+  "avg_fps": 30.0,
+  "codec": "h264",
+  "dur_s": 9.0
+ },
+ {
+  "path": "data/incoming/Shell/mpc_mixed_p03.mp4",
+  "surface": "Shell",
+  "width": 3840,
+  "height": 2160,
+  "r_fps": 30.0,
+  "avg_fps": 30.0,
+  "codec": "h264",
+  "dur_s": 6.0
+ },
+ {
+  "path": "data/incoming/Shell/mpc_mixed_p04.mp4",
+  "surface": "Shell",
+  "width": 3840,
+  "height": 2160,
+  "r_fps": 30.0,
+  "avg_fps": 30.0,
+  "codec": "h264",
+  "dur_s": 13.8
+ },
+ {
+  "path": "data/incoming/Shell/mpc_mixed_p05.mp4",
+  "surface": "Shell",
+  "width": 3840,
+  "height": 2160,
+  "r_fps": 30.0,
+  "avg_fps": 30.0,
+  "codec": "h264",
+  "dur_s": 8.8
+ },
+ {
+  "path": "data/incoming/Shell/mpc_mixed_p06.mp4",
+  "surface": "Shell",
+  "width": 3840,
+  "height": 2160,
+  "r_fps": 30.0,
+  "avg_fps": 30.0,
+  "codec": "h264",
+  "dur_s": 7.6
+ },
+ {
+  "path": "data/incoming/Shell/mpc_mixed_p07.mp4",
+  "surface": "Shell",
+  "width": 3840,
+  "height": 2160,
+  "r_fps": 30.0,
+  "avg_fps": 30.0,
+  "codec": "h264",
+  "dur_s": 6.0
+ },
+ {
+  "path": "data/incoming/Shell/mpc_mixed_p08.mp4",
+  "surface": "Shell",
+  "width": 3840,
+  "height": 2160,
+  "r_fps": 30.0,
+  "avg_fps": 30.0,
+  "codec": "h264",
+  "dur_s": 6.0
+ },
+ {
+  "path": "data/incoming/Shell/mpc_mixed_p09.mp4",
+  "surface": "Shell",
+  "width": 3840,
+  "height": 2160,
+  "r_fps": 30.0,
+  "avg_fps": 30.0,
+  "codec": "h264",
+  "dur_s": 6.0
+ },
+ {
+  "path": "data/incoming/Shell/mpc_mixed_p10.mp4",
+  "surface": "Shell",
+  "width": 3840,
+  "height": 2160,
+  "r_fps": 30.0,
+  "avg_fps": 30.0,
+  "codec": "h264",
+  "dur_s": 6.0
+ },
+ {
+  "path": "data/incoming/Shell/mpc_mixed_p11.mp4",
+  "surface": "Shell",
+  "width": 3840,
+  "height": 2160,
+  "r_fps": 30.0,
+  "avg_fps": 30.0,
+  "codec": "h264",
+  "dur_s": 6.0
+ },
+ {
+  "path": "data/incoming/Shell/mpc_mixed_p12.mp4",
+  "surface": "Shell",
+  "width": 3840,
+  "height": 2160,
+  "r_fps": 30.0,
+  "avg_fps": 30.0,
+  "codec": "h264",
+  "dur_s": 30.0
+ },
+ {
+  "path": "data/incoming/Shell/mpc_tuesday_p01.mp4",
+  "surface": "Shell",
+  "width": 3840,
+  "height": 2160,
+  "r_fps": 30.0,
+  "avg_fps": 30.0,
+  "codec": "h264",
+  "dur_s": 7.4
+ },
+ {
+  "path": "data/incoming/Shell/mpc_tuesday_p02.mp4",
+  "surface": "Shell",
+  "width": 3840,
+  "height": 2160,
+  "r_fps": 30.0,
+  "avg_fps": 30.0,
+  "codec": "h264",
+  "dur_s": 6.0
+ },
+ {
+  "path": "data/incoming/Shell/mpc_tuesday_p03.mp4",
+  "surface": "Shell",
+  "width": 3840,
+  "height": 2160,
+  "r_fps": 30.0,
+  "avg_fps": 30.0,
+  "codec": "h264",
+  "dur_s": 6.0
+ },
+ {
+  "path": "data/incoming/Shell/mpc_tuesday_p04.mp4",
+  "surface": "Shell",
+  "width": 3840,
+  "height": 2160,
+  "r_fps": 30.0,
+  "avg_fps": 30.0,
+  "codec": "h264",
+  "dur_s": 6.6
+ },
+ {
+  "path": "data/incoming/Shell/mpc_tuesday_p05.mp4",
+  "surface": "Shell",
+  "width": 3840,
+  "height": 2160,
+  "r_fps": 30.0,
+  "avg_fps": 30.0,
+  "codec": "h264",
+  "dur_s": 6.0
+ },
+ {
+  "path": "data/incoming/Shell/mpc_tuesday_p06.mp4",
+  "surface": "Shell",
+  "width": 3840,
+  "height": 2160,
+  "r_fps": 30.0,
+  "avg_fps": 30.0,
+  "codec": "h264",
+  "dur_s": 8.0
+ },
+ {
+  "path": "data/incoming/Shell/mpc_tuesday_p07.mp4",
+  "surface": "Shell",
+  "width": 3840,
+  "height": 2160,
+  "r_fps": 30.0,
+  "avg_fps": 30.0,
+  "codec": "h264",
+  "dur_s": 6.0
+ },
+ {
+  "path": "data/incoming/Shell/mpc_tuesday_p08.mp4",
+  "surface": "Shell",
+  "width": 3840,
+  "height": 2160,
+  "r_fps": 30.0,
+  "avg_fps": 30.0,
+  "codec": "h264",
+  "dur_s": 6.0
+ },
+ {
+  "path": "data/incoming/Shell/mpc_tuesday_p09.mp4",
+  "surface": "Shell",
+  "width": 3840,
+  "height": 2160,
+  "r_fps": 30.0,
+  "avg_fps": 30.0,
+  "codec": "h264",
+  "dur_s": 7.0
+ },
+ {
+  "path": "data/incoming/Shell/mpc_tuesday_p10.mp4",
+  "surface": "Shell",
+  "width": 3840,
+  "height": 2160,
+  "r_fps": 30.0,
+  "avg_fps": 30.0,
+  "codec": "h264",
+  "dur_s": 6.8
+ },
+ {
+  "path": "data/incoming/Shell/mpc_tuesday_p11.mp4",
+  "surface": "Shell",
+  "width": 3840,
+  "height": 2160,
+  "r_fps": 30.0,
+  "avg_fps": 30.0,
+  "codec": "h264",
+  "dur_s": 6.0
+ },
+ {
+  "path": "data/incoming/Shell/mpc_tuesday_p12.mp4",
+  "surface": "Shell",
+  "width": 3840,
+  "height": 2160,
+  "r_fps": 30.0,
+  "avg_fps": 30.0,
+  "codec": "h264",
+  "dur_s": 6.0
+ },
+ {
+  "path": "data/incoming/Shell/RZ_wyJ9rI3Q.mp4",
+  "surface": "Shell",
+  "width": 1280,
+  "height": 720,
+  "r_fps": 60.0,
+  "avg_fps": 60.0,
+  "codec": "h264",
+  "dur_s": 134.883333
+ },
+ {
+  "path": "data/incoming/Shell/yt_esnrHQhCIxQ.mp4",
+  "surface": "Shell",
+  "width": 640,
+  "height": 360,
+  "r_fps": 30.0,
+  "avg_fps": 30.0,
+  "codec": "h264",
+  "dur_s": 335.017506
+ },
+ {
+  "path": "data/incoming/Shell/yt_rally2.mp4",
+  "surface": "Shell",
+  "width": 1280,
+  "height": 720,
+  "r_fps": 60.0,
+  "avg_fps": 60.0,
+  "codec": "h264",
+  "dur_s": 36.916667
+ },
+ {
+  "path": "data/incoming/Shell/yt_rNMc9tpWWZ0.mp4",
+  "surface": "Shell",
+  "width": 640,
+  "height": 360,
+  "r_fps": 29.97,
+  "avg_fps": 29.97,
+  "codec": "h264",
+  "dur_s": 938.179048
+ }
+]

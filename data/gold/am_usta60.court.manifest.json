@@ -1,0 +1,91 @@
+{
+ "clip": "am_usta60",
+ "kind": "court",
+ "video": "https://www.youtube.com/watch?v=pg7jA45MBmM",
+ "source": "youtube-stream",
+ "youtube_id": "pg7jA45MBmM",
+ "notes": "amateur vs USTA 6.0",
+ "width": 640,
+ "height": 360,
+ "fps": 30.0,
+ "video_frames": 37043,
+ "created": "2026-07-12 18:38:06",
+ "params": {
+  "n": 18,
+  "sampling": "uniform"
+ },
+ "frames": [
+  {
+   "frame": 740,
+   "bucket": "court"
+  },
+  {
+   "frame": 2832,
+   "bucket": "court"
+  },
+  {
+   "frame": 4924,
+   "bucket": "court"
+  },
+  {
+   "frame": 7015,
+   "bucket": "court"
+  },
+  {
+   "frame": 9107,
+   "bucket": "court"
+  },
+  {
+   "frame": 11199,
+   "bucket": "court"
+  },
+  {
+   "frame": 13291,
+   "bucket": "court"
+  },
+  {
+   "frame": 15383,
+   "bucket": "court"
+  },
+  {
+   "frame": 17475,
+   "bucket": "court"
+  },
+  {
+   "frame": 19566,
+   "bucket": "court"
+  },
+  {
+   "frame": 21658,
+   "bucket": "court"
+  },
+  {
+   "frame": 23750,
+   "bucket": "court"
+  },
+  {
+   "frame": 25842,
+   "bucket": "court"
+  },
+  {
+   "frame": 27934,
+   "bucket": "court"
+  },
+  {
+   "frame": 30026,
+   "bucket": "court"
+  },
+  {
+   "frame": 32117,
+   "bucket": "court"
+  },
+  {
+   "frame": 34209,
+   "bucket": "court"
+  },
+  {
+   "frame": 36301,
+   "bucket": "court"
+  }
+ ]
+}

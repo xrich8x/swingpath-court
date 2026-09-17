@@ -1,0 +1,91 @@
+{
+ "clip": "am_indoor_hard1",
+ "kind": "court",
+ "video": "https://www.youtube.com/watch?v=a2L6RQS3c1A",
+ "source": "youtube-stream",
+ "youtube_id": "a2L6RQS3c1A",
+ "notes": "indoor hard, amateur singles",
+ "width": 640,
+ "height": 360,
+ "fps": 29.97002997002997,
+ "video_frames": 15743,
+ "created": "2026-07-12 18:36:42",
+ "params": {
+  "n": 18,
+  "sampling": "uniform"
+ },
+ "frames": [
+  {
+   "frame": 314,
+   "bucket": "court"
+  },
+  {
+   "frame": 1203,
+   "bucket": "court"
+  },
+  {
+   "frame": 2092,
+   "bucket": "court"
+  },
+  {
+   "frame": 2981,
+   "bucket": "court"
+  },
+  {
+   "frame": 3870,
+   "bucket": "court"
+  },
+  {
+   "frame": 4759,
+   "bucket": "court"
+  },
+  {
+   "frame": 5648,
+   "bucket": "court"
+  },
+  {
+   "frame": 6537,
+   "bucket": "court"
+  },
+  {
+   "frame": 7426,
+   "bucket": "court"
+  },
+  {
+   "frame": 8315,
+   "bucket": "court"
+  },
+  {
+   "frame": 9204,
+   "bucket": "court"
+  },
+  {
+   "frame": 10093,
+   "bucket": "court"
+  },
+  {
+   "frame": 10982,
+   "bucket": "court"
+  },
+  {
+   "frame": 11871,
+   "bucket": "court"
+  },
+  {
+   "frame": 12760,
+   "bucket": "court"
+  },
+  {
+   "frame": 13649,
+   "bucket": "court"
+  },
+  {
+   "frame": 14538,
+   "bucket": "court"
+  },
+  {
+   "frame": 15427,
+   "bucket": "court"
+  }
+ ]
+}
