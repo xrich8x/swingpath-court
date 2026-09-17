@@ -121,6 +121,12 @@ data/output/fps/*.mp4
 data/output/session_i_ab/*.png
 # ...and the one evidence image from the 2026-07-05 regression investigation.
 !data/output/regression_diff.jpg
+# The 3D court camera's scored runs (docs/evidence/court-camera3d.md), same
+# one-level-down rule. The encoder scratch folder stays out.
+!data/output/court_camera3d_seed/
+!data/output/court_camera3d_seed/*.json
+!data/output/court_track_sim/
+!data/output/court_track_sim/*.json
 data/*.mp4
 data/*.mov
 

@@ -235,6 +235,16 @@ C3 is the founder's visit. **Order: P2 finishes first**, per the founder.
 
 ## LOG — newest first (court only; older entries are in the archived journal)
 
+- **2026-09-17** — **3D court camera built on branch `camera3d-pnp-paintfit` (not pushed).** Founder task: 2D
+  homography → 3D PnP + keypoints. Scoped with the founder: court only (ball solver dropped), keypoints
+  only SEED, detector = interface only. `camera3d`/`paintfit`/`camtrack`, `court.LANDMARKS_3D`,
+  `setup.camera`. Pre-registered in `617cd96`. **G1 arm K PASS** (far baseline L 4.43 cm) **with an
+  8.75% wrong-camera tail**; **G2 K0 KILL** (6.65 m); **G3 tracking KILL** (knock lost; one seed re-locked
+  on wrong paint while reporting `tracking`). CP1's x265 is non-deterministic (follow-up task offered).
+  No real footage: this repo has none and settings forbid reading the main repo's. Evidence:
+  `docs/evidence/court-camera3d.md`. **Queue item 3 (tracking precision) now has a number; item 3's
+  replacement tracker is not ready.**
+
 - **2026-09-17** — **qa audit of CP1: PASS QUALIFIED** (`b308396`, `docs/evidence/court-fit-cp1-qa.md`). No truth
   leak, bit-identical reproduction, seed-1 spot check passes. Qualified: one dev=score camera pose; undeclared
   shared assumptions (blur on the fitter's grid, linear sensor, flat chroma, step at outer paint edge); far

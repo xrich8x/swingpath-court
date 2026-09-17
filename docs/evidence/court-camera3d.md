@@ -156,9 +156,109 @@ and 1.2°. It should hold during sway, lose the court at the knock, and never co
 
 ---
 
-## Results
+## Results (scored after `617cd96`; bars above not moved)
 
-*(filled in after the scored runs; bars above are not moved)*
+Raw output:
+- `data/output/court_camera3d_seed/K_seed0_n400.json`;
+- `data/output/court_track_sim/seeds0-1-2_n120.json`.
+
+### G1 Arm K — **PASS by the letter, with a wrong-camera tail about 9× CP1's**
+
+400 trials, 0 failures to run.
+
+Every line's p90 is ≤ 5 cm. The four far lines:
+
+| Line | M p90 | L p90 |
+|---|---|---|
+| far baseline | 1.18 cm | **4.43 cm** |
+| far service line | 0.74 cm | **4.57 cm** |
+| far singles sideline R | — | 1.61 cm |
+| far singles sideline L | — | 1.20 cm |
+
+Every other line is ≤ 1 cm. CP1 arm P, from a four-corner seed, was 3.58 cm on the far baseline and
+3.42 cm on the far service line. The margin to the bar is now 0.4–0.6 cm.
+
+**THE TAIL, which the p90 bar cannot see:**
+- **35 of 400 trials (8.75%) converged to a WRONG camera.** Fitted focal length is 13–130% off, and
+  36 trials put some line more than 5 cm out on the model readout.
+- CP1 arm P had 4 of 400 trials past 5 cm, all on the far lines.
+- **The false solutions are discrete, not noise.** f −13.7% with height 3.39 m recurs 5 times,
+  and ±15.4% recurs 4 times. These are neighbouring basins, most likely a paint line assigned to its
+  neighbour.
+- **The seed predicts the failure.** The PnP seed's median height error is **0.69 m** on
+  wrong-camera trials against **0.13 m** on the rest; its focal error is 10.5% against 4.6%.
+  RANSAC kept one of the injected outliers on 4 of the 35 wrong-camera trials and on 1 of the 365
+  others.
+- **So the keypoint seed's tail is worse than CP1's four-corner seed.** The keypoint noise is the
+  same, but the seed solves focal length and pose from it jointly.
+- A further 11 trials have the right camera but one measured-line (L) readout past 5 cm, mostly on
+  the far baseline.
+- The cross-ratio gate dropped a point in 94 of 400 trials, nearly all of them points that were only
+  noisy, not outliers.
+
+On the correct-camera trials:
+- fitted focal error p90 **0.043%**;
+- camera height error p90 **0.6 mm**.
+
+**Measured against** exact projected court geometry from CP1's synthetic camera.
+
+### G2 Arm K0 — **KILL, as predicted**
+
+The keypoint PnP camera alone, with no paint fit. Worst-of-11-points p90:
+
+| Line | p90 |
+|---|---|
+| far baseline | **6.65 m** |
+| far service line | **3.86 m** |
+| near sidelines | 0.63–0.95 m |
+
+Every line fails the bar. With the same seeds, the paint fit takes the far baseline to 1.2 cm (M).
+C1's conclusion holds for 21 keypoints as well as for 4.
+
+### G3 Tracking — **KILL, and it is the more important result**
+
+Pooled over 360 frames:
+
+| Measure | camtrack | court_lock_step (baseline) |
+|---|---|---|
+| Worst line p90 | **11.0 m** (far baseline) | 13.4 m |
+| Largest steady-state jump (bar ≤ 2 px) | **10.1 px** | 5.3 px |
+| Knock recovery (frames, per seed) | **32 / never / never** | never on all three |
+
+Three separate failures, each named:
+
+1. **Setup failed on seed 2.** The paint fit on frame 0 converged to f = 694 px against a true
+   806 px, with the worst line 1.64 m out. This is G1's wrong-camera tail again (1 of 3), and
+   everything after it inherits the error.
+2. **Steady sway, on seeds 0 and 1 (good setup, first 60 frames):**
+   - camtrack's worst line has a median of **5.0–5.2 cm**, a p90 of **9.2–10.9 cm** and a max of
+     15 cm;
+   - court_lock_step's worst line has a median of **61–154 cm**, a p90 of 133–273 cm and a max of
+     338 cm.
+
+   camtrack is 10–30× better than the shipped snap, but not inside 5 cm. The shipped snap does not
+   follow sway at all, as its docstring says.
+3. **The knock (1.5° pitch + 1° yaw in one frame, about 14 px):**
+   - Flow and the ±9 px paint snap lose the court. The simulation passes **no detector**, so the
+     tracker HOLDS (6–11 frames on seeds 0–1).
+   - When holding ended it resumed "tracking" from the stale pose. Seed 0 found its way back after
+     32 frames. **Seed 1 LOCKED ONTO THE WRONG PAINT and tracked 7–10 m out for the remaining
+     50 frames, with status `tracking`.**
+   - **No paint re-fit ever fired**, for two reasons:
+     - the drift test compares the pose with its own flowed-and-snapped points, which agree with
+       each other even when they are all on the wrong line;
+     - the 10 s backstop is longer than the 4 s clip.
+
+**What this means for the design, recorded as observations, not fixed here (a fix needs its own
+pre-registered run):**
+- **A confident wrong lock is the worst outcome.** The tracker needs an INDEPENDENT check that the
+  court is on the paint. Self-consistency of its own points is not one.
+- **Recovery must not depend on a detector existing.** A pose-only paint re-fit from the last good
+  pose, whose first pass searches 40 px, is a recovery path that is not the closed search.
+- **Steady precision:** single-frame snaps give about 5 cm median. Getting under 5 cm at p90 likely
+  needs temporal averaging of the paint measurements, or scheduled paint re-fits.
+- **The setup tail (G1 and G3 seed 2)** needs multi-start or seed-quality screening before the paint
+  fit is trusted.
 
 ---
 
