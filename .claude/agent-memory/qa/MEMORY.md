@@ -66,7 +66,7 @@ this agent's system prompt — read it first; it is the authoritative copy.
   screen DID catch the one real confirmed-wrong case (11.3 m). But the core mechanism
   reproduces synthetically: depth-anisotropic corner compression is invisible to every
   SHIPPED gate across the full tested range on 2 clips, while isotropic scale IS caught by
-  coverage (confirms researcher's aniso/iso distinction) — and a computed-but-unused
+  coverage (confirms the research note's aniso/iso distinction) — and a computed-but-unused
   quantity (fitted hfov from the same cam_fit_quad call) would catch the compression at
   ~15% severity, so "blind by construction" overstates a reporting gap as a geometric law.
 

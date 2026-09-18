@@ -5,7 +5,7 @@ metadata:
   type: project
 ---
 
-Ran researcher's pre-registered §4.1 modality test (single-linkage on per-frame court
+Ran the research note's pre-registered §4.1 modality test (single-linkage on per-frame court
 quads at 12 px@640) on 2026-09-09. Evidence:
 `docs/evidence/mixture-vs-precision-floor.md`.
 

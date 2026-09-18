@@ -267,7 +267,7 @@ T24. **Trusting a tool's own docstring about whether it has been RUN.** `eval/mo
 
 T25. **Treating a search tool's "no matches" as evidence something does not exist.** Twice on
    2026-09-04, the harness `Grep`/`Glob` tools returned *no matches* for content that is
-   plainly in the repo. The researcher hit it first — Grep/Glob "would not search directories
+   plainly in the repo. It was hit first — Grep/Glob "would not search directories
    in this session", working only when `path` pointed at a single known file — and burned tool
    calls rediscovering it. The lead then hit the same thing hunting `verify_court`: `Grep` for
    `verify_court` returned **"No files found"**, and for `def verify_court` **"No matches
@@ -325,7 +325,7 @@ T27. **Reasoning about a filter's REJECTS from properties measured on the chain'
    rendered output**. The gate's own reject-ghosts had already been measured, in
    `docs/evidence/smoother-gate-backward-readmit-separation.md` §5, at **24.0, 30.3, 49.8 and
    386.2 px** - three of the four squarely inside the radius the widen would have opened.
-   **Second**, the researcher's case for rejection-run coherence: *"all 19 chain false locks have
+   **Second**, the research case for rejection-run coherence: *"all 19 chain false locks have
    `run_len = 1`, so a single-frame ghost cannot form a coherent run and the ghost population is
    excluded by its own measured property."* Same 19 clips of evidence, same swap. Measured the
    same day: **19 of 28 pooled ghost rejects (68%) sit in runs of >= 2.** The mechanism died on

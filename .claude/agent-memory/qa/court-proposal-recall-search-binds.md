@@ -63,7 +63,7 @@ its control.
 
 1. `run_refs.references()` = 20 `data/*_pts.json` with `_exact:true` — 8 Hardcourt,
    2 Clay, 10 Shell (= 5 shell recordings x2 points). This is what I measured.
-2. The **10 original calibrated clips** — researcher's `7/10 generated` comes from here
+2. The **10 original calibrated clips** — the research note's `7/10 generated` comes from here
    (`docs/evidence/court-detection-frames-that-each-find-the.md`), NOT from my 20.
 3. `data/gold/*.court.labels.json` (`am_*`) — a different pool again.
 `HoHxFSX_gLk_s1/s2` share a source; the 10 shell clips are 5 recordings.

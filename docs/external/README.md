@@ -1,7 +1,7 @@
 # External research, supplied by the founder
 
 Documents here were pasted into chat by the founder, not produced by this project. They are
-kept as files so agents can READ them — a researcher run on 2026-09-09 graded a *restatement*
+kept as files so agents can READ them — a research run on 2026-09-09 graded a *restatement*
 of the court claims rather than the artifact, because the document existed only in the
 conversation and `Grep`/`Glob` were returning false negatives (trap T25).
 

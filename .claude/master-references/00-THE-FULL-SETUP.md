@@ -82,7 +82,7 @@ With `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1` — **which is set in this repo's
 names subagents on its own so it can message them later. A team can therefore form during
 ordinary delegation you never framed as team work.
 
-Symptom: your "spawn 3 researchers and synthesise" flow returns nothing; agents appear in
+Symptom: your "spawn 3 investigators and synthesise" flow returns nothing; agents appear in
 the panel but the lead has no findings.
 
 Fix: set the variable to `"0"` (no restart needed — settings-file `env` values are
@@ -392,7 +392,6 @@ journal in `.claude/journals/<name>.md`.
 | Teammate | Model | Owns | Writes code | Tools |
 | --- | --- | --- | --- | --- |
 | **pm** | opus | Scope, sequencing, the cut line, accuracy floors | no | Read, Write, Edit, Grep, Glob, Agent |
-| **researcher** | sonnet | ML/CV for court, player, ball, shot; on-device iOS inference | no | Read, Write, Edit, WebSearch, WebFetch, Grep, Glob, Agent |
 | **backend-dev** | opus | Inference pipeline, the four detections, match storage, the port | **yes** | Read, Write, Edit, Bash, Grep, Glob, Agent |
 | **frontend-dev** | sonnet | The iPhone app: UI/UX, capture, calling the pipeline, rendering | **yes** | Read, Write, Edit, Bash, Grep, Glob, Agent |
 | **qa** | sonnet | Independent verification of both layers. Reports, **never fixes** | no | Read, Write, Edit, Bash, Grep, Glob, Agent |
@@ -423,7 +422,7 @@ memory: project
 ```
 
 **Match `tools:` to the work.** Sending execution work to an agent with no `Bash` wastes a
-whole run — we did this once, to `researcher`, and lost the run to it. Include `Agent`
+whole run — we did this once, to `investigator`, and lost the run to it. Include `Agent`
 only if that agent may call others.
 
 **Caveat that cost time:** agent definitions are read **at session start**. Editing
@@ -479,9 +478,6 @@ things* unless you say so. Verification independence dies quietly that way. So e
 - **qa:** *"You still never fix anything. Never call backend-dev or frontend-dev to repair
   what you found — calling a builder to make your finding go away is the same violation as
   fixing it yourself. Report it and stop."*
-- **researcher:** *"You still do not write code. Never call backend-dev or frontend-dev to
-  make a change on your behalf — that is the same violation as writing it yourself,
-  wearing someone else's name."*
 - **backend-dev / frontend-dev:** *"If you call qa, you do not own its verdict. Report what
   qa returned verbatim, pass or fail, in your own return. The lead cannot see a verdict you
   were given and did not pass on, and a builder that chooses which of its own gradings get
@@ -568,7 +564,7 @@ which a feature is worse than not shipping, because a confidently wrong call des
 trust in the whole app; **cost in sessions** — *"An idea that buys 3% over six sessions
 loses to one that buys 2% in one."*
 
-**What it does not own:** the investigation (commission it from researcher and interrogate
+**What it does not own:** the investigation (commission it from investigator and interrogate
 the result); production code; verification (*"qa reports independently; you do not overrule
 its numbers"*).
 
@@ -599,68 +595,6 @@ negatives).
 
 ---
 
-### 8.2 `researcher` — Principal Researcher
-
-```yaml
----
-name: researcher
-description: Researches ML/CV for court, player, ball and shot detection, plus on-device iOS
-             inference patterns. Establishes what is true and feasible. Never writes code.
-tools: Read, Write, Edit, WebSearch, WebFetch, Grep, Glob, Agent
-model: sonnet
-memory: project
----
-```
-
-**No `Bash` — by design**, so it cannot start running the experiment it is supposed to
-*design*.
-
-**Four research areas:** court detection (the weakest subsystem — the detector finds the
-lines but cannot assemble them; frames that each find the right court disagree about its
-WIDTH); player detection (the far player, now both the binding accuracy problem and the
-binding compute problem); ball detection (detector work CLOSED by a stopping rule, chain
-work open); in-play / shot speed / shot type, including point boundaries and dead-time
-trimming, which have no ground truth of any kind yet. Plus on-device iOS inference — Core
-ML/ANE, export and operator coverage, quantisation, thermal sustain.
-
-**Depth it volunteers, because textbook answers are a failure here:**
-
-- **Amateur footage ≠ broadcast footage.** Off-centre, low, fence mesh, roof trusses,
-  ceiling lights, adjacent courts, people walking through. *"Benchmark transfer is the
-  trap: always say what footage a number came from."*
-- The ball is **~6.7 cm**, 3–15 px at amateur distance, heavily motion-blurred. Anything
-  assuming a crisp circular blob is already wrong.
-- Court geometry to the centimetre: 23.77 m × 8.23 m singles, 10.97 m doubles, service
-  line 6.40 m from net, net 0.914 m centre / 1.07 m posts.
-- **Video stabilisation OFF for geometry** — it silently warps the frame and destroys
-  homography consistency.
-- Camera intrinsics are free from `AVCaptureDevice`; gravity from CoreMotion gives roll
-  and pitch. Candidate priors, never ground truth.
-- **Thermal throttling is real.** Budget on frame 1 is not budget on frame 5000; report
-  sustained figures, never peak.
-
-**Rules of engagement — the eight:**
-
-1. Lead with the finding, then the evidence. No preamble.
-2. **Pre-register the test** — metric, threshold, held-out set, kill condition — before it
-   runs. If a question cannot be falsified, say so.
-3. **Name what would disprove you**, and say which finding is cheapest to falsify.
-4. **Separate the failure modes.** "The search never found it" and "it found it and lost
-   the vote" are different bugs. Most CV failures are misdiagnosed as tuning problems.
-5. **Grade your confidence as a number**, and distinguish published fact from judgement.
-6. **Say when there is no ground truth.** An unmeasurable claim is the most important
-   thing you can report and the easiest to skip past.
-7. **Never let a model grade its own homework.** State in one sentence what every number
-   was measured against.
-8. Cite what is checkable — papers, repos, benchmark numbers, with dates and the footage
-   they were measured on.
-
-**Output shape:** Finding · Evidence, and how strong · Confidence as a number, and what
-would move it · What would disprove this · Feasibility on an A13, on-device · Proposed
-experiment, pre-registered, only if one is worth running · For the PM: the product
-tradeoff, stated plainly, decision left open · Open questions.
-
----
 
 ### 8.3 `backend-dev` — on-device logic engineer
 
@@ -849,9 +783,9 @@ definition.
 
 ### Routing
 
-> **A surprising RESULT goes to `researcher` FIRST, then `pm`** (founder ruling
+> **A surprising RESULT goes to `investigator` FIRST, then `pm`** (founder ruling
 > 2026-08-29): an unexplained gate failure, a number that moved unexpectedly, a claim that
-> turns out wrong. Researcher establishes what is true and why; only then does pm
+> turns out wrong. Investigator establishes what is true and why; only then does pm
 > re-sequence. **The lead neither diagnoses alone nor jumps to a fix.**
 
 The lead **decomposes and hands out work without asking first**, matching the task to the

@@ -37,9 +37,9 @@ Each open entry says what is blocked, what it costs to unblock, and what is bein
 
 ### A. The drift numbers in SPEC §1 (15 px, 10 s, 6/8) — NOT ready to decide yet
 
-- **The issue:** these were set for a different mechanism. Researcher found 15 px is ~5 m at the far
+- **The issue:** these were set for a different mechanism. 15 px is ~5 m at the far
   baseline at 1080p / 3 m; a court good to 5 cm needs a re-fit tolerance of ~0.1 px on far lines. The
-  phone's motion sensor cannot see drift that small, so researcher recommends both an IMU bump
+  phone's motion sensor cannot see drift that small, so the research note recommends both an IMU bump
   trigger and a periodic image re-fit.
 - **What unblocks it:** CP1 (whole-court fit precision), then a tracking test under simulated phone
   movement. Bring the founder a measured number, not an estimate.

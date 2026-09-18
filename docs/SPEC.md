@@ -40,7 +40,7 @@ sight."
 
 Read through the rulings above: "recalibration" means a re-fit of the tracked court, and nothing here
 halts the app. **The numbers (15 px, 10 s, 6/8) were set for a different mechanism and are
-unmeasured for this one.** Researcher found 15 px is ~5 m at the far baseline at 1080p / 3 m, and
+unmeasured for this one.** 15 px is ~5 m at the far baseline at 1080p / 3 m, and
 that a sub-5 cm court needs a re-fit tolerance of ~0.1 px on far lines. The founder resets these
 once a measurement exists.
 

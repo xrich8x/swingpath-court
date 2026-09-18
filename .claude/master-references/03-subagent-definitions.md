@@ -82,7 +82,7 @@ in the body, in CLAUDE.md, or in the spawn prompt — not in `skills:`.
 Patterns worth knowing:
 
 ```yaml
-tools: Agent(worker, researcher), Read, Bash   # may only spawn those two agent types
+tools: Agent(worker, investigator), Read, Bash   # may only spawn those two agent types
 disallowedTools: mcp__github                   # drop one MCP server's tools
 disallowedTools: mcp__*                        # drop all MCP tools
 ```
@@ -200,7 +200,7 @@ completed subagent auto-resumes it with full history. Transcripts live at
    choose. Write when to use it *and* when not to — the repo's `qa-verifier`
    does this well: *"Never used to write or fix code."*
 3. **Restrict tools deliberately.** A verifier with `Write` will fix what it
-   finds and destroy its own independence. A researcher with `Bash` will start
+   finds and destroy its own independence. A investigator with `Bash` will start
    running experiments instead of reporting.
 4. **State the anti-goals in the body.** "You never edit code, and you never
    adjust a test or gate to make something pass" is worth more than three

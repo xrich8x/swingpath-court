@@ -33,7 +33,7 @@ With `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1`, **any subagent Claude gives a
 message them later. So a team can form during ordinary delegation you never
 framed as team work.
 
-Symptoms: your "spawn 3 researchers and synthesise" flow returns nothing;
+Symptoms: your "spawn 3 investigators and synthesise" flow returns nothing;
 agents appear in the panel but the lead has no findings.
 
 Fix: set `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS` to `"0"` (no restart needed —

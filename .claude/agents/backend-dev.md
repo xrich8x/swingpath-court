@@ -57,7 +57,7 @@ Read `docs/SPEC.md` and `docs/STATE.md` — the court feature is your whole scop
 
 - **C1:** a court pinned from four corner points puts the far baseline metres off unless the corners
   are right to ~0.07-0.11 px at 1080p / 3 m. Error is linear in corner error.
-- **Researcher's routes:** a whole-court fit's far-baseline target is ~0.14 px of LINE position; what
+- **The route notes:** a whole-court fit's far-baseline target is ~0.14 px of LINE position; what
   survives averaging is bias — surface flatness x10, paint-edge convention (courts are measured to the
   OUTSIDE of lines), ultra-wide distortion, thermal lens drift, video compression, net tape near the
   far baseline on low mounts.

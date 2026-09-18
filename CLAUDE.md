@@ -40,7 +40,7 @@ Do NOT "ML-ify" geometry. Regulation dimensions are exact; use them as constrain
 - **C1 (measured):** a court pinned from four corner points misplaces the far lines by metres unless
   those corners are right to ~0.1 px at 1080p/3 m — **whoever or whatever finds them, an ML
   model included.** So the court must be fitted to the WHOLE painted lines, not to four points.
-- **Routes (researcher):** a whole-court fit to sub-pixel line measurements can plausibly reach that;
+- **Routes:** a whole-court fit to sub-pixel line measurements can plausibly reach that;
   what survives averaging is BIAS (surface flatness x10, paint-edge convention, ultra-wide
   distortion, thermal lens drift, video compression, net tape near the far baseline).
 - **CP1 (stage 1, PASS QUALIFIED by qa):** that fit places every line within 5 cm p90 on a rendered 1080p/3 m court; far-line margin ~1.4 cm, one camera pose, undeclared shared assumptions.
@@ -126,14 +126,13 @@ python -m pytest tests/                                        # from backend/
 | Teammate | Owns (court only) | Writes code |
 | --- | --- | --- |
 | **pm** | Court scope, sequencing, accuracy floors | no |
-| **researcher** | ML/CV for automatic court finding, line precision, lens, tracking | no |
 | **backend-dev** | Court detection, fitting, tracking; the renderer; porting to iOS | yes |
 | **frontend-dev** | The iPhone court setup and overlay screens, camera capture | yes |
 | **qa** | Independent verification of court gates. **Never fixes** | no |
 
 **Announce a teammate by name** and label its output. **THREE LIVE AGENTS PROJECT-WIDE**
 (`.claude/hooks/agent-cap.sh`); the lead holds **one** direct child at a time. A refusal is PARKED.
-A surprising RESULT goes to `researcher`, then `pm`. **Batch founder asks into ONE update.**
+A surprising RESULT goes to `pm`. **Batch founder asks into ONE update.**
 
 **`.claude/journals/` — one per agent plus `lead.md`, written DURING work.** Read yours FIRST on
 restart. **A KILL IS NOT A PAUSE.** Only the founder pauses, via `lead.md`'s `RUN-STATE:`.

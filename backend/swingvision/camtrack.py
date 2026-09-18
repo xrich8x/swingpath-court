@@ -23,7 +23,7 @@ Per frame:
   5. RE-FIT - a pose-only paint fit every `refit_s` seconds (SPEC s1 backstop).
 
 EVERY THRESHOLD HERE IS UNMEASURED. SPEC s1's numbers were set for another
-mechanism; researcher found 15 px is ~5 m at the far baseline at 1080p/3 m.
+mechanism; 15 px is ~5 m at the far baseline at 1080p/3 m.
 tools/court_track_sim.py is the pre-registered measurement.
 """
 from __future__ import annotations

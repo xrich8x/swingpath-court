@@ -36,6 +36,6 @@ off by +261.7%, +94.0%, −69.1%, −45.8%.
   after the result AND circular: the range would be centred on the fitted height, so the
   independent check would be steered by the number it is checking.
 - The tape's 10% / ~3 %-per-px bar is now the **benchmark for off-plane references**, and
-  two challengers have failed it: the post (this) and gravity/arc (researcher, same day,
+  two challengers have failed it: the post (this) and gravity/arc (research, same day,
   ~±20% from pixel noise at these low mounts). See
   [[net-tape-height-is-precision-limited]].

@@ -1,6 +1,6 @@
 ---
 name: ground-plane-blindness-narrows
-description: synthetic-corruption test of researcher's ground-plane-blindness claim — the claim NARROWS, its anchoring anecdote does not survive
+description: synthetic-corruption test of the research note's ground-plane-blindness claim — the claim NARROWS, its anchoring anecdote does not survive
 metadata:
   type: project
 ---
@@ -24,7 +24,7 @@ calls a failure.
 **What I built to test the abstract claim anyway** (since the anecdote gave nothing to
 reproduce): corrupted real clicked corners in memory (never touched `data/*_pts*.json`)
 across 5 families — depth-anisotropic compression (the claim's own mechanism), isotropic
-scale (researcher's requested control), sideways shift, rotation, asymmetric scale — on
+scale (the research note's requested control), sideways shift, rotation, asymmetric scale — on
 2 clips (`yt_match40`, `flexi_franz_p01`), scored against the SHIPPED gates
 (`verify_court`, `camera_height_m` via `cam_fit_quad`) and the one off-plane statistic
 (`tools/net_tape_height.py`).
@@ -41,7 +41,7 @@ scale (researcher's requested control), sideways shift, rotation, asymmetric sca
   fitted one. This is a REPORTING gap, not a geometric law — "hard to see" not
   "impossible to see."
 - Isotropic scale (not depth-specific) IS caught by `court_line_coverage`/`verify_court`
-  on `yt_match40` (coverage 0.94→0.31, correctly FAILS) — confirming the researcher's
+  on `yt_match40` (coverage 0.94→0.31, correctly FAILS) — confirming the the research note's
   cross-feed prediction that the honest boundary is anisotropic-depth-specific, not
   ground-plane-general. (Masked on the other clip only because its baseline coverage
   margin, 0.996, is so far above the lax 0.40 bar that nothing tested crosses it — a

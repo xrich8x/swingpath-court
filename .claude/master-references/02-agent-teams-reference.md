@@ -213,7 +213,7 @@ blocked message never arrives.
 ## 10. Shutdown and cleanup
 
 ```text
-Ask the researcher teammate to shut down
+Ask the investigator teammate to shut down
 ```
 
 The lead sends a shutdown request; the teammate can approve (exiting gracefully)

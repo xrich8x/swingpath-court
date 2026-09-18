@@ -153,7 +153,7 @@ archive and trim it AFTER CP1 lands, not while it is working.**
 ### THE COURT QUEUE — one direct child at a time
 
 1. **Verify CP1 stage 1** from its raw output (controls first), then brief stage 2's arms.
-2. **researcher — the AUTOMATIC court route.** The founder's ruling makes this the main line:
+2. **The AUTOMATIC court route** (lead; there is no research agent). The founder's ruling makes this the main line:
    - a court model trained on AMATEUR low-mount footage (the 2026-09-09 named remedy);
    - SYNTHETIC training data from the CP1 renderer — unlimited, exactly labelled courts;
    - inferring out-of-view end points from the regulation dimensions;
@@ -259,8 +259,9 @@ C3 is the founder's visit. **Order: P2 finishes first**, per the founder.
   PARKED until the route is designed and pre-registered.
 - **2026-09-18 — the founder authorised the agent team for this work** ("Yes use any and all of
   them"). The `.claude/hooks/agent-cap.sh` cap (three live project-wide, lead holds one direct
-  child) still binds, so they run in sequence: researcher (route + pre-registration), then
-  backend-dev (build), then qa (independent verification).
+  child) still binds, so they run in sequence. **2026-09-18: the founder deleted the `research`
+  agent and its journal — do not recreate it; the lead does that work. pm checks feasibility
+  before development, backend-dev builds, qa verifies.**
 
 - **2026-09-17 — court feature only.** Everything else archived in
   `swingpath:docs/archive/2026-09-17-pre-court-only/`. Only the founder reopens any of it.
@@ -324,7 +325,7 @@ C3 is the founder's visit. **Order: P2 finishes first**, per the founder.
   modules. `docs/evidence/` and `data/output/` untouched (records, not instructions).
 - **2026-09-17** — Founder rulings: automatic court (ML), live tracking continues, shell in scope,
   gold edits theirs, no visit yet. Applied to SPEC, CLAUDE.md, STATE, court/CLOSED.md.
-- **2026-09-17** — researcher's court-precision routes landed and were verified (arithmetic; Apple's
+- **2026-09-17** — the research note's court-precision routes landed and were verified (arithmetic; Apple's
   calibration-data condition). CP1 specified; two pre-run fixes (400 trials; staged build).
   `backend-dev` dispatched on CP1 stage 1.
 - **2026-09-16** — **P8 C1: KILL FIRED.** A four-point court misplaces every line past 10 cm at

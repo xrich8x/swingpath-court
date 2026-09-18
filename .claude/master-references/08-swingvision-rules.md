@@ -28,7 +28,6 @@ tool unless the user requests it.**
 sessions**, gated on express user approval at each stop:
 
 1. `pm-agent` → spec. **STOP**, show, wait for approval.
-2. `researcher-agent` with the approved spec, **in its own new chat session**.
    **STOP**, show, wait.
 3. Implement, **in its own new chat session**, handed the approved spec and
    findings.
@@ -47,7 +46,7 @@ This is the **opposite shape** to an agent team, deliberately:
 | Coupling | Teammates message each other | Stages never talk; the artifact is the interface |
 
 Do not "improve" it by running the four as a team. The separation is the point:
-the researcher must not inherit the PM back-and-forth, the coder must not
+the investigator must not inherit the PM back-and-forth, the coder must not
 inherit the research dead ends, and **QA must read the diff fresh, not inherit
 the coder's framing of what it did.** A team shares a mailbox, which is exactly
 the contamination this design removes.
@@ -59,14 +58,13 @@ are ever enabled in this project, the workflow must be run with them off.
 
 ## What the three existing definitions get right
 
-`.claude/agents/` holds `pm-agent`, `researcher-agent`, `qa-verifier` — all
+`.claude/agents/` holds `pm-agent`, `qa-verifier` — all
 `model: opus`, `memory: project`, with deliberately narrow tools:
 
 - **`qa-verifier`: `Read, Bash, Grep, Glob`** — and the body says *"You never
   edit or write code, and you never adjust a test or gate to make something
   pass."* That is the model: the tool list and the anti-goal say the same thing
   twice, so neither the harness nor the prompt alone has to hold the line.
-- **`researcher-agent`: `Read, WebSearch, WebFetch, Grep, Glob`** — no `Bash`,
   so it cannot start running the experiment it is supposed to *design*.
 - **`pm-agent`: `Read, Grep, Glob`** — read-only. It produces briefs, not code.
 - All three carry `memory: project`, so `.claude/agent-memory/<name>/MEMORY.md`
