@@ -407,3 +407,175 @@ must sit at chance (i.e. at the false-flag rate the threshold costs). If a permu
 
 **A failed bar stays failed.** Nothing below this line is edited after the run except by adding
 results.
+
+### G7 RESULTS — **SEPARATES, and the separator is already shipped; the fit's OWN cost FAILS and is INVERTED**
+
+Run: `tools/court_cost_separation.py --n 400 --seed 0 --workers 10`, 1,059 s,
+`data/output/court_cost_separation/G7_seed0_n400.json` (stamp: commit, n, seed, arm, fitter config,
+codec, the ridge-residual parameters, the wrong rule). Tests: `backend/tests/test_cost_separation.py`
+(8). Instruments and bar pre-registered above and committed at `adafc41` before this ran; the tool
+at `026c55b`, also before.
+
+**The population this run produced.** 400 trials, **2 threw** in the paint fit (trial 20
+`pass 5: no measurements`, trial 398 `pass 4: no measurements`) and are excluded from the scoring;
+**398 scored, of which 33 (8.3%) are WRONG cameras** by the pre-registered rule
+(|f_fit − 805.54| / 805.54 > 1%) and 365 right. G1's run of the same arm gave 35/400 (8.75%) and
+0 failures — the difference is the non-deterministic codec, as the pre-registration expected, which
+is why the label was recomputed here rather than carried over. The wrong cameras' focal error runs
+**−34.4% to +132.4%**, with the discrete basins G1 named recurring: −13.6 to −13.7% eight times, +15.3 to
++15.6% four times.
+
+#### The ceiling: the TRUE rendering camera, on these same 398 images
+
+| Quantity | p50 | min | max |
+|---|---|---|---|
+| `paint_check` support | 0.968 | 0.929 | 0.993 |
+| `paint_check` worst-line fraction | 0.943 | 0.895 | 0.981 |
+| ridge residual, median (px @720) | 0.054 | 0.032 | 0.109 |
+| ridge residual, mean (px @720) | 0.151 | 0.084 | **0.252** |
+| ridge residual, fraction of samples with a ridge | **1.000** | **1.000** | 1.000 |
+
+`paint_check.ok` is True on **398 of 398**. `unchecked` is `[far_baseline, far_service]` on every
+single trial — the declared blind spot, confirmed, not assumed: **neither instrument ever judged a
+camera on a far cross-court line.** So the true camera does not score perfectly (support 0.968, not
+1.0), and a right fitted camera is indistinguishable from it: fitted-right support p50 0.964 against
+the truth's 0.968, ridge mean 0.150 against 0.151.
+
+#### The two distributions
+
+Fitted cameras, 33 wrong against 365 right:
+
+| Quantity | wrong p10 / p50 / p90 | right p10 / p50 / p90 | right inside the wrong range |
+|---|---|---|---|
+| support (low = wrong) | 0.330 / 0.498 / 0.719 | 0.947 / 0.964 / 0.993 | 100% |
+| worst-line fraction (low = wrong) | 0.000 / 0.000 / 0.000 | 0.925 / 0.943 / 0.981 | 100% |
+| ridge median px @720 (high = wrong) | 0.108 / 1.170 / 4.520 | 0.036 / 0.052 / 0.076 | 98.6% |
+| ridge mean px @720 (high = wrong) | 2.421 / 4.023 / 5.688 | 0.102 / 0.150 / 0.195 | **1.6%** |
+| ridge fraction found (low = wrong) | 0.687 / 0.780 / 0.876 | 1.000 / 1.000 / 1.000 | **0.3%** |
+| fit's own cost, px (high = wrong) | 0.0138 / 0.0184 / 0.0853 | 0.0140 / 0.0163 / 0.0197 | 100% |
+| fit's own cost, weighted (high = wrong) | 0.437 / 1.219 / 1.716 | 1.304 / 1.500 / 1.710 | 100% |
+
+"Inside the wrong range" is the share of RIGHT cameras whose score falls between the wrong group's
+minimum and maximum — a raw overlap, before any threshold. Rank separation (AUC, 33 x 365 pairs):
+
+| Instrument | AUC |
+|---|---|
+| ridge fraction found | **0.9973** |
+| ridge mean | **0.9972** |
+| worst-line fraction | 0.9683 |
+| support | 0.9679 |
+| ridge median | 0.9617 |
+| fit's own cost, px | 0.6930 |
+| **fit's own cost, weighted** | **0.2157 — inverted** |
+
+#### The pre-registered verdict: threshold set on the train half, applied to the held-out half
+
+17 wrong and 183 right cameras in the held-out half.
+
+| Instrument | held-out catch | false flag | cost of 90% catch in held-out | **verdict** |
+|---|---|---|---|---|
+| `paint_check` support | **17/17 = 1.000** | 1/183 = 0.55% | 0.55% | **SEPARATES** |
+| ridge residual, mean | **17/17 = 1.000** | 1/183 = 0.55% | 0.55% | **SEPARATES** |
+| ridge residual, fraction found | **17/17 = 1.000** | 1/183 = 0.55% | 0.55% | **SEPARATES** |
+| `paint_check` worst line | 15/17 = 0.882 | 1/183 = 0.55% | 0.55% | PARTIAL |
+| ridge residual, median | 15/17 = 0.882 | 1/183 = 0.55% | 3.28% | PARTIAL |
+| fit's own cost, px | 14/17 = 0.824 | **170/183 = 92.9%** | 96.7% | **FAILS** |
+| fit's own cost, weighted | 16/17 = 0.941 | **183/183 = 100%** | 100% | **FAILS** |
+
+**NULL CONTROL PASSES.** 1,000 seeded label permutations per instrument, the whole split-and-
+threshold procedure re-run on each: held-out catch equals held-out false-flag rate to within 0.01 on
+every instrument (0.877-1.000 against 0.877-1.000) — chance, exactly as required — and **not one
+permutation of any instrument met the bar (`separates_rate` 0.000, 7/7).** The pass above is not
+something this procedure hands out for free.
+
+#### The three rules that hold over all 398, not just the held-out half
+
+| Rule | catches | false-flags |
+|---|---|---|
+| **`camera3d.paint_check(...).ok` — the SHIPPED flag, no new threshold** | **33 of 33** | **1 of 365 (0.27%)** |
+| ridge fraction found < 1.000 | **33 of 33** | 1 of 365 (0.27%) |
+| ridge mean >= 0.235 px @720 | **33 of 33** | 6 of 365 (1.64%) |
+| support < 0.90 | 32 of 33 (97.0%) | 1 of 365 (0.27%) |
+
+Every one of those meets the pre-registered bar. **The strongest result is that nothing new is
+needed:** the flag that `fit_camera_checked` already computes catches every wrong camera here.
+
+**The single "false flag" is a MISLABEL, recorded and NOT fixed (hard rule 8).** All four rules
+false-flag the same trial, **trial 32**, and its focal length is right to 0.01% — so the
+pre-registered label calls it a right camera. But its worst line is **infinite metres out**, its
+`centre_service` line has **0.0** of its samples on paint, and 36% of its samples have no ridge
+within 12 px @720. The instruments are right about trial 32 and the focal-length label is wrong
+about it. **The label is left alone**, so every false-flag rate above is if anything overstated;
+excluding trial 32 the three top rules cost **0 of 364**.
+
+**The one wrong camera that support cannot see, and why the structure rule matters.** Trial 69 is
+**+132.4% in focal** and scores **support 1.000** and ridge mean 0.235 — inside the right cameras'
+range. It is invisible to a court-wide average because it puts almost the whole court out of frame:
+only **5 lines** remain checkable and **all four cross-court lines** (`near_baseline`,
+`far_baseline`, `near_service`, `far_service`) are unchecked. `paint_check` catches it on
+`too_few_lines`, its `min_across`/`min_along` guard, not on any fraction. **So a bare threshold on a
+photometric average is not enough; the acceptance rule must also require that enough of the court
+was checkable.** That is a design requirement this run produced, not a tuning detail.
+
+#### The fit's own cost is worse than useless — it is INVERTED
+
+The optimiser's own weighted residual has **AUC 0.216**: in a head-to-head between a wrong camera
+and a right one, **the WRONG camera has the lower weighted cost 78.4% of the time**. Unweighted, in
+undistorted pixels, it is weakly informative (AUC 0.693) but still loses **30.7%** of head-to-heads,
+and catching 90% of wrong cameras costs 93-100% false rejection. A wrong camera measures its own
+paint points on whatever lines it landed near and then fits them beautifully: median 0.018 px on
+about 950 points, against 0.016 px for a right camera. This is G3's "self-consistent on the wrong
+paint" finding again, now measured on the fit rather than the tracker.
+
+#### Predictions, scored
+
+- **Prediction 1 WRONG.** The worst-line fraction did NOT beat the court-wide support: support
+  SEPARATES (17/17) and the worst line is PARTIAL (15/17). The cause is threshold selection, not
+  signal — the wrong group's worst-line fraction is **exactly 0.000 at every percentile up to p90**,
+  so the "tightest threshold catching 90% of the train half" lands on the degenerate value 0.0. Its
+  AUC (0.9683) is a hair above support's (0.9679). **The bar was pre-registered and it stays where
+  it fell: PARTIAL.**
+- **Prediction 2 WRONG in a useful direction.** The ridge mean did not land between them, it beat
+  both (AUC 0.9972 against 0.968), because it is an average over samples rather than over lines and
+  a wrong camera is far off nearly everywhere. The ridge MEDIAN, which discards exactly that, is the
+  weakest of the three (0.9617).
+- **Prediction 3 RIGHT, and stronger than predicted.** The fit's own cost does not separate; it is
+  inverted.
+- **Prediction 4 PARTLY RIGHT.** The surviving hard case is a zoom basin (trial 69, +132%), as
+  predicted, but it survives by pushing the court out of frame rather than by sitting on real paint
+  one alley over.
+
+#### What this means for the three roadmap items
+
+- **Item 3, the multi-anchor selector that picks "the lowest photometric residual": VIABLE, but only
+  if the residual is an INDEPENDENT one.** Read as the fit's own cost it picks the wrong camera 78%
+  of the time in a head-to-head. Read as `paint_check` support or the ridge mean it ranks right
+  above wrong on 96.8-99.7% of pairs. **Specify which residual; the two answers are opposite.**
+- **Item 1 Tier 2's acceptance rule: EXISTS ALREADY.** `camera3d.paint_check(...).ok` at its shipped
+  defaults caught 33 of 33 wrong cameras at 1 flag in 365 right ones, and that one flag is a
+  mislabel. No new threshold is needed on this scene.
+- **Item 4's "not locked" trigger: SUPPORTED on this evidence, with the structure guard kept.** A
+  trigger on `paint_check` failing would have fired on every wrong camera here and idled on
+  365 of 365 right ones. It must keep the `min_across`/`min_along` requirement: trial 69 passes every
+  fraction and fails only that.
+
+#### Caveats, stated rather than buried
+
+- **Synthetic, one camera pose, one scene.** CP1 arm P: rendered paint, uniform surface, a Gaussian
+  PSF, libx265, no players, no shadows, no worn paint, no occlusion. `ridge fraction found = 1.000`
+  on 364 of 365 right cameras is a property of a clean synthetic court; on real footage some samples
+  will miss for reasons that have nothing to do with the camera, and that rule is the one most likely
+  to fall apart first. Support and the ridge mean degrade more gracefully.
+- **Neither instrument can see the far baseline or the far service line** (too thin for the ridge
+  finder at this mount and resolution), on every one of the 398 trials. A camera that is right on
+  the near half and wrong on the far half is exactly what C1 says to fear, and **this experiment
+  cannot detect it.** Everything above separates GROSSLY wrong cameras from right ones; it says
+  nothing about the 5 cm question.
+- **`paint_check`'s thresholds were set on development seeds of this same scene** (G4/G5), so its
+  33/33 is not a fully independent number in the way the ridge residual's is — the ridge residual was
+  defined in the pre-registration above, before this run, and never tuned.
+- **The wrong/right label is the focal length alone.** Trial 32 shows it is not a perfect label. The
+  right way to read this section is as separating *cameras that are grossly wrong somewhere* from
+  *cameras that are right*, with focal error as a proxy that misses at least one case.
+- **2 of 400 trials threw** in the paint fit and are outside every number here. In a product they are
+  trivially "not locked".

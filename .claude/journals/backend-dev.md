@@ -19,11 +19,36 @@ seeded + re-runnable, rows to `data/output/`; (3) results in the same G7 section
 
 ## STATE
 
-- Step 1 DONE: read CLAUDE.md, STATE.md, court-camera3d.md, ML_PRACTICES.md, camera3d.py,
-  paintfit.py, court_camera3d_seed.py, court_fit_cp1.py.
-- Step 2: write + commit the G7 pre-registration.  <- IN PROGRESS
-- Step 3: write the tool, smoke at n=2, then run n=400 seed 0.
-- Step 4: analyse, write results, STATE row, commit.
+**TASK COMPLETE** apart from the final report to the lead. All five deliverables done.
+- adafc41 G7 pre-registration (BEFORE the run). 026c55b the tool (BEFORE the run).
+- Scored run: `--n 400 --seed 0 --workers 10`, 1,059 s ->
+  `data/output/court_cost_separation/G7_seed0_n400.json` (force-added; data/output/*.json is
+  ignored in subdirectories but the arm-K artifact is tracked by the same precedent).
+- Results + STATE row + `backend/tests/test_cost_separation.py` (8 pass) committed.
+
+## THE ANSWER (do not re-derive)
+
+**SEPARATES.** 398 scored, 33 wrong (8.3%) vs 365 right; 2 trials threw (`pass N: no measurements`).
+- **`camera3d.paint_check(...).ok`, the SHIPPED flag, catches 33/33 at 1 false flag in 365** — and
+  that flag, trial 32, is a MISLABEL (focal right to 0.01%, worst line INFINITE). Recorded, not fixed.
+- Held-out (pre-registered split): support / ridge-mean / ridge-frac-found all 17/17 at 0.55%
+  = SEPARATES; worst-line and ridge-median 15/17 = PARTIAL (degenerate threshold at exactly 0.0).
+- **The fit's OWN robust cost is INVERTED: AUC 0.216, wrong beats right in 78.4% of head-to-heads.**
+  Unweighted px cost AUC 0.693, still loses 30.7%.
+- Trial 69 (+132% focal) scores support 1.000 by pushing the court OUT OF FRAME; only the
+  `min_across`/`min_along` structure guard catches it.
+- Null control PASSES: 1,000 permutations, catch == false-flag rate, `separates_rate` 0.000 on 7/7.
+- **Blind spot on every one of 398 trials:** `unchecked` = [far_baseline, far_service]. This
+  separates GROSSLY wrong cameras only; it says NOTHING about the 5 cm question.
+
+## SMOKE RESULT (n=3, seed 99, all three RIGHT cameras) — keep, it sets scale
+- true camera:  support 0.940-0.993, worst-line frac 0.912-0.981, ridge_med 0.033-0.087 px@720
+- fitted (right): essentially identical to the true camera (support to 4 dp, ridge_med within 0.003)
+- PnP SEED camera: support 0.12-0.34, worst-line frac 0.00-0.03, ridge_med 2.6-3.8 px@720
+  -> the instruments have a big dynamic range on a KNOWN-bad camera. Encouraging, not the answer.
+- `unchecked` is ALWAYS ['far_baseline','far_service'] — the declared far-line blind spot, confirmed.
+- fit's own cost px_med 0.014-0.021 px on ~950 points; w_med 1.2-1.8.
+- 14.7 s per trial at 3 workers.
 
 ## KEY FACTS ESTABLISHED (do not re-derive)
 
