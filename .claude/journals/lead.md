@@ -245,6 +245,21 @@ C3 is the founder's visit. **Order: P2 finishes first**, per the founder.
 
 ## DECIDED — binds everyone, do not reopen
 
+- **2026-09-18 — BOUNDED STATE, and it supersedes the "no dependence on the previous frame" half of
+  this morning's ruling.** Founder, after pm's feasibility check put the measurements in front of
+  them (stateless cold path 9.6 s/frame; best measured stateless per-frame precision p90 9.2-10.9 cm
+  against a 5 cm target): *"the court is found in the image every frame, but the camera may be
+  refined across frames."* Never propagate a saved court, never snap; the independent on-paint check
+  runs EVERY frame; temporal averaging is allowed. SPEC §1 and `docs/DECISIONS_PENDING.md` F1 carry
+  the binding wording. **The 5 cm / 10 cm floor is unchanged.**
+- **2026-09-18 — pm's feasibility check on the founder's four-item roadmap is IN
+  `docs/DECISIONS_PENDING.md`.** Headlines: a network predicting camera parameters directly IS arm
+  K0 (far baseline p90 6.65 m) so it can only ever be a SEED; roadmap items 1 and 2 are one
+  deliverable; item 3's net-clearance check as worded would reject correct courts on every amateur
+  mount we own (all 1.36-1.74 m, below the ~2.2 m tape crossover); item 2 unblocks the rest. First
+  build, dispatched to backend-dev: does a photometric cost separate the 35 wrong cameras from the
+  365 right ones in arm K (pre-registered as G7)?
+
 - **2026-09-18 — TRACKING MUST CONTINUOUSLY DETECT THE COURT, NOT SNAP.** Founder, verbatim:
   *"Remember the tracking shouldnt snap but continuously detect the court"*, and asked which of
   three readings applied; they chose **FULL DETECTION EVERY FRAME** — the court is found in each

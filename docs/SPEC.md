@@ -29,6 +29,20 @@ because the phone moved"
 
 - When the phone moves, the court keeps being tracked and re-fitted. The app never refuses and never
   asks the user to re-tap.
+
+**2026-09-18 — the court is FOUND IN EVERY FRAME; state is BOUNDED.** The founder first ruled that
+tracking "shouldnt snap but continuously detect the court", choosing full per-frame detection with no
+dependence on the previous frame; shown the measurements (stateless cold path 9.6 s/frame; best
+measured stateless per-frame precision p90 9.2–10.9 cm, above the 5 cm target), they settled on
+**bounded state**: *"the court is found in the image every frame, but the camera may be refined
+across frames."*
+
+- A saved court is **never propagated**, and there is **no snap**: every frame measures the court in
+  that image.
+- The camera **may** be refined across frames; temporal averaging is allowed and is the known route
+  under 5 cm.
+- An **independent on-paint check runs every frame**, so a wrong court can never be reported as good.
+- The accuracy floor is unchanged (§3): every line p90 ≤ 5 cm, 10 cm kills.
 - Recovery after a large change may use the automatic court finder. It may **not** use the specific
   search branches recorded dead in `docs/court/CLOSED.md` (rule 3).
 
