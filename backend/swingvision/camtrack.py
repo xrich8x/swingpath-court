@@ -53,7 +53,8 @@ class TrackConfig:
     ridge_min_dn: float = 6.0       # paint must stand this far above its surround
     ransac_px_720: float = 3.0
     # process noise (white acceleration). G3 ran 1e-2: the filter lagged the sway
-    # and turned ~1 cm raw poses into 4-12 cm (dev seed 100; evidence G5 notes).
+    # and turned ~1 cm raw poses into 4-12 cm (dev seed 100; docs/evidence/
+    # court-camera3d.md G5 - DEVELOPMENT numbers, the fixed tracker is unscored).
     q_rot: float = 100.0            # rad^2 s^-3
     q_pos: float = 100.0            # m^2 s^-3
     r_floor_px: float = 0.1         # measurement noise floor, px rms

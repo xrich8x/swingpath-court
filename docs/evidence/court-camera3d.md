@@ -125,6 +125,29 @@ and 1.2°. It should hold during sway, lose the court at the knock, and never co
 
 ---
 
+### G5. Thresholds set on DEVELOPMENT seeds after G3 — not scored, and cited by shipped code
+
+**qa 2026-09-18 found this section MISSING while its values were already cited by
+`camera3d.paint_check`'s docstring and `camtrack.TrackConfig`.** The provenance existed only as a
+bullet list in the lead journal. It is written down here so the citations resolve. **Nothing here is
+a scored result**: these are development numbers on seeds 100–102 and 200–202, chosen after G3
+failed, and the fixed tracker has no pre-registered gate — **G3's KILL stands.**
+
+- **`paint_check` thresholds** (`tol_px_720 = 1.5`, `min_dn = 6.0`, `min_line_frac = 0.5`,
+  `min_width_px_720 = 0.67`, `min_across = 2`, `min_along = 2`): set on development renders of the
+  synthetic scene. On those, the true camera scores 0.94 support against 0.48–0.52 for a court one
+  alley over or 0.3° of pan, and 0.03 after a knock. **The structure guard (`min_across` /
+  `min_along`) is load-bearing**: G7 caught a wrong camera at +132% focal that scored support 1.000
+  by pushing the court out of frame, and only the guard rejected it.
+- **Kalman process noise `q_rot` / `q_pos` 1e-2 → 100.** On dev seed 100 the raw paint-anchored pose
+  was p50 1.08 / p90 1.87 cm while the filtered pose was p50 4.32 / p90 12.06 cm — the filter was
+  lagging the sway. At 100 the filtered pose matches the raw one (0.80 / 1.63 cm).
+- **Restart directions** (`dolly` ×1.15/0.87/1.33/0.75, `shift` ±1 alley): the two false-basin
+  families G1 measured (a slide in depth, a one-alley shift).
+- **Development results, for context only:** sim seeds 100–102 worst line p90 3.52 cm, steady jump
+  0.18 px, 1-frame recovery from the small knock; a 4× knock is lost and never recovered. qa
+  re-ran these and they reproduced exactly, and got 2.41 cm on fresh seeds 200–202.
+
 ## Rule 7 — lifting the R1 fit into `swingvision.paintfit` changed nothing
 
 - **Method:** a pristine checkout of `b3af0ca` (a git worktree) against the lifted code. Same arms,

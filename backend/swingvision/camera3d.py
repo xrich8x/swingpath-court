@@ -473,7 +473,9 @@ def paint_check(grey, cam: CourtCamera, *, tol_px_720: float = 1.5, min_dn: floa
     An INDEPENDENT lock check - it reads the image at the camera's own
     predictions over the whole court, not at points a tracker chose - and a
     lock/no-lock signal only, never an accuracy measure (rule 1). Thresholds
-    were set on development seeds (docs/evidence/court-camera3d.md, G5)."""
+    were set on DEVELOPMENT seeds of the synthetic scene and are scored on that
+    same scene (docs/evidence/court-camera3d.md, G5; qa flagged the circularity
+    in the 2026-09-18 audit). The structure guard below is load-bearing."""
     world, wdir, ids, names, widths = _samples(step_m)
     w, h = cam.image_wh
     s = h / 720.0
