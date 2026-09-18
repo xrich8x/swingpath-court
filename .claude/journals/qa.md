@@ -7,25 +7,39 @@ automatically. Whatever is below is what survived.
 
 ---
 
-## TASK — DONE 2026-09-17: verify CP1 stage 1 (commits 4ac52fc code freeze, 99e1812 results)
-Checks: 1 freeze integrity, 2 truth leakage (fn near line 274 "f and pp held at truth"), 3 shared
-assumptions, 4 recompute tables from data/output/court_fit_cp1/, 5 rerun control1+3a, arm P n=50 seed 1
-(>10 cm any line = reproduction concern; descriptive only), 6 encode realism from existing A3 vs P.
-Output: docs/evidence/court-fit-cp1-qa.md, commit (no push). Verdict: PASS STANDS / QUALIFIED / DOES NOT STAND.
+## TASK — 2026-09-18: audit the 3D court camera (G7, tracker fixes, rule-7 lift, libx265 nondet)
+Branch camera3d-pnp-paintfit. Python: "E:\Claude Outputs\Cowork Tasks\Swing Vision\backend\.venv\Scripts\python.exe".
+1. G7 photometric separation: paint_check 33/33 @1 false flag/365; fit's own cost inverted AUC 0.216; ridge AUC 0.997;
+   trial 32 "mislabel" claim; prereg-before-run; label circularity; split leak; null control; dev-data grading.
+2. Post-G3 tracker fixes UNSCORED (camtrack.py, paint_check/fit_camera_checked) - what is established vs not; tuned-on-quoted-seeds?
+3. Rule-7 lift no-op claim; re-run backend/tests/test_paintfit_lift.py + one other arm.
+4. libx265 nondeterminism - confirm/refute independently.
+Deliverable: append "QA AUDIT 2026-09-18: the 3D court camera, G7 and the unscored tracker fixes" to
+docs/evidence/court-camera3d.md + 1 STATE row if material. Commit locally, DO NOT PUSH.
 
 ## STATE
-- COMPLETE: docs/evidence/court-fit-cp1-qa.md written, verdict PASS QUALIFIED; committed, not pushed. Resumed once after a usage-limit kill.
+- Started. Prior task (CP1 audit) DONE, archived below.
 
 ## LOG
-- 2026-09-17: journal reset to court scope.
-- check1: tool unchanged 4ac52fc..HEAD and in worktree (git diff empty); tool has ONE commit (4ac52fc). JSON stamps next.
-- check2 (code read): fitter r1_fit(img, seed_corners, FitConfig, rcam.cx, H/2). lam_star/truth_camera/ref_cam/HFOV only in run_trial setup, readouts, summarise, stamp = scoring. f free (bounds 200-4000) all passes. LEAKS/near-leaks: cx passed from TRUTH object (=W/2 in stage 1, latent leak for A9); fitter sig_grid 0.5..2.5 step .05 contains exactly the render PSF_GRID values (on-grid sigma, undeclared); profile model = exact render kernel form (pixel box x Gaussian); paint_lines()/centre_marks()/TapeLine/POST_X shared objects; surface/run-off boundary coincides with outer paint edge in both; ONE camera geometry for dev tuning AND scoring. stamp render_order string stale ("1/4 px grid").
-- check1: all 7 JSONs stamp commit 4ac52fc8, dirty False, render cp1-render-5-smooth-kernel-sub2, 0 failures; every run STARTED after the freeze commit (ctl1 +20 s). BUT git_sha()/git_dirty() run at END (stamp()), and stamp dict has duplicate key "seed" -> numeric seed overwritten by description string (metadata bug). Coverage CACHE predates freeze: ctl1/ctl2 key 86a05df4 built ~4 h pre-freeze, P/A3 efa87348 ~4 min pre, ctl3a ff11a531 ~10 min pre. Cache key = RENDER_VERSION+geometry, not code hash -> re-rendering fresh (cache=False) to compare, scratch scripts in scratchpad.
-- check4 DONE: every per-line p90 (P, A3, ctl1/2/2s0/3a/3b) recomputed from rows = evidence/STATE to rounding; 0 failures, 0 inf, trial ids complete 0..n-1; rows regenerate from SeedSequence([0,trial]); P/A3 paired identical draws. ctl3b paired L 0.0993 sd .0023. P-A3 median fbL +1.21 cm, fsL +1.36. TAIL: P far_baseline L >5 cm in 4/400 (max 5.69, trial 268), far_service L >5 cm in 4/400 (max 6.75); none >10 cm; M max 1.38 cm. fbL p90 by contrast 60-85 DN = 4.31 cm; psf 1.15/1.20 = 4.51/4.69 cm (subgroups n~30). sig_est == true psf in 100% of trials in ALL arms incl P (fitter grid contains render grid).
-- rerender ctl1 running in bg -> scratchpad/rr_ctl1.txt
-- check5: ctl1 + ctl3a rerun (seed 0, n 20, out to scratchpad) BIT-IDENTICAL to scored JSON (max diff 0). ctl1 cache (4 h pre-freeze) == fresh render from frozen code, max diff 0.0. P-geometry fresh render running -> scratchpad/rr_P.txt. Next: P n=50 seed 1 -> scratchpad/P_seed1_n50.json (log P1.txt).
-- check3 notes (spec §7 read): f free in fit_camera every pass (CONFIRMED). Undeclared shared assumptions found: sigma on-grid (fitter grid contains render grid); linear sensor (no gamma/tone map/sharpening) - profile model is linear; chroma flat U=V=128 (all bits to luma) not in flattering list; step boundary exactly at outer paint edge; single camera pose for dev AND score; all 4 corners + 14 halves in view; cx passed from truth object (latent A9 leak); tape_top() sag function shared; square pixels. Controls ctl1/ctl3a n=20 (deterministic apart from contrast/psf) - minor vs addendum "400 every arm".
-- check6 framing: P-A3 p90 fbL 3.58 vs 0.93 (+2.65 cm); margin 1.42 -> codec cost can grow ~1.5x before fbL p90 > 5 cm. Apple 1080p60 HEVC bitrate ~12 Mbps is my UNVERIFIED recollection.
-- check5 DONE: P n=50 seed 1 (frozen code, run at HEAD a00dbf4 with tool clean): 0 failures, every line p90 <=5 cm; worst far_baseline L p90 3.87 cm (seed0 first-50: 3.89), far_service 3.03; 1/50 far_baseline trial 5.36 cm; none >10 cm -> no reproduction concern. P-geometry fresh render == cache (max diff 0.0), so pre-freeze caches are clean.
-- PROBE (QA, pre-registered now, DESCRIPTIVE ONLY, cannot change verdict): fitter sigma grid shifted +0.025 px (true sigma falls midway between grid values), everything else identical, P n=50 seed 1 paired with the run above. Reading: report per-line p90 and paired far-baseline change; flag if any line p90 >5 cm. Script scratchpad/probe_sig.py -> probe_sig.json
-- PROBE result: 0 fails; off-grid sigma (est always true +-0.025): far_baseline L p90 3.87->3.98 (paired median +0.11 cm, 2/50 >5 cm), far_service 3.03->3.86 (1/50 >5), every line still p90<=5; kappa bias +2.2%. Mild, margin thinner.
+- 2026-09-18 start. git: prereg adafc41 (21:04) -> tool 026c55b (21:08) -> results db33a45 (21:51). Results commit does NOT touch tools/court_cost_separation.py => tool unchanged after commit. Need: camera3d.py threshold history.
+- PRIOR TASK (CP1 stage 1 audit) COMPLETE: docs/evidence/court-fit-cp1-qa.md, verdict PASS QUALIFIED, committed.
+- G7 pop CONFIRMED from rows: stamp commit 026c55b dirty=false (run AT the instrument commit, after prereg adafc41); 400 rows, 2 threw (20,398), 398 ok, 33 wrong / 365 right; f_true 805.5356 (prereg text says 805.35 = typo, tool computes it); basins -13.6/-13.7 x8, +15.3-15.6 x4, +132.4 x1 - all match evidence.
+- ALL 7 AUCs reproduce EXACTLY (support .9679, worst_frac .9683, ridge_med .9617, ridge_mean .9972, ridge_found .9973, self_px .6930, self_w .2157). NB AUC is NOT computed by the tool - backend-dev computed it ad hoc; my recompute is independent.
+- TRIAL 32 CONFIRMED MISLABEL: focal rel -0.000103 (0.01%), but camera X 4.1124 vs ~5.485 = 1.37 m lateral shift; every sideline/centre-service 1.36-1.37 m out (M readout), L readout inf. Genuinely wrong camera the focal label calls right. Label untouched in code => hard rule 8 honoured.
+- INDEPENDENT GEOMETRIC LABEL (worst-line M err > 0.10 m vs the exact rendering camera, no focal): 34 wrong; agrees with focal label on 33, adds only trial 32. paint_check.ok catch 34/34, FALSE FLAG 0/364. ridge_found AUC 1.0000, ridge_mean 0.9996. Headline STRENGTHENED, not weakened. Right-group worst line max finite 0.061 m => no hidden grossly-wrong camera among the 365.
+- G7 held-out split REPRODUCES EXACTLY at split-seed 0 (all 7 instruments, catch+false to 4dp, verdicts). Ceiling table reproduces. Null control stored: catch_mean==false_mean, separates_rate 0.000 on 7/7.
+- G7 FINDING (new, mine): the held-out verdict is SPLIT-SEED BRITTLE. Over split seeds 0-9: support SEPARATES on 3/10 (catch 0.765-1.000), ridge_mean 3/10, ridge_found 3/10 (catch as low as 0.471), ridge_median 0/10. Cause: threshold set at exactly 90% catch on train (17 wrong) leaves zero margin; 2 held-out misses of 17 flips SEPARATES->PARTIAL. Seed 0 was pre-registered so this is not p-hacking, but the label "SEPARATES" is an n=17 coin flip. The WHOLE-POPULATION rules (33/33 @1/365) are not split-dependent and are the durable result.
+- Rules over all 398 reproduce: paint_check.ok 33/33 @1/365 (trial 32); ridge_found<1 33/33 @1/365; support<0.90 32/33 @1/365; ridge_mean>=0.2348377 33/33 @6/365 BUT literal ">=0.235" as written in the table gives 32/33 (rounding).
+- Trial 69 CONFIRMED: +132.4% focal, support 1.000, 5 lines all frac 1.0, unchecked = all 4 cross-court lines, ok False via worst="too_few_lines".
+- Tracker-fix dev numbers exist ONLY in .claude/journals/lead.md (seeds 100-102 p90 3.5 cm, 1-frame recovery, KC 101/102 0 silently wrong). NOT in docs/evidence/ and NOT in STATE; STATE's G3 row still says KILL. So the record does not overclaim.
+- LIBX265 NONDETERMINISM CONFIRMED INDEPENDENTLY: 4 encodes of a byte-identical 30-frame array -> kbps 18919.7/18933.3/18945.2/18937.2, decoded mean differs on ~1.8M of 2.07M px, max |dDN| 1.47. Downstream: arm P seed 1 trials 0/1/2 x3 repeats -> far_baseline L spread 0.302/0.236/0.657 cm. "up to ~0.7 cm" CONFIRMED.
+- test_paintfit_lift + test_cost_separation: 12 passed (A3 trial 0 matches pre-lift pins at rel 1e-9).
+- RULE 7 CONFIRMED INDEPENDENTLY: fresh git worktree at b3af0ca (pre-lift) vs HEAD, ctl1 (3 trials seed 7) + ctl2 (4, seed 0) + ctl3a (1): 768 values compared, 0 differing. Plus test_paintfit_lift A3 trial 0 passes at rel 1e-9.
+- TRACKER SIM RE-RUN BY ME. Dev seeds 100-102 REPRODUCE the lead's journal numbers exactly: worst p90 3.52 cm (claimed 3.5), steady jump 0.18 px, knock recovery [1,1,1], 1 locked-but-wrong frame, 358 locked / 2 unlocked. FRESH seeds 200-202 (never used in dev): worst p90 2.41 cm, jump 0.18 px, recovery [1,1,1], 1 locked-but-wrong, 358/2. => the fixes are NOT tuned to the quoted seeds; they generalise (and improve) on held-out seeds.
+- BUT the silent wrong lock persists on BOTH sets: seed 101 frame 60 (knock) locked=True status=tracking at far_baseline 70.4 cm / far_service 44.2 cm; seed 201 frame 60 56.8 / 35.8 cm. Near lines <=10 cm. Those are exactly the 2 lines paint_check lists UNCHECKED => G7's declared blind spot is demonstrated, not hypothetical.
+- G7 within-accepted power (mine, n=364 excl trial 32): worst line <=1.48 cm; rho(support, worst-line) -0.682 but rho(support, far_baseline L) only -0.265; ridge_found is CONSTANT 1.000 across all 364 => zero resolving power inside the accepted set. Quantifies "says nothing about 5 cm".
+- paint_check docstring + camtrack q comment both cite "docs/evidence/court-camera3d.md, G5" - THERE IS NO G5 SECTION in that file. Dangling provenance for the tuned thresholds.
+- camtrack.TrackConfig comment states q 1e-2 -> 100 was changed on "dev seed 100", one of the seeds the 3.5 cm is quoted against => tuned on a quoted seed (but held-out seeds confirm it anyway).
+- PENDING: knock x4 on fresh seeds running -> scratchpad/sim_fresh_k4.json. Then write the evidence section + commit.
+- knock x4 FRESH seeds 200-202: lost at frame 60 on 3/3, never recovered, 0/180 locked-but-wrong, worst p90 while locked 2.34 cm => dev claim reproduces held-out.
+- Evidence section appended to docs/evidence/court-camera3d.md (12-claim verdict table + 7 subsections + STATE row as TEXT ONLY; did not touch docs/STATE.md). Committing next.

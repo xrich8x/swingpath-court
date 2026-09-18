@@ -579,3 +579,247 @@ paint" finding again, now measured on the fit rather than the tracker.
   *cameras that are right*, with focal error as a proxy that misses at least one case.
 - **2 of 400 trials threw** in the paint fit and are outside every number here. In a product they are
   trivially "not locked".
+
+---
+
+## QA AUDIT 2026-09-18: the 3D court camera, G7 and the unscored tracker fixes
+
+qa, branch `camera3d-pnp-paintfit`, HEAD `7eef894`. Hard rule 1: one session wrote the 3D camera code
+and the tests that scored it, so everything below is **re-derived from raw rows or re-run**, never
+read off a summary. Nothing in `backend/`, `tools/` or `docs/STATE.md` was edited; the STATE row this
+audit implies is given as text at the end for the lead to file.
+
+### Verdict per claim
+
+| # | Claim | Verdict |
+|---|---|---|
+| 1 | `paint_check(...).ok` catches 33 of 33 wrong cameras at 1 false flag in 365 | **CONFIRMED**, and strengthened under an independent label |
+| 2 | The fit's own weighted cost is INVERTED, AUC 0.216 | **CONFIRMED** (0.2157) |
+| 3 | The ridge instruments reach AUC 0.997 | **CONFIRMED** (mean 0.9972, fraction-found 0.9973) |
+| 4 | The single false flag (trial 32) is a MISLABEL, recorded not fixed | **CONFIRMED**; hard rule 8 honoured |
+| 5 | The pre-registration was committed before the run | **CONFIRMED** by commit times, stamp and file diffs |
+| 6 | The pre-registered held-out verdict "SEPARATES" | **QUALIFIED — split-seed brittle, 3 of 10 seeds** |
+| 7 | The wrong/right label is not circular with the instruments | **CONFIRMED** |
+| 8 | `paint_check` is graded on its own development data | **TRUE, and its provenance pointer is dangling** |
+| 9 | Post-G3 tracker fixes: the dev numbers | **CONFIRMED, and they hold on held-out seeds** |
+| 10 | Post-G3 tracker fixes: scored status | **UNSCORED. G3's KILL stands** |
+| 11 | Rule 7 — the `paintfit` lift changed nothing | **CONFIRMED** on a fresh pristine worktree |
+| 12 | libx265 is not deterministic run to run | **CONFIRMED** independently, encoder isolated |
+
+### 1. G7 — what reproduced, exactly
+
+Re-derived from `data/output/court_cost_separation/G7_seed0_n400.json` with an independent script.
+
+- **Population.** 400 rows, 2 threw (trials 20 and 398), 398 scored, **33 wrong / 365 right** under
+  `|f_fit - f_true| / f_true > 0.01` with `f_true = 805.5356` recomputed from 1920 px and 100°.
+  Wrong-camera focal error -34.4% to +132.4%; basins -13.6/-13.7% eight times and +15.3-15.6% four
+  times. Every figure matches. (The prose pre-registration writes `805.35`; the tool computes
+  805.5356 and the stamp says 805.54. A typo in the prose, not in the run.)
+- **All seven AUCs reproduce to four decimals** — support 0.9679, worst-line 0.9683, ridge median
+  0.9617, ridge mean 0.9972, ridge fraction-found 0.9973, own cost 0.6930, own weighted **0.2157**.
+  Worth noting for whoever maintains the tool: **AUC is not computed by
+  `tools/court_cost_separation.py`** and is not in the rows file — it was worked out by hand after
+  the run. It is right, but it is not reproducible from the committed instrument.
+- **The held-out table reproduces exactly** at `--split-seed 0` (all seven instruments, catch and
+  false flag to four decimals, and every verdict string).
+- **The four whole-population rules reproduce**, with one rounding nit: `ridge mean >= 0.235` as
+  literally written catches **32** of 33, because trial 69's ridge mean is 0.2348377. At the exact
+  value it is 33 of 33 at 6 of 365, as the table says. Report the rule to more digits.
+- **The ceiling reproduces**: true camera `ok` on **398 of 398**, and `unchecked` is exactly
+  `[far_baseline, far_service]` on **398 of 398** rows for both the true and the fitted camera. The
+  declared blind spot is confirmed on every trial.
+- **Trial 69 reproduces**: +132.4% focal, support 1.000, five lines all at fraction 1.0, all four
+  cross-court lines unchecked, `ok` False with `worst = "too_few_lines"`.
+
+### 2. G7 — an independent label, which strengthens the headline
+
+The published label is the fitted focal length. That is a proxy, and the evidence file says so. I
+built the label the proxy stands in for: **a trial is wrong if its worst line is more than 0.10 m
+from the exact rendering camera** (the `M` readout, which is finite where `L` is not) — a purely
+geometric label that never touches focal length.
+
+- It marks **34** wrong. It agrees with the focal label on all 33 and adds exactly one: **trial 32**.
+- Against it, **`paint_check(...).ok` catches 34 of 34 with 0 false flags in 364**; ridge
+  fraction-found has **AUC 1.0000** and ridge mean 0.9996.
+- Among the 365 focal-labelled "right" cameras the worst line never exceeds **6.1 cm** apart from
+  trial 32, so there is **no hidden grossly-wrong camera** sitting unflagged inside the right group.
+
+**Trial 32 is a genuine mislabel, and the write-up's reading of it is correct.** Its focal is right
+to 0.01% but its camera centre is at x = 4.112 m against about 5.485 m for a right fit: **a 1.37 m
+lateral shift**, with every sideline and centre-service line 1.36-1.37 m out on the `M` readout and
+`L` infinite (the fitted line is parallel to truth). The instruments are right about it. `WRONG_F_REL`
+and the row are untouched in the committed code and the trial is excluded from nothing, so **hard
+rule 8 is honoured**.
+
+### 3. G7 — what is weaker than the headline
+
+**a. The pre-registered held-out verdict is split-seed brittle.** Split seed 0 was fixed in the
+pre-registration, so this is not selection after the fact — but the label it produces is close to a
+coin flip. Re-running the identical procedure on split seeds 0-9:
+
+| Instrument | held-out catch across seeds 0-9 | false flag | SEPARATES on |
+|---|---|---|---|
+| `paint_check` support | 0.765-1.000 | 0.0000-0.0055 | **3 of 10** |
+| ridge mean | 0.765-1.000 | 0.0000-0.0055 | **3 of 10** |
+| ridge fraction found | 0.471-1.000 | 0.0000-0.0055 | **3 of 10** |
+| `paint_check` worst line | 0.824-1.000 | 0.0000-0.0055 | 4 of 10 |
+| ridge median | 0.765-1.000 | 0.0000-0.1694 | **0 of 10** |
+
+The cause is the procedure, not the signal: the threshold is set at *exactly* 90% catch on a train
+half holding 16 wrong cameras, which leaves no margin, and two misses out of 17 in the held-out half
+flip SEPARATES to PARTIAL. **The durable result is the whole-population one** — 33/33 at 1/365, or
+34/34 at 0/364 under the geometric label — which involves no split at all. A future version of this
+bar should set the threshold with margin (e.g. at 100% train catch) or report the split distribution.
+
+**b. Three of the four whole-population rules are in-sample.** `ridge_found < 1.0`,
+`ridge_mean >= 0.2348` and `support < 0.90` were chosen after seeing these 398 rows. Only
+**`paint_check(...).ok` has no free parameter fitted in this run**, which is exactly why it is the
+one worth quoting.
+
+**c. `paint_check` is graded on its own development family, and the provenance is missing.** Its
+docstring says "Thresholds were set on development seeds (docs/evidence/court-camera3d.md, G5)" and
+`camtrack.TrackConfig` cites "evidence G5 notes" — **there is no G5 section in this file, or
+anywhere in `docs/`.** The only record of those dev numbers is a bullet list in
+`.claude/journals/lead.md`. So the six defaults that produce the headline have no recorded sweep, no
+recorded dev population and no recorded alternative. The mitigation is real and I checked it: the
+**ridge residual, defined in the pre-registration and never tuned, matches `paint_check` exactly**
+(33/33 at 1/365; AUC 1.0000 under the geometric label), so the result does not depend on the tuned
+instrument. But the citation should either point at a section that exists or be removed.
+
+**d. The label is not circular.** The label reads `f_fit` against the rendering camera's focal;
+instruments (1) and (2) read image intensities along projected lines and never see a focal length.
+The one shared object is the fit itself, which supplies both `f_fit` and the camera the photometric
+instruments are scored on — that shortens the distance between label and instrument, but it cannot
+manufacture the separation, and the geometric label above removes the shared term entirely and gives
+a *better* result. **The null control does what it claims** and no more: permuting labels destroys
+the separation on all seven instruments (`separates_rate` 0.000, held-out catch equal to false-flag
+rate). It tests the split-and-threshold procedure. It cannot test for dev-data contamination.
+
+**e. The separator has essentially no power inside the accepted set.** Over the 364 accepted cameras
+excluding trial 32 (worst line <= 1.48 cm), Spearman rho against the worst line is -0.682 for support
+and +0.667 for ridge mean, but against the quantity the product cares about — the far baseline `L`
+error — it is only **-0.265 / +0.271**, and **ridge fraction-found is constant at 1.000 on all 364**,
+i.e. exactly zero resolving power. This is the arithmetic behind the write-up's own caveat: G7
+separates grossly wrong from right, and says nothing about 5 cm.
+
+**f. Provenance of the run is clean.** Pre-registration `adafc41` 21:04:04; instrument `026c55b`
+21:08:31; rows file written 21:26 (about 1,059 s after the instrument commit, matching the recorded
+wall time); results `db33a45` 21:51:51. The rows file stamps `commit 026c55b`, `dirty false`.
+`git diff 026c55b HEAD -- tools/court_cost_separation.py` is empty, so the instrument has not moved
+since it was committed, and `backend/swingvision/camera3d.py` was last touched at `0ed62d6`, before
+the pre-registration — **`paint_check`'s thresholds were frozen before the bar was written.**
+`backend/tests/test_cost_separation.py` (8 tests) pins the harness — the label rule, the threshold
+picker, the orientation, the split, the verdict bands — not the result. It passes.
+
+### 4. The post-G3 tracker fixes — re-run by qa, on dev seeds and on fresh ones
+
+The dev numbers exist **only** in `.claude/journals/lead.md`. They are in no evidence file and no
+STATE row, and STATE's G3 row still reads KILL, so **the project record does not overclaim.** I ran
+`tools/court_track_sim.py` myself, 120 frames per seed, measured against the exact synthetic camera
+that rendered each frame.
+
+| Run | worst line p90 | steady jump | knock recovery | locked / locked-but-wrong / unlocked |
+|---|---|---|---|---|
+| **Dev seeds 100-102** (the quoted seeds) | **3.52 cm** | 0.18 px | 1, 1, 1 frames | 358 / **1** / 2 |
+| **Fresh seeds 200-202** (never used in development) | **2.41 cm** | 0.18 px | 1, 1, 1 frames | 358 / **1** / 2 |
+| **Fresh seeds 200-202, knock x4** | 198.8 m, KILL | 1.93 px | never, never, never | 180 / **0** / 180 |
+
+- **The dev numbers reproduce exactly** (3.5 cm, 0.18 px, 1-frame recovery, 1 locked-but-wrong frame).
+- **They are not tuned to the seeds they are quoted against.** `camtrack.TrackConfig` says in a
+  comment that `q_rot`/`q_pos` were moved 1e-2 -> 100 on "dev seed 100", one of those three seeds — so
+  the concern was well founded — but on three seeds that played no part in development the tracker is
+  **better**, 2.41 cm against 3.52 cm, with the same jump, the same recovery and the same lock
+  behaviour. The `knock x4` claim ("lost, never recovered, never falsely locked") also reproduces on
+  fresh seeds: 3 of 3 lost at the knock, 0 of 180 locked frames wrong.
+- **What this does NOT establish.** There is no pre-registered gate for the fixed tracker. G3's gate
+  was pre-registered, the tracker failed it, and **a failed gate stays failed**; the "PASS" string
+  above is the sim's own comparison against C1's 5 cm bar, not a gate anyone registered in advance.
+  Same renderer, same sway model, same knock, same three-seed design, no lens, no codec, no players,
+  no real footage. The correct status is still UNSCORED.
+
+**And the silent wrong lock is still there — on both seed sets.** On seed 101 and on seed 201, the
+knock frame is reported `locked=True, status=tracking` while the court is **70.4 cm** (dev) and
+**56.8 cm** (fresh) out. The error is concentrated exactly where the check cannot look:
+
+| line | seed 101, frame 60 | seed 201, frame 60 |
+|---|---|---|
+| far baseline | **70.4 cm** | **56.8 cm** |
+| far service line | 44.2 cm | 35.8 cm |
+| worst near line | 10.3 cm | 8.0 cm |
+
+`far_baseline` and `far_service` are precisely the two lines `paint_check` lists as `unchecked` on
+398 of 398 G7 trials. **G7's declared blind spot is not hypothetical: it produces a confident wrong
+lock in the tracker, on held-out seeds, at more than half a metre.** On the other two seeds of each
+set the same frame is correctly reported unlocked, so the failure rate is 1 frame in 3 seeds, twice
+over, at the one event the check exists to catch.
+
+### 5. Rule 7 — the `paintfit` lift
+
+**CONFIRMED independently.** I created a fresh git worktree at `b3af0ca` (the pre-lift state, where
+the fitter still lives inside `tools/court_fit_cp1.py`), ran three control arms in both trees with my
+own comparator, and compared every value in every row:
+
+- **ctl1** (3 trials, seed 7), **ctl2** (4 trials, seed 0), **ctl3a** (1 trial): **768 values
+  compared, 0 differing.**
+- `backend/tests/test_paintfit_lift.py` passes: arm A3 trial 0 reproduces the pre-lift `f`, lambda,
+  height, kappa, sigma, every per-line point count and three line errors at `rel 1e-9`.
+
+The arms I chose deliberately overlap only partly with the ones the author checked, and ctl2 exercises
+sensor noise and a noisy seed rather than the noiseless path.
+
+### 6. libx265 non-determinism
+
+**CONFIRMED, and isolated to the encoder.** I encoded one **byte-identical** 30-frame array (hash
+checked) four times through `court_fit_cp1.codec_mean`:
+
+| encode | kbps | decoded 30-frame mean differs from encode 0 |
+|---|---|---|
+| 0 | 18919.7 | — |
+| 1 | 18933.3 | 1,752,849 of 2,073,600 px, max delta 1.27 DN |
+| 2 | 18945.2 | 1,837,704 px, max delta 1.47 DN |
+| 3 | 18937.2 | 1,833,427 px, max delta 1.33 DN |
+
+Downstream, arm P seed 1, the same trial run three times end to end:
+
+| trial | far baseline `L` over 3 repeats | spread | bitrates |
+|---|---|---|---|
+| 0 | 1.196 / 0.960 / 0.894 cm | 0.302 cm | 18937 / 18941 / 18762 |
+| 1 | 3.247 / 3.011 / 3.104 cm | 0.236 cm | 20504 / 20004 / 20119 |
+| 2 | 1.792 / 1.225 / 1.882 cm | **0.657 cm** | 16871 / 16982 / 16891 |
+
+"A single trial's far-baseline number carries up to ~0.7 cm of encoder noise" is right. **This
+qualifies every codec-arm number in CP1 and every per-trial number in G1 and G7**, including G7's
+33/398 wrong-camera count, which will differ on a re-run — the pre-registration anticipated that and
+recomputed the label from the run actually scored, which was the right call. Pinning
+`pools=1:frame-threads=1` before any codec arm-vs-arm comparison remains the outstanding action.
+
+### 7. The single most important thing that has not been measured
+
+**Nothing in this repository can see the far baseline.** `paint_check` marks it `unchecked` on 398 of
+398 G7 trials; the ridge residual inherits the same width filter; the tracker's lock flag therefore
+certifies only the near half of the court; and section 4 above shows a pose 0.57-0.70 m out on that
+line passing the check and reporting `tracking`. The far baseline is simultaneously the line CP1
+spends almost all its margin on (p90 3.58 cm of a 5 cm bar), the line C1 says a four-point model
+loses first, and the line no shipped check can observe. **An acceptance test that can see the far
+lines — or an honest statement that "locked" means "locked on the near half" — is the gap.**
+Everything G7 established is about grossly wrong cameras; nothing measured here bears on 5 cm.
+
+### STATE row this audit implies (text only; qa did not edit `docs/STATE.md`)
+
+> **QA AUDIT 2026-09-18: G7 CONFIRMED and strengthened; the tracker fixes reproduce on HELD-OUT seeds;
+> the blind spot bites** — qa, branch `camera3d-pnp-paintfit`. Re-derived from raw rows: population
+> 33/365, all 7 AUCs, the held-out table, the ceiling and the 4 rules reproduce exactly; under an
+> **independent geometric label** (worst line > 0.10 m from the rendering camera, no focal length)
+> `paint_check(...).ok` catches **34 of 34 at 0 false flags in 364** and trial 32 is confirmed a
+> mislabel (1.37 m lateral shift, focal right to 0.01%). **Qualified:** the pre-registered held-out
+> "SEPARATES" is split-seed brittle (3 of 10 seeds; the whole-population 33/33 is the durable
+> number); three of the four rules are in-sample; `paint_check`'s thresholds cite a `G5` section that
+> does not exist, though the untuned ridge residual matches them exactly. **Tracker fixes re-run by
+> qa: dev seeds 100-102 reproduce (3.52 cm p90, 0.18 px, 1-frame recovery) and FRESH seeds 200-202
+> are better (2.41 cm), so they are not tuned to their quoted seeds — but they remain UNSCORED and
+> G3's KILL stands, and on 1 seed of each set the knock frame reports `locked`/`tracking` while 70.4
+> / 56.8 cm out, all of it on the far baseline and far service line that `paint_check` cannot see.**
+> Rule 7 lift CONFIRMED (fresh `b3af0ca` worktree, ctl1+ctl2+ctl3a, 768 values, 0 differing). libx265
+> non-determinism CONFIRMED and isolated to the encoder (4 encodes of a byte-identical frame array:
+> 18919.7-18945.2 kbps, up to 1.47 DN; far baseline spread 0.24-0.66 cm over repeats of one trial) |
+> [evidence/court-camera3d.md](evidence/court-camera3d.md)
