@@ -43,3 +43,6 @@ docs/evidence/court-camera3d.md + 1 STATE row if material. Commit locally, DO NO
 - PENDING: knock x4 on fresh seeds running -> scratchpad/sim_fresh_k4.json. Then write the evidence section + commit.
 - knock x4 FRESH seeds 200-202: lost at frame 60 on 3/3, never recovered, 0/180 locked-but-wrong, worst p90 while locked 2.34 cm => dev claim reproduces held-out.
 - Evidence section appended to docs/evidence/court-camera3d.md (12-claim verdict table + 7 subsections + STATE row as TEXT ONLY; did not touch docs/STATE.md). Committing next.
+
+## STATE (final)
+- COMPLETE 2026-09-18. Audit section appended to docs/evidence/court-camera3d.md and committed (1f377af, NOT pushed). Memory updated (g7-separation-audit, tracker-fixes-hold-on-held-out-seeds, pre-court-verifications; MEMORY.md compacted 166 -> ~40 lines). docs/STATE.md NOT touched - the row is text inside the evidence section. Scratch artefacts in the session scratchpad; pristine worktree removed.
