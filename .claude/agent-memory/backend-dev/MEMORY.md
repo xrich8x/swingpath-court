@@ -24,3 +24,4 @@ monolithic file; nothing was dropped.
 - [Court gold provenance is UNATTRIBUTED](court-gold-provenance-is-unattributed.md) — `_exact` is a checkbox not a human marker; 9/20 refs placed by a self-grading agent session; blame values, not commits
 - [Core ML export runs on LINUX](coreml-export-runs-on-linux.md) — 1x CI billing not macOS's 10x; the manylinux1 tag trap, and ultralytics' silent .mlmodel fallback
 - [Sub-pixel renderer + boundary degeneracy](subpixel-renderer-and-boundary-degeneracy.md) — CP1: blur BEFORE binning; thin line on a colour step needs kappa (~1.3 cm per 5%)
+- [Photometric lock signal SEPARATES](photometric-lock-signal-separates.md) — paint_check catches 33/33 wrong cameras at 1 in 365; the fit's OWN cost is INVERTED, AUC 0.216
