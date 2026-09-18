@@ -320,6 +320,7 @@ class PaintFitResult:
     sigma_px: float
     kappa: float | None
     n_points: dict
+    meas: dict = field(default_factory=dict)
 
 
 def grey_mean(frames) -> np.ndarray:
@@ -357,4 +358,217 @@ def fit_camera_on_paint(frames, seed: CourtCamera, *, pose_only: bool = False,
     out = CourtCamera.from_paintfit(
         cam, PINNED_PAINT, seed_source=seed.extra.get("seed_source", "camera"),
         paint_fit=True, paint_points=int(sum(n_pts.values())))
-    return PaintFitResult(out, float(sig), kappa, n_pts)
+    return PaintFitResult(out, float(sig), kappa, n_pts, meas)
+
+
+# ------------------------------------------------- paint measurements -----
+def ridge_offsets(grey, pts, nrm, reach, min_dn, step=0.5):
+    """Sub-pixel offset along `nrm` from each point to the nearest bright paint
+    ridge within +-`reach` px, and whether one was found. The ridge is the local
+    maximum of the grey profile nearest the point that stands `min_dn` above the
+    profile's median; its position is refined by a parabola through 3 samples."""
+    from scipy import ndimage
+    s = np.arange(-reach, reach + 1e-9, step)
+    xy = pts[:, None, :] + s[None, :, None] * nrm[:, None, :]
+    prof = ndimage.map_coordinates(np.asarray(grey, float), [xy[..., 1].ravel(), xy[..., 0].ravel()],
+                                   order=1, mode="nearest").reshape(len(pts), len(s))
+    base = np.median(prof, axis=1)
+    peak = np.zeros_like(prof, bool)
+    peak[:, 1:-1] = (prof[:, 1:-1] >= prof[:, :-2]) & (prof[:, 1:-1] > prof[:, 2:])
+    peak &= prof >= base[:, None] + min_dn
+    dist = np.where(peak, np.abs(s)[None, :], np.inf)
+    k = np.argmin(dist, axis=1)
+    found = np.isfinite(dist[np.arange(len(pts)), k])
+    k = np.clip(k, 1, len(s) - 2)
+    r = np.arange(len(pts))
+    y0, y1, y2 = prof[r, k - 1], prof[r, k], prof[r, k + 1]
+    den = y0 - 2 * y1 + y2
+    with np.errstate(divide="ignore", invalid="ignore"):
+        frac = np.where(np.abs(den) > 1e-9, 0.5 * (y0 - y2) / den, 0.0)
+    return s[k] + np.clip(frac, -0.5, 0.5) * step, found
+
+
+def paint_samples(step_m, clear_m=0.3):
+    """Points every `step_m` along the CENTRE of every painted line
+    (paintfit.paint_lines: ITF positions are line edges, the paint ridge is
+    its centre) and each point's line direction. Points within `clear_m` of
+    another painted line are dropped: at a crossing the profile is paint on
+    both sides and the ridge is meaningless. The net is not paint."""
+    lines = paintfit.paint_lines()
+    pts, dirs = [], []
+    for L in lines:
+        n = max(2, int(np.linalg.norm(L.b - L.a) / step_m))
+        t = np.linspace(0.0, 1.0, n)[:, None]
+        g = (1 - t) * L.a + t * L.b
+        near = np.zeros(len(g), bool)
+        for M in lines:
+            if M is L:
+                continue
+            lo, hi = np.minimum(M.a, M.b), np.maximum(M.a, M.b)
+            d = np.linalg.norm(g - np.clip(g, lo, hi), axis=1)     # distance to segment M
+            near |= d < clear_m + M.width / 2
+        g = g[~near]
+        pts.append(g)
+        dirs.append(np.repeat(((L.b - L.a) / np.linalg.norm(L.b - L.a))[None], len(g), 0))
+    g, d = np.vstack(pts), np.vstack(dirs)
+    return np.column_stack([g, np.zeros(len(g))]), np.column_stack([d, np.zeros(len(d))])
+
+
+def line_normals(cam: CourtCamera, world, wdir):
+    """Unit image normals (undistorted frame) of each sample's line."""
+    pf = cam.to_paintfit()
+    a, _ = pf.to_undist(world)
+    b, _ = pf.to_undist(world + 0.05 * wdir)
+    d = b - a
+    d /= np.maximum(np.linalg.norm(d, axis=1, keepdims=True), 1e-12)
+    return np.column_stack([-d[:, 1], d[:, 0]])
+
+
+_SUPPORT_SAMPLES = {}
+
+
+def _samples(step_m):
+    """paint_samples plus, for each sample, its paintfit line index and width."""
+    if step_m not in _SUPPORT_SAMPLES:
+        world, wdir = paint_samples(step_m)
+        lines = paintfit.paint_lines()
+        ids = np.empty(len(world), int)
+        for k, p in enumerate(world):
+            best = None
+            for i, L in enumerate(lines):
+                d = L.b - L.a
+                u = np.clip((p[:2] - L.a) @ d / (d @ d), 0.0, 1.0)
+                e = float(np.linalg.norm(L.a + u * d - p[:2]))
+                if best is None or e < best[0]:
+                    best = (e, i)
+            ids[k] = best[1]
+        _SUPPORT_SAMPLES[step_m] = (world, wdir, ids, [L.name for L in lines],
+                                    np.array([L.width for L in lines]))
+    return _SUPPORT_SAMPLES[step_m]
+
+
+@dataclass
+class PaintCheck:
+    ok: bool
+    support: float                 # over every sample on a checked line
+    lines: dict                    # name -> (fraction on paint, n samples)
+    unchecked: list                # lines too thin (or out of frame) to check
+    worst: str | None
+
+
+def paint_check(grey, cam: CourtCamera, *, tol_px_720: float = 1.5, min_dn: float = 6.0,
+                min_line_frac: float = 0.5, min_width_px_720: float = 0.67,
+                min_samples: int = 6, min_across: int = 2, min_along: int = 2,
+                step_m: float = 0.4) -> PaintCheck:
+    """Does `cam` put the court ON THE PAINT? For every painted line whose
+    projected paint is at least `min_width_px_720` wide (thinner lines, usually
+    the far ones, are listed as unchecked - a ridge finder cannot see them), the
+    fraction of its in-frame samples with a paint ridge within `tol_px_720` of
+    where `cam` puts them. `ok` needs EVERY checked line >= `min_line_frac`:
+    a court slid in depth keeps its long sidelines on paint and loses one
+    baseline, which a court-wide average hides. It also needs at least
+    `min_across` checkable cross-court lines and `min_along` long lines: a camera
+    that pushes lines OUT of the frame must not pass by leaving nothing to check.
+
+    An INDEPENDENT lock check - it reads the image at the camera's own
+    predictions over the whole court, not at points a tracker chose - and a
+    lock/no-lock signal only, never an accuracy measure (rule 1). Thresholds
+    were set on development seeds (docs/evidence/court-camera3d.md, G5)."""
+    world, wdir, ids, names, widths = _samples(step_m)
+    w, h = cam.image_wh
+    s = h / 720.0
+    uv = cam.project(world)
+    inb = np.isfinite(uv).all(1) & (uv[:, 0] >= 8) & (uv[:, 0] < w - 8) &         (uv[:, 1] >= 8) & (uv[:, 1] < h - 8)
+    nrm = np.zeros_like(uv)
+    wpx = np.zeros(len(world))
+    if inb.any():
+        nrm[inb] = line_normals(cam, world[inb], wdir[inb])
+        n3 = np.column_stack([-wdir[inb, 1], wdir[inb, 0], np.zeros(inb.sum())])
+        half = (widths[ids[inb]] / 2.0)[:, None]
+        wpx[inb] = np.linalg.norm(cam.project(world[inb] + n3 * half)
+                                  - cam.project(world[inb] - n3 * half), axis=1)
+    use = inb & (wpx >= min_width_px_720 * s)
+    lines, unchecked = {}, []
+    hits = np.zeros(len(world), bool)
+    if use.any():
+        tol = tol_px_720 * s
+        off, found = ridge_offsets(grey, uv[use], nrm[use], 3.0 * tol, min_dn)
+        hits[use] = found & (np.abs(off) <= tol)
+    for i, nm in enumerate(names):
+        m = use & (ids == i)
+        if m.sum() < min_samples:
+            unchecked.append(nm)
+            continue
+        lines[nm] = (float(hits[m].mean()), int(m.sum()))
+    if not lines:
+        return PaintCheck(False, float("nan"), {}, unchecked, None)
+    worst = min(lines, key=lambda k: lines[k][0])
+    checked = use & np.isin(ids, [names.index(k) for k in lines])
+    across = sum(1 for k in lines if abs(wdir[ids == names.index(k)][0, 0]) > 0.5)
+    ok = (lines[worst][0] >= min_line_frac and across >= min_across
+          and len(lines) - across >= min_along)
+    if lines[worst][0] >= min_line_frac and not ok:
+        worst = "too_few_lines"
+    return PaintCheck(ok, float(hits[checked].mean()), lines, unchecked, worst)
+
+
+def paint_support(grey, cam: CourtCamera, **kw) -> float:
+    """Court-wide fraction of checkable paint samples that sit on paint."""
+    return paint_check(grey, cam, **kw).support
+
+
+def dolly_zoom(cam: CourtCamera, scale: float) -> CourtCamera:
+    """`cam` with focal length x `scale` and its centre moved along the optical
+    axis so that the court's centre keeps its image position and size: the
+    direction in which a court fitted to its sidelines is least constrained in
+    depth."""
+    c = np.array([court.X_CENTER, court.NET_Y, 0.0])
+    R = cam.R
+    z_c = float((R @ c + cam.tvec)[2])
+    Cn = cam.position_m() - (scale - 1.0) * z_c * R[2]
+    return CourtCamera(cam.f_px * scale, cam.rvec, -R @ Cn, cam.image_wh, cam.lens,
+                       cam.dist, cam.pinned_by, dict(cam.extra))
+
+
+def shifted(cam: CourtCamera, dx_m: float) -> CourtCamera:
+    """`cam` moved `dx_m` across the court, orientation kept: a court fitted
+    one alley over (singles and doubles sidelines swapped)."""
+    C = cam.position_m() + [dx_m, 0.0, 0.0]
+    return CourtCamera(cam.f_px, cam.rvec, -cam.R @ C, cam.image_wh, cam.lens, cam.dist,
+                       cam.pinned_by, dict(cam.extra))
+
+
+RESTARTS = (("dolly", 1.15), ("dolly", 0.87), ("dolly", 1.33), ("dolly", 0.75),
+            ("shift", court.ALLEY), ("shift", -court.ALLEY))
+
+
+def fit_camera_checked(frames, seed: CourtCamera, *, restarts=RESTARTS, cfg=None,
+                       pose_only: bool = False) -> PaintFitResult:
+    """`fit_camera_on_paint`, then `paint_check`; when the check fails, re-fit
+    from variants of the seed along the two known false-basin directions (a
+    dolly-zoom in depth, a one-alley shift across) and keep the first that
+    passes, else the one whose worst line is best. `pose_only` never restarts.
+    `result.camera.extra` records `paint_check` ("pass" / "FAIL:<line>") and
+    `starts`. A FAIL is a court the app must treat as NOT LOCKED."""
+    grey = np.clip(grey_mean(frames), 0, 255).astype(np.uint8)
+    tried = []
+    for k, rs in enumerate((None,) + tuple(restarts)):
+        if k and pose_only:
+            break
+        start = (seed if rs is None else
+                 dolly_zoom(seed, rs[1]) if rs[0] == "dolly" else shifted(seed, rs[1]))
+        try:
+            res = fit_camera_on_paint(grey.astype(float), start, pose_only=pose_only, cfg=cfg)
+        except Exception:
+            continue
+        chk = paint_check(grey, res.camera)
+        tried.append((chk, res))
+        if chk.ok:
+            break
+    if not tried:
+        raise RuntimeError("paint fit failed from every start")
+    chk, res = max(tried, key=lambda cr: (cr[0].ok, min((v[0] for v in cr[0].lines.values()),
+                                                         default=-1.0)))
+    res.camera.extra.update(paint_check="pass" if chk.ok else f"FAIL:{chk.worst}",
+                            starts=len(tried))
+    return res

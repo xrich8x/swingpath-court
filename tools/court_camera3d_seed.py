@@ -9,6 +9,8 @@ Arm K:  CP1 arm P's scene (Brown lens, fence/truss clutter, noise, 30-frame mean
         The principal point is the image centre (CP1 passed the true cx; qa's
         latent-leak finding).
 Arm K0: the same seeds, scored WITHOUT the paint fit - the keypoint camera alone.
+Arm KC (--checked): arm K with camera3d.fit_camera_checked - the fit is checked
+        ON THE PAINT (per line) and re-started from dolly-zoom seeds if it fails.
 
 Measured against exact projected court geometry from CP1's known synthetic camera,
 with CP1's own readouts (M: fitted model; L: measured line). K0 has only M.
@@ -80,10 +82,22 @@ def run_trial(job):
         seed_pf = s.camera.to_paintfit()
         k0, _ = T.readouts(seed_pf, {}, T.paint_lines(), rcam, rcam)
         row["K0"] = {k: v["M"] for k, v in k0.items()}
-        fcam, meas, lines, sig, kappa = paintfit.r1_fit(img, None, seed_cam=seed_pf)
+        g8 = np.clip(img, 0, 255).astype(np.uint8)
+        if job.get("checked"):
+            res = camera3d.fit_camera_checked(img, s.camera)
+            fcam = res.camera.to_paintfit()
+            meas, lines = res.meas, paintfit.paint_lines()
+            sig, kappa = res.sigma_px, res.kappa
+            row.update({"check": res.camera.extra["paint_check"],
+                        "starts": res.camera.extra["starts"]})
+        else:
+            fcam, meas, lines, sig, kappa = paintfit.r1_fit(img, None, seed_cam=seed_pf)
         per, fb = T.readouts(fcam, meas, lines, rcam, rcam)
         row.update({"ok": True, "lines": per, "far_bl": fb, "sig_est": sig, "kappa": kappa,
-                    "f_fit": fcam.f, "lam_fit": fcam.lam, "cam_h": float(fcam.C[2])})
+                    "f_fit": fcam.f, "lam_fit": fcam.lam, "cam_h": float(fcam.C[2]),
+                    "params": fcam.params().tolist(), "seed_params": seed_pf.params().tolist(),
+                    "support": camera3d.paint_support(
+                        g8, camera3d.CourtCamera.from_paintfit(fcam, "fit"))})
     except Exception as ex:                       # a failed trial is a FAILURE row
         row.update({"ok": False, "error": repr(ex)})
     row["t_total_s"] = round(time.time() - t0, 2)
@@ -121,6 +135,11 @@ def summarise(rows):
                                  if "seed_f" in r], 90),
         "f_err_pct_p90": q([abs(r["f_fit"] - f_true) / f_true * 100 for r in ok], 90) if ok else None,
         "cam_h_abs_err_p90": q([abs(r["cam_h"] - T.MOUNT_M) for r in ok], 90) if ok else None,
+        "wrong_camera": int(sum(abs(r["f_fit"] - f_true) / f_true > 0.01 for r in ok)),
+        "check_failed": int(sum(str(r.get("check", "")).startswith("FAIL") for r in ok)),
+        "wrong_but_check_passed": int(sum(abs(r["f_fit"] - f_true) / f_true > 0.01
+                                          and r.get("check") == "pass" for r in ok)),
+        "restarted": int(sum(r.get("starts", 1) > 1 for r in ok)),
     }
 
 
@@ -131,11 +150,13 @@ def main():
     ap.add_argument("--seed", type=int, default=0)
     ap.add_argument("--workers", type=int, default=max(1, (os.cpu_count() or 2) - 2))
     ap.add_argument("--out", default=None)
+    ap.add_argument("--checked", action="store_true", help="arm KC")
     args = ap.parse_args()
     T._coverage_for(T.ARMS["P"])
     tmp = OUT_DIR / "tmp"
     tmp.mkdir(parents=True, exist_ok=True)
-    jobs = [{"trial": i, "seed": args.seed, "tmp": str(tmp)} for i in range(args.n)]
+    jobs = [{"trial": i, "seed": args.seed, "tmp": str(tmp), "checked": args.checked}
+            for i in range(args.n)]
     t0 = time.time()
     with ProcessPoolExecutor(args.workers) as ex:
         rows = []
@@ -147,12 +168,14 @@ def main():
     s["wall_s"] = time.time() - t0
     stamp = {"tool": "tools/court_camera3d_seed.py", "commit": T.git_sha(), "n": args.n,
              "seed": args.seed, "workers": args.workers, "scene": "CP1 arm P",
+             "arm": "KC" if args.checked else "K",
              "seed_model": f"{len(court.LANDMARKS_3D)} 3D keypoints in frame, sigma "
                            f"{T.TAP_SIGMA_PRIMARY} px + {N_OUTLIERS} outliers {OUTLIER_PX} px",
              "principal_point": "image centre", "fitter": paintfit.FitConfig.as_dict(),
              "codec": T.X265,
              "measured_against": "exact projected court geometry from CP1's synthetic camera"}
-    out = Path(args.out or OUT_DIR / f"K_seed{args.seed}_n{args.n}.json")
+    arm = "KC" if args.checked else "K"
+    out = Path(args.out or OUT_DIR / f"{arm}_seed{args.seed}_n{args.n}.json")
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(json.dumps(T._jsonable({"stamp": stamp, "summary": s, "rows": rows}), indent=1),
                    encoding="utf-8")
@@ -161,7 +184,8 @@ def main():
     for n, v in s["K"].items():
         print(f"{n:<26}{v['M_p90']:9.4f}{v['L_p90']:9.4f}{v['max_over_5cm']:6d}  "
               f"{v['verdict']:<9} {s['K0'][n]['M_p90']:9.3f} {s['K0'][n]['verdict']}")
-    print({k: s[k] for k in ("outliers_kept_by_seed", "cross_ratio_dropped_any",
+    print({k: s[k] for k in ("wrong_camera", "check_failed", "wrong_but_check_passed",
+                             "restarted", "outliers_kept_by_seed", "cross_ratio_dropped_any",
                              "seed_f_err_pct_p90", "f_err_pct_p90", "cam_h_abs_err_p90")})
     print("wrote", out)
 

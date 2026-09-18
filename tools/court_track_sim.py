@@ -18,8 +18,11 @@ the worst perpendicular ground distance (metres), as in C1 and CP1. Also: the
 largest frame-to-frame "grid jump" - how far the tracked far baseline moved in
 the image beyond how far the true one moved (px).
 
-The pre-registered gate is in docs/evidence/court-camera3d.md and was committed
-before the first scored run.
+The pre-registered gates are in docs/evidence/court-camera3d.md (G3, and G6 for
+the checked tracker), each committed before its first scored run. From G6 on,
+setup uses camera3d.fit_camera_checked and every frame records whether the
+tracker claimed a lock; `locked_wrong` counts frames that claim a lock while
+some line is more than 10 cm out - the silent failure G3 exposed.
 
 THE RENDERER IS SIMPLER THAN CP1's: 5 cm paint on a flat surface, supersampled
 2x2, Gaussian blur, sensor noise, a far fence with posts as clutter; no lens
@@ -119,10 +122,10 @@ def render(cam: camera3d.CourtCamera, rng, contrast=110.0, psf=0.9, noise=True, 
 
 
 # --------------------------------------------------------------- motion ----
-def sway_path(n, rng, knock_s=KNOCK_S):
+def sway_path(n, rng, knock_s=KNOCK_S, knock_scale=1.0):
     """Per-frame (yaw, pitch, roll, dx, dy, dz) offsets: a fence swaying in wind
     (sinusoids plus a slow random walk, ~0.3 deg and ~1 cm) and one knock at
-    `knock_s` (+1.5 deg pitch, +1 deg yaw, held)."""
+    `knock_s` (+1.5 deg pitch, +1 deg yaw, held; x `knock_scale`)."""
     t = np.arange(n) / FPS
     out = np.zeros((n, 6))
     amp = np.radians([0.3, 0.3, 0.15])
@@ -135,8 +138,8 @@ def sway_path(n, rng, knock_s=KNOCK_S):
     for k in range(3, 6):
         out[:, k] = 0.01 * np.sin(2 * np.pi * rng.uniform(0.5, 2.0) * t + rng.uniform(0, 6.3))
     knock = t >= knock_s
-    out[knock, 0] += np.radians(1.0)
-    out[knock, 1] += np.radians(1.5)
+    out[knock, 0] += np.radians(1.0 * knock_scale)
+    out[knock, 1] += np.radians(1.5 * knock_scale)
     return out
 
 
@@ -183,18 +186,26 @@ def summarise(runs):
         after = [i for i in range(r["knock"], len(r["frames"]))
                  if max(r["frames"][i].values()) <= C1.BAR_M]
         recovery.append(after[0] - r["knock"] if after else None)
-    return {"lines": lines, "worst_p90_m": worst, "verdict": verdict,
-            "max_steady_jump_px": float(np.max(steady)) if steady else 0.0,
-            "max_jump_px": float(np.max([j for r in runs for _, j in r["jumps"]])),
-            "knock_recovery_frames": recovery}
+    out = {"lines": lines, "worst_p90_m": worst, "verdict": verdict,
+           "max_steady_jump_px": float(np.max(steady)) if steady else 0.0,
+           "max_jump_px": float(np.max([j for r in runs for _, j in r["jumps"]])),
+           "knock_recovery_frames": recovery}
+    if all(r.get("locked") is not None for r in runs):
+        lk = [(l, max(f.values())) for r in runs for l, f in zip(r["locked"], r["frames"])]
+        out["locked_frames"] = int(sum(l for l, _ in lk))
+        out["locked_wrong"] = int(sum(l and e > C1.KILL_M for l, e in lk))
+        out["unlocked_frames"] = int(sum(not l for l, _ in lk))
+        lw = [e for l, e in lk if l]
+        out["locked_worst_p90_m"] = float(np.percentile(lw, 90)) if lw else math.inf
+    return out
 
 
 # ----------------------------------------------------------------- arms ----
-def run(seed=0, n=120, seed_sigma=14.78, verbose=True):
+def run(seed=0, n=120, seed_sigma=14.78, verbose=True, knock_scale=1.0):
     r_path, r_img, r_seed = [np.random.default_rng(s) for s in
                              np.random.SeedSequence(seed).spawn(3)]
     p0 = base_pitch()
-    path = sway_path(n, r_path)
+    path = sway_path(n, r_path, knock_scale=knock_scale)
     truths = [camera(p[0], p0 + p[1], p[2], p[3], p[4], p[5]) for p in path]
 
     # setup on frame 0 exactly as the product would: keypoints -> PnP -> paint fit
@@ -205,7 +216,7 @@ def run(seed=0, n=120, seed_sigma=14.78, verbose=True):
                              truths[0].project(list(court.LANDMARKS_3D.values())))
            if np.isfinite(uv).all() and 0 <= uv[0] < W and 0 <= uv[1] < H}
     seed_cam = camera3d.solve_pnp_seed(kps, (W, H)).camera
-    setup = camera3d.fit_camera_on_paint(f0, seed_cam).camera
+    setup = camera3d.fit_camera_checked(f0, seed_cam).camera
     setup_err = line_errors(truths[0], setup.ground_point)
     if verbose:
         print(f"setup: worst line {max(setup_err.values()) * 100:.2f} cm, "
@@ -217,7 +228,7 @@ def run(seed=0, n=120, seed_sigma=14.78, verbose=True):
     res = {"camtrack": [], "lock_step": []}
     jumps = {"camtrack": [], "lock_step": []}
     prev = {"camtrack": None, "lock_step": None, "true": None}
-    status = []
+    status, locked = [], []
     frame = f0
     for i, tc in enumerate(truths):
         if i:
@@ -225,6 +236,7 @@ def run(seed=0, n=120, seed_sigma=14.78, verbose=True):
         img8 = np.clip(frame, 0, 255).astype(np.uint8)
         st = tracker.step(img8, i / FPS)
         status.append(st.status)
+        locked.append(bool(st.locked))
         if i:
             A, _ = calibration.court_lock_step(np.dstack([img8] * 3), Hb)
             Hb = A @ Hb
@@ -249,15 +261,18 @@ def run(seed=0, n=120, seed_sigma=14.78, verbose=True):
                   f"({time.time() - t0:.0f}s)", flush=True)
     return {
         "stamp": {"tool": "tools/court_track_sim.py", "seed": seed, "n_frames": n, "fps": FPS,
-                  "image": [W, H], "mount_m": MOUNT_M, "setback_m": SETBACK_M,
+                  "image": [W, H], "knock_scale": knock_scale, "mount_m": MOUNT_M, "setback_m": SETBACK_M,
                   "hfov_deg": HFOV_DEG, "seed_sigma_px": seed_sigma,
                   "tracker_cfg": vars(camtrack.TrackConfig()),
                   "measured_against": "the exact synthetic camera that rendered each frame",
                   "renderer": "flat court, 5 cm paint, 2x2 supersample, blur 0.9 px, "
                               "sensor noise, far fence with posts; no lens, no codec"},
         "setup_worst_m": max(setup_err.values()),
+        "setup_check": setup.extra.get("paint_check"),
         "status": status,
-        "runs": {arm: {"frames": res[arm], "jumps": jumps[arm], "knock": int(KNOCK_S * FPS)}
+        "locked": locked,
+        "runs": {arm: {"frames": res[arm], "jumps": jumps[arm], "knock": int(KNOCK_S * FPS),
+                       "locked": locked if arm == "camtrack" else None}
                  for arm in res},
     }
 
@@ -267,22 +282,29 @@ def main():
     ap.add_argument("--seeds", type=int, nargs="+", default=[0, 1, 2])
     ap.add_argument("--n", type=int, default=120)
     ap.add_argument("--out", default=None)
+    ap.add_argument("--knock-scale", type=float, default=1.0)
     a = ap.parse_args()
-    got = [run(s, a.n) for s in a.seeds]
+    got = [run(s, a.n, knock_scale=a.knock_scale) for s in a.seeds]
     summ = {arm: summarise([g["runs"][arm] for g in got]) for arm in ("camtrack", "lock_step")}
-    out = Path(a.out or OUT / f"seeds{'-'.join(map(str, a.seeds))}_n{a.n}.json")
+    tag = "" if a.knock_scale == 1.0 else f"_knock{a.knock_scale:g}"
+    out = Path(a.out or OUT / f"seeds{'-'.join(map(str, a.seeds))}_n{a.n}{tag}.json")
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(json.dumps({"summary": summ, "runs": got}, indent=1), encoding="utf-8")
     for arm, s in summ.items():
         print(f"{arm:10s} worst p90 {s['worst_p90_m'] * 100:8.2f} cm  {s['verdict']:13s} "
               f"steady jump {s['max_steady_jump_px']:.2f} px (all {s['max_jump_px']:.2f})  "
               f"knock recovery {s['knock_recovery_frames']} frames")
+        if "locked_frames" in s:
+            print(f"    locked {s['locked_frames']}  locked-but-wrong(>10 cm) {s['locked_wrong']}  "
+                  f"unlocked {s['unlocked_frames']}  worst-line p90 while locked "
+                  f"{s['locked_worst_p90_m'] * 100:.2f} cm")
         for nm, v in s["lines"].items():
             print(f"    {nm:26s} p50 {v['p50'] * 100:8.2f}  p90 {v['p90'] * 100:8.2f}  "
                   f"max {v['max'] * 100:8.2f} cm")
     for g in got:
         st = g["status"]
-        print(f"seed {g['stamp']['seed']}: setup worst line {g['setup_worst_m'] * 100:.2f} cm, "
+        print(f"seed {g['stamp']['seed']}: setup worst line {g['setup_worst_m'] * 100:.2f} cm "
+              f"(check {g['setup_check']}), "
               f"tracker status {({s: st.count(s) for s in sorted(set(st))})}")
     print("wrote", out)
 

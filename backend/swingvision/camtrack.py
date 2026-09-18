@@ -11,12 +11,16 @@ Per frame:
              checked; player boxes masked), then a RANSAC PnP gives a measured pose.
   2. SMOOTH - a constant-velocity Kalman filter on the 6-DOF pose absorbs fence
              sway and wind without jumping the court grid.
-  3. RE-FIT - paintfit's whole-court fit, pose only, from the filtered pose, when
-             the SPEC s1 drift test fires (tracked-point error over `drift_px`
-             for `drift_frames` frames) or every `refit_s` seconds.
-  4. RECOVER - when flow loses the court: detector -> PnP seed -> paint fit.
-             Until that succeeds the last good camera is held. It never calls
-             `courtfit.autodetect`, the search recorded CLOSED (SPEC s1, rule 3).
+  3. CHECK  - every frame, camera3d.paint_check asks whether the new pose puts
+             EVERY checkable line on the paint. It reads the image at the pose's
+             own predictions over the whole court, so a tracker that has followed
+             its points onto the wrong paint cannot vouch for itself (G3).
+  4. RECOVER - when flow is lost or the check fails twice running: a pose-only
+             paint fit from the last good camera (its first pass searches 40 px),
+             and only then a keypoint detector -> PnP seed -> paint fit. Until one
+             passes the check the last good camera is held and the step reports
+             `locked=False`. It never calls `courtfit.autodetect` (CLOSED).
+  5. RE-FIT - a pose-only paint fit every `refit_s` seconds (SPEC s1 backstop).
 
 EVERY THRESHOLD HERE IS UNMEASURED. SPEC s1's numbers were set for another
 mechanism; researcher found 15 px is ~5 m at the far baseline at 1080p/3 m.
@@ -29,7 +33,7 @@ from dataclasses import dataclass
 
 import numpy as np
 
-from . import camera3d, court, paintfit
+from . import camera3d, court
 
 
 PINNED_TRACK = ("tracked: paint points followed by optical flow from the last paint fit + "
@@ -38,9 +42,9 @@ PINNED_TRACK = ("tracked: paint points followed by optical flow from the last pa
 
 @dataclass
 class TrackConfig:
-    drift_px_720: float = 10.0      # SPEC s1's 15 px, read at 1080p; scales by height/720
-    drift_frames: int = 3           # SPEC s1: sustained, not a one-frame spike
     refit_s: float = 10.0           # SPEC s1 backstop
+    fail_frames: int = 2            # paint check fails this many frames running -> recover
+    recover_every: int = 5          # while lost, attempt recovery every N frames
     sample_step_m: float = 0.4      # spacing of tracked points along the lines
     min_tracked: int = 12
     lost_frac: float = 0.35         # fewer surviving points than this -> recover
@@ -48,17 +52,20 @@ class TrackConfig:
     ridge_px_720: float = 6.0       # paint search either side of the flowed point
     ridge_min_dn: float = 6.0       # paint must stand this far above its surround
     ransac_px_720: float = 3.0
-    q_rot: float = 1e-2             # process noise (white acceleration), rad^2 s^-3
-    q_pos: float = 1e-2             # m^2 s^-3
+    # process noise (white acceleration). G3 ran 1e-2: the filter lagged the sway
+    # and turned ~1 cm raw poses into 4-12 cm (dev seed 100; evidence G5 notes).
+    q_rot: float = 100.0            # rad^2 s^-3
+    q_pos: float = 100.0            # m^2 s^-3
     r_floor_px: float = 0.1         # measurement noise floor, px rms
 
 
 @dataclass
 class TrackStep:
     camera: camera3d.CourtCamera
-    status: str          # tracking | refit | recovered | holding
+    status: str          # tracking | refit | recovered | lost
     n_tracked: int
     resid_px: float
+    locked: bool = True  # this frame's camera passed the paint check
 
 
 class _PoseKalman:
@@ -123,9 +130,9 @@ class CameraTracker:
         self.prev = None
         self.t_prev = None
         self.t_refit = None
-        self.drift_run = 0
+        self.fail_run = self.lost_for = 0
         self.scale = cam0.image_wh[1] / 720.0
-        self.world, self.wdir = _paint_samples(self.cfg.sample_step_m)
+        self.world, self.wdir = camera3d.paint_samples(self.cfg.sample_step_m)
 
     def _like(self, rvec, tvec, pinned):
         c = self.cam
@@ -172,7 +179,7 @@ class CameraTracker:
         # along its line's normal, so the measurement is anchored to the court
         # and errors cannot accumulate from frame to frame
         p1 = p1.reshape(-1, 2).astype(float)
-        off, found = _ridge(grey, p1, nrm, self.cfg.ridge_px_720 * self.scale,
+        off, found = camera3d.ridge_offsets(grey, p1, nrm, self.cfg.ridge_px_720 * self.scale,
                             self.cfg.ridge_min_dn)
         keep &= found
         if keep.sum() < max(self.cfg.min_tracked, self.cfg.lost_frac * len(idx)):
@@ -204,128 +211,89 @@ class CameraTracker:
             return None
         return sol.x[:3], sol.x[3:], float(np.sqrt(np.mean(r[inl] ** 2)))
 
-    def _refit(self, frame, seed):
+    def _check(self, grey, cam):
+        return camera3d.paint_check(grey, cam).ok
+
+    def _fit(self, frame, seed, grey):
         try:
-            return self.paint_fit(frame, seed, pose_only=True).camera
+            cam = self.paint_fit(frame, seed, pose_only=True).camera
         except Exception:
             return None
+        return cam if self._check(grey, cam) else None
 
-    def _recover(self, frame):
+    def _recover(self, frame, grey, seeds):
+        for seed in seeds:
+            cam = self._fit(frame, seed, grey)
+            if cam is not None:
+                return cam
         if self.detector is None:
             return None
         try:
             kps = self.detector.detect(frame)
-            if kps is None:
-                return None
-            s = camera3d.solve_pnp_seed(kps, self.cam.image_wh, f_hint=self.cam.f_px)
+            s = (camera3d.solve_pnp_seed(kps, self.cam.image_wh, f_hint=self.cam.f_px)
+                 if kps is not None else None)
         except Exception:
             return None
         if s is None:
             return None
-        return self._refit(frame, self._like(s.camera.rvec, s.camera.tvec,
-                                             camera3d.PINNED_PNP))
+        return self._fit(frame, self._like(s.camera.rvec, s.camera.tvec,
+                                           camera3d.PINNED_PNP), grey)
 
     def _adopt(self, cam, t):
         self.cam = self.good = cam
         self.kf.reset(cam.rvec, cam.tvec)
         self.t_refit = t
-        self.drift_run = 0
+        self.fail_run = self.lost_for = 0
 
     def step(self, frame, t: float, boxes=None) -> TrackStep:
         grey = _grey8(frame)
         if self.prev is None:
             self.prev, self.t_prev, self.t_refit = grey, t, t
-            return TrackStep(self.cam, "tracking", 0, 0.0)
+            return TrackStep(self.cam, "tracking", 0, 0.0, self._check(grey, self.cam))
         dt = max(t - self.t_prev, 1e-3)
         got, n = self._flow(grey, boxes)
         pose = self._pose_from(*got) if got is not None else None
-        status, resid = "tracking", math.nan
-        if pose is None:
-            cam = self._recover(frame)
-            if cam is not None:
-                self._adopt(cam, t)
-                status = "recovered"
-            else:
-                self.cam = self.good
-                self.kf.reset(self.good.rvec, self.good.tvec)
-                status = "holding"
-        else:
+        cand, resid = None, math.nan
+        if pose is not None:
             rvec, tvec, r = pose
             # 1 px of image error ~ 1/f rad of rotation, ~ D/f m of position
             r = max(r, self.cfg.r_floor_px) / self.cam.f_px
             dist = float(np.linalg.norm(self.cam.position_m()
                                         - [court.X_CENTER, court.NET_Y, 0.0]))
             rf, tf = self.kf.step(dt, np.concatenate([rvec, tvec]), r ** 2, (r * dist) ** 2)
-            self.cam = self._like(rf, tf, PINNED_TRACK)
+            cand = self._like(rf, tf, PINNED_TRACK)
             idx, img = got
             resid = float(np.median(np.abs(self._normal_resid(
-                self.cam, idx, self.cam.undistort(img)))))
-            self.drift_run = self.drift_run + 1 if resid > self.cfg.drift_px_720 * self.scale else 0
-            due = t - self.t_refit >= self.cfg.refit_s
-            if self.drift_run >= self.cfg.drift_frames or due:
-                cam = self._refit(frame, self.cam)
+                cand, idx, cand.undistort(img)))))
+        ok = cand is not None and self._check(grey, cand)
+        self.fail_run = 0 if ok else self.fail_run + 1
+        status = "tracking"
+        if ok:
+            self.cam = self.good = cand
+            self.lost_for = 0
+            if t - self.t_refit >= self.cfg.refit_s:
+                self.t_refit = t
+                cam = self._fit(frame, self.cam, grey)
                 if cam is not None:
                     self._adopt(cam, t)
                     status = "refit"
-                else:
-                    self.t_refit = t          # do not retry every frame
-                    self.good = self.cam
+        elif cand is not None and self.fail_run < self.cfg.fail_frames:
+            self.cam = cand                  # one bad frame: keep following, not trusted
+        else:
+            cam = None
+            if self.lost_for % self.cfg.recover_every == 0:
+                seeds = [self.good] + ([cand] if cand is not None else [])
+                cam = self._recover(frame, grey, seeds)
+            if cam is not None:
+                self._adopt(cam, t)
+                status, ok = "recovered", True
             else:
-                self.good = self.cam
+                self.lost_for += 1
+                self.cam = self.good
+                self.kf.reset(self.good.rvec, self.good.tvec)
+                status = "lost"
         self.prev, self.t_prev = grey, t
-        return TrackStep(self.cam, status, n, resid)
-
-
-def _ridge(grey, pts, nrm, reach, min_dn, step=0.5):
-    """Sub-pixel offset along `nrm` from each point to the nearest bright paint
-    ridge within +-`reach` px, and whether one was found. The ridge is the local
-    maximum of the grey profile nearest the point that stands `min_dn` above the
-    profile's median; its position is refined by a parabola through 3 samples."""
-    from scipy import ndimage
-    s = np.arange(-reach, reach + 1e-9, step)
-    xy = pts[:, None, :] + s[None, :, None] * nrm[:, None, :]
-    prof = ndimage.map_coordinates(np.asarray(grey, float), [xy[..., 1].ravel(), xy[..., 0].ravel()],
-                                   order=1, mode="nearest").reshape(len(pts), len(s))
-    base = np.median(prof, axis=1)
-    peak = np.zeros_like(prof, bool)
-    peak[:, 1:-1] = (prof[:, 1:-1] >= prof[:, :-2]) & (prof[:, 1:-1] > prof[:, 2:])
-    peak &= prof >= base[:, None] + min_dn
-    dist = np.where(peak, np.abs(s)[None, :], np.inf)
-    k = np.argmin(dist, axis=1)
-    found = np.isfinite(dist[np.arange(len(pts)), k])
-    k = np.clip(k, 1, len(s) - 2)
-    r = np.arange(len(pts))
-    y0, y1, y2 = prof[r, k - 1], prof[r, k], prof[r, k + 1]
-    den = y0 - 2 * y1 + y2
-    with np.errstate(divide="ignore", invalid="ignore"):
-        frac = np.where(np.abs(den) > 1e-9, 0.5 * (y0 - y2) / den, 0.0)
-    return s[k] + np.clip(frac, -0.5, 0.5) * step, found
-
-
-def _paint_samples(step_m, clear_m=0.3):
-    """Points every `step_m` along the CENTRE of every painted line
-    (paintfit.paint_lines: ITF positions are line edges, the paint ridge is
-    its centre) and each point's line direction. Points within `clear_m` of
-    another painted line are dropped: at a crossing the profile is paint on
-    both sides and the ridge is meaningless. The net is not paint."""
-    lines = paintfit.paint_lines()
-    pts, dirs = [], []
-    for L in lines:
-        n = max(2, int(np.linalg.norm(L.b - L.a) / step_m))
-        t = np.linspace(0.0, 1.0, n)[:, None]
-        g = (1 - t) * L.a + t * L.b
-        near = np.zeros(len(g), bool)
-        for M in lines:
-            if M is L:
-                continue
-            lo, hi = np.minimum(M.a, M.b), np.maximum(M.a, M.b)
-            d = np.linalg.norm(g - np.clip(g, lo, hi), axis=1)     # distance to segment M
-            near |= d < clear_m + M.width / 2
-        g = g[~near]
-        pts.append(g)
-        dirs.append(np.repeat(((L.b - L.a) / np.linalg.norm(L.b - L.a))[None], len(g), 0))
-    g, d = np.vstack(pts), np.vstack(dirs)
-    return np.column_stack([g, np.zeros(len(g))]), np.column_stack([d, np.zeros(len(d))])
+        return TrackStep(self.cam, status, n, resid, ok)
 
 
 def ground_lines_px(cam: camera3d.CourtCamera, n: int = 50) -> list:

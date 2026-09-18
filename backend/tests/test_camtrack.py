@@ -29,7 +29,7 @@ def frame(cam, seed=0):
 
 
 def no_fit(frames, seed, pose_only=False):
-    raise AssertionError("paint fit must not run here")
+    raise RuntimeError("no paint fit in this test")
 
 
 def worst_px(est, truth):
@@ -94,7 +94,8 @@ def test_a_knock_recovers_through_the_detector_never_the_closed_search(p0, monke
     tr = camtrack.CameraTracker(before, detector=det, paint_fit=seed_as_fit)
     tr.step(frame(before), 0.0)
     st = tr.step(frame(after, 1), 1 / 30.0)
-    assert st.status == "recovered" and det.calls == 1 and seen == [True]
+    # the paint fit from the last good camera is tried first (and fails the check)
+    assert st.status == "recovered" and det.calls == 1 and seen == [True, True]
     assert st.camera.f_px == before.f_px
     assert worst_px(st.camera, after) < 0.5
 
@@ -104,7 +105,7 @@ def test_without_a_detector_a_lost_court_holds_the_last_good_camera(p0):
     tr = camtrack.CameraTracker(before, paint_fit=no_fit)
     tr.step(frame(before), 0.0)
     st = tr.step(frame(after, 1), 1 / 30.0)
-    assert st.status == "holding"
+    assert st.status == "lost" and st.locked is False
     assert np.allclose(st.camera.rvec, before.rvec) and np.allclose(st.camera.tvec, before.tvec)
 
 
@@ -140,3 +141,108 @@ def test_players_are_masked_out_of_the_flow(p0):
 def test_court_lines_project_as_polylines(p0):
     lines = camtrack.ground_lines_px(cam_at(p0), n=10)
     assert len(lines) == len(court.LINES) and all(p.shape == (10, 2) for p in lines)
+
+
+def test_a_knock_recovers_by_paint_fit_without_a_detector(p0):
+    """The pose-only paint fit from the last good camera comes before any
+    detector; stubbed here to return the true camera."""
+    before, after = cam_at(p0), cam_at(p0, yaw=math.radians(1.0), dpitch=math.radians(1.5))
+    seeds = []
+
+    def fit(frames, seed, pose_only=False):
+        seeds.append(seed)
+        return camera3d.PaintFitResult(after, 1.0, None, {})
+    tr = camtrack.CameraTracker(before, paint_fit=fit)
+    tr.step(frame(before), 0.0)
+    got = [tr.step(frame(after, i), i / 30.0) for i in range(1, 4)]
+    assert any(s.status == "recovered" for s in got)
+    assert seeds and np.allclose(seeds[0].rvec, before.rvec)
+    assert got[-1].locked and worst_px(got[-1].camera, after) < 0.5
+
+
+def test_a_wrong_lock_is_never_reported_as_locked(p0):
+    """G3's worst outcome: following paint onto the WRONG lines. The paint check
+    sees it whatever the tracked points say."""
+    truth = cam_at(p0)
+    wrong = S.camera(0.0, p0, 0.0, dx=court.ALLEY, wh=WH)
+    tr = camtrack.CameraTracker(wrong, paint_fit=no_fit)
+    got = [tr.step(frame(truth, i), i / 30.0) for i in range(4)]
+    assert not any(s.locked for s in got)
+
+
+# ------------------------------------------------ camera3d.paint_check -----
+@pytest.fixture(scope="module")
+def truth_and_frame(p0):
+    truth = cam_at(p0)
+    return truth, frame(truth, 7)
+
+
+def test_paint_check_passes_the_true_camera(truth_and_frame):
+    truth, img = truth_and_frame
+    chk = camera3d.paint_check(img, truth)
+    assert chk.ok and chk.support > 0.8
+    assert {"near_baseline", "doubles_L", "doubles_R"} <= set(chk.lines)
+
+
+@pytest.mark.parametrize("wrong", [
+    dict(dx=court.ALLEY),                       # one alley over
+    dict(yaw=math.radians(0.5)),                # a small pan
+    dict(dolly=1.3),                            # slid in depth
+])
+def test_paint_check_fails_wrong_cameras(p0, truth_and_frame, wrong):
+    truth, img = truth_and_frame
+    if "dolly" in wrong:
+        cam = camera3d.dolly_zoom(truth, wrong["dolly"])
+    elif "dx" in wrong:
+        cam = S.camera(0.0, p0, 0.0, dx=wrong["dx"], wh=WH)
+    else:
+        cam = cam_at(p0, yaw=wrong["yaw"])
+    assert not camera3d.paint_check(img, cam).ok
+
+
+def test_paint_check_needs_enough_lines_to_judge(truth_and_frame):
+    truth, img = truth_and_frame
+    away = camera3d.CourtCamera(truth.f_px, truth.rvec + [0.0, 1.5, 0.0], truth.tvec, WH)
+    chk = camera3d.paint_check(img, away)
+    assert not chk.ok
+
+
+def test_dolly_zoom_keeps_the_court_centre_scale(truth_and_frame):
+    truth, _ = truth_and_frame
+    c = np.array([court.X_CENTER, court.NET_Y, 0.0])
+    pts = [c + [-1, 0, 0], c + [1, 0, 0]]
+
+    def span(cam):
+        a, b = cam.project(pts)
+        return np.linalg.norm(a - b)
+    for s in (0.75, 0.87, 1.15, 1.33):
+        d = camera3d.dolly_zoom(truth, s)
+        assert d.f_px == pytest.approx(truth.f_px * s)
+        assert span(d) == pytest.approx(span(truth), rel=0.02)
+        assert np.allclose(d.project([c]), truth.project([c]), atol=1e-6)
+
+
+def test_checked_fit_restarts_until_the_paint_agrees(truth_and_frame, monkeypatch):
+    truth, img = truth_and_frame
+    starts = []
+
+    def fake_fit(frames, seed, pose_only=False, cfg=None):
+        starts.append(seed)
+        # only the one-alley shift start "converges" to the truth
+        cam = truth if len(starts) == 6 else seed
+        return camera3d.PaintFitResult(cam, 1.0, None, {})
+    monkeypatch.setattr(camera3d, "fit_camera_on_paint", fake_fit)
+    wrong = camera3d.shifted(truth, -court.ALLEY)
+    res = camera3d.fit_camera_checked(img, wrong)
+    assert res.camera is truth and res.camera.extra["paint_check"] == "pass"
+    assert res.camera.extra["starts"] == 6
+
+
+def test_checked_fit_reports_a_failure_instead_of_hiding_it(truth_and_frame, monkeypatch):
+    truth, img = truth_and_frame
+    monkeypatch.setattr(camera3d, "fit_camera_on_paint",
+                        lambda frames, seed, pose_only=False, cfg=None:
+                        camera3d.PaintFitResult(seed, 1.0, None, {}))
+    res = camera3d.fit_camera_checked(img, camera3d.shifted(truth, 3.0))
+    assert res.camera.extra["paint_check"].startswith("FAIL")
+    assert res.camera.extra["starts"] == 1 + len(camera3d.RESTARTS)

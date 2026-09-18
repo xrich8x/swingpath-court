@@ -109,7 +109,33 @@ Then, before doing anything else, read in this order:
 
 ## NOW — what is running
 
-RUN-STATE: RUNNING — cleared 2026-09-17 by the founder ("Continue - remember only court related things").
+RUN-STATE: RUNNING — cleared 2026-09-18 by the founder (resumed with the per-frame detection ruling below).
+
+**RESUME POINT (branch `camera3d-pnp-paintfit`, last commit `aea8635`; work since is UNCOMMITTED on disk):**
+- Built since `aea8635`, dev seeds only, NOTHING scored:
+  - `camera3d.paint_check` (per-line on-paint lock check), `fit_camera_checked` (dolly/alley restarts);
+  - camtrack gated by `paint_check`, pose-only paint-fit recovery before any detector, `locked` flag,
+    q 1e-2 -> 100 (the filter lag was most of G3's steady error);
+  - sim `--knock-scale` and a `locked_wrong` metric; arm KC (`--checked`);
+  - `tools/court_track_video.py` (demo videos, sent to the founder);
+  - `tools/court_real_probe.py`.
+- Dev numbers:
+  - sim seeds 100-102: worst line p90 3.5 cm, knock recovered in 1 frame, 1 locked-but-wrong frame
+    (the knock frame; far lines are unchecked);
+  - knock x4: lost, never recovered (~85 px > the 40 px fit window), never falsely locked;
+  - KC dev seeds 101/102: 0 silently wrong, ~10% of setups flagged.
+- Suite at last run: `test_camtrack` + `test_camera3d` 46 pass.
+- Footage: 25 calibrated clips HARD-LINKED from `swingpath:data/incoming` into `data/incoming`
+  (git-ignored) - the founder asked for real footage.
+- NEXT on resume:
+  1. Rerun the dev probe:
+     `cd backend && ../tools/court_real_probe.py --clips L73ep7JHiJ4 HoHxFSX_gLk_s2 --out <scratch>`.
+     It is slow: each failed check costs up to 7 paint fits of ~11 s.
+  2. Fill "Development" in `docs/evidence/court-camera3d-real.md`, then COMMIT that
+     pre-registration (E1-E5, drafted, not yet committed) BEFORE the strict-16 run.
+  3. Run the pool (`--workers 8`) and record the results.
+  4. Separately pre-register the synthetic gates for KC and the checked tracker on fresh seeds;
+     G3's KILL stands.
 
 **SCOPE: THE COURT FEATURE ONLY (founder, 2026-09-17).** "Clear out ALL OTHER FEATURES aside from the
 court - save the information that has already been doen but all instruictioins aside from this court
@@ -219,6 +245,23 @@ C3 is the founder's visit. **Order: P2 finishes first**, per the founder.
 
 ## DECIDED — binds everyone, do not reopen
 
+- **2026-09-18 — TRACKING MUST CONTINUOUSLY DETECT THE COURT, NOT SNAP.** Founder, verbatim:
+  *"Remember the tracking shouldnt snap but continuously detect the court"*, and asked which of
+  three readings applied; they chose **FULL DETECTION EVERY FRAME** — the court is found in each
+  frame with **no dependence on the previous frame**. What existed when they ruled (measured, not
+  claimed): `camtrack` re-measures the real paint every frame (0.020 s at 1080p) and re-solves the
+  full camera, so it is NOT a homography snap — but its search is ±9 px @1080 around the PREVIOUS
+  frame's prediction, which is why an ~85 px knock was lost and never recovered. A full re-fit is
+  9.6 s/frame, so the current fit cannot run per frame. **This makes the amateur-trained keypoint
+  model the blocking dependency** (upstream CourtNet fires on 2-3 of 14 points on amateur footage;
+  PnP needs 5), and per-frame CNN cost contradicts `docs/modules.md`'s "one-time, not per-frame"
+  note (STATE: 8 frames once per video; one-in-30 called a 91x regression). Real-clip testing is
+  PARKED until the route is designed and pre-registered.
+- **2026-09-18 — the founder authorised the agent team for this work** ("Yes use any and all of
+  them"). The `.claude/hooks/agent-cap.sh` cap (three live project-wide, lead holds one direct
+  child) still binds, so they run in sequence: researcher (route + pre-registration), then
+  backend-dev (build), then qa (independent verification).
+
 - **2026-09-17 — court feature only.** Everything else archived in
   `swingpath:docs/archive/2026-09-17-pre-court-only/`. Only the founder reopens any of it.
 - **2026-09-17 — the court is found AUTOMATICALLY** (ML learns the 3D court, finds near and far
@@ -234,6 +277,8 @@ C3 is the founder's visit. **Order: P2 finishes first**, per the founder.
   forever. Do not reopen the Sideloadly line without the founder.
 
 ## LOG — newest first (court only; older entries are in the archived journal)
+
+- **2026-09-18** — PAUSED by founder ("Pause first - I want to sleep and turn off the PC"). Left running: nothing.
 
 - **2026-09-17** — **3D court camera built on branch `camera3d-pnp-paintfit` (not pushed).** Founder task: 2D
   homography → 3D PnP + keypoints. Scoped with the founder: court only (ball solver dropped), keypoints
