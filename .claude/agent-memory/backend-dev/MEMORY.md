@@ -25,3 +25,7 @@ monolithic file; nothing was dropped.
 - [Core ML export runs on LINUX](coreml-export-runs-on-linux.md) — 1x CI billing not macOS's 10x; the manylinux1 tag trap, and ultralytics' silent .mlmodel fallback
 - [Sub-pixel renderer + boundary degeneracy](subpixel-renderer-and-boundary-degeneracy.md) — CP1: blur BEFORE binning; thin line on a colour step needs kappa (~1.3 cm per 5%)
 - [Photometric lock signal SEPARATES](photometric-lock-signal-separates.md) — paint_check catches 33/33 wrong cameras at 1 in 365; the fit's OWN cost is INVERTED, AUC 0.216
+- [Renderers cannot place sub-pixel paint](renderers-cannot-place-subpixel-paint.md) — fixed-grid samples miss by PHASE and binning-before-blur quantises POSITION; no `ss` fixes either
+- [The net tape OWNS the far lines](the-net-tape-owns-the-far-lines.md) — clutter moved a far-line ridge 5 px where the lens moved it 0.02; 369/369 right cameras flagged
+- [A second profile, never an edit](a-second-profile-never-an-edit.md) — determinism and fidelity fixes change the SCENE; flag them, default to the old behaviour, null-control must FAIL
+- [Undetected is not failed](undetected-is-not-failed.md) — three outcomes, not two; and a search window narrower than the errors you must catch hides them as "unobservable"
