@@ -846,3 +846,188 @@ Everything G7 established is about grossly wrong cameras; nothing measured here 
 > non-determinism CONFIRMED and isolated to the encoder (4 encodes of a byte-identical frame array:
 > 18919.7-18945.2 kbps, up to 1.47 DN; far baseline spread 0.24-0.66 cm over repeats of one trial) |
 > [evidence/court-camera3d.md](evidence/court-camera3d.md)
+
+---
+
+## G8: can anything in this repository SEE the far baseline? — PRE-REGISTRATION
+
+**Written and committed BEFORE any scored run** (hard rule 2). backend-dev, 2026-09-19, branch
+`camera3d-pnp-paintfit`. Nothing below the "RESULTS" heading existed when the runs started;
+nothing above it is edited afterwards except by adding results.
+
+### The gap this answers
+
+qa's 2026-09-18 audit, section 7: *"Nothing in this repository can see the far baseline."*
+`camera3d.paint_check` lists `far_baseline` and `far_service` as `unchecked` on **398 of 398** G7
+trials, the G7 ridge residual inherits the same filter, and the consequence is measured, not
+hypothetical: on sim seed 101 and on held-out sim seed 201 the knock frame reports
+`locked=True, status="tracking"` while the court is **70.4 cm / 56.8 cm** out, all of it on those
+two lines.
+
+**The cause is not the aggregation rule.** `paint_check` already fails if ANY checked line falls
+below `min_line_frac`. The cause is the `min_width_px_720 = 0.67` filter, which drops a line before
+any threshold applies. At 1920x1080, hfov 100 deg, mount 3.0 m, setback 6.0 m (the tracking sim's
+scene) the projected width of the far baseline's 5 cm paint is about **0.14 px** — seven times below
+the filter — because the line's 5 cm runs in DEPTH and foreshortens as `f*h/D^2`. A per-point ridge
+finder genuinely cannot see it: the paint's whole contrast is about 6-7 DN of peak against about
+1.8 DN of sensor noise.
+
+### Part A — the instrument: ALONG-LINE INTEGRATION (stacked normal profile)
+
+The founder proposed a 3-level Gaussian pyramid. The pyramid is **measured here as a declared
+secondary arm**, but the primary mechanism is along-line integration, for a stated reason:
+decimation makes a sub-pixel-wide line *narrower* in pixel units, and the SNR it buys is at most
+about 2x per level, while what the check actually needs is a sub-pixel OFFSET, which decimation
+destroys. Integrating along the line instead buys `sqrt(N)` over N samples with N in the hundreds,
+and preserves offset resolution.
+
+**`camera3d.far_line_profile` — exact definition, fixed before the run.**
+
+For, and only for, a painted line that the existing `min_width_px_720` filter DROPS (so behaviour
+on every currently-checked line is unchanged by construction — rule 7):
+
+1. Sample the line's world centreline so that consecutive projections are about
+   `stack_step_px = 1.0` px apart in the image. Drop samples within `clear_m` of another painted
+   line (`paint_samples`' existing rule) and samples out of frame.
+2. Split the surviving samples into `far_segments = 8` contiguous along-line segments (fewer if the
+   line is short; a segment needs at least `far_min_samples = 24` samples or it is not used). A
+   segment is used so that a camera ROTATED about the line's midpoint — which produces equal and
+   opposite offsets at the two ends — cannot cancel itself out in one pooled average.
+3. In each segment, sample the grey image at offsets `s` in `[-reach, +reach]` step 0.25 px along
+   each sample's image normal (`reach = 3 * far_tol`), and average the profiles over the segment's
+   samples: `P(s)`.
+4. Segment statistics: baseline `b = median(P)`; noise `sd = 1.4826 * MAD(P)` over the wings
+   `|s| > far_tol`; the peak is the largest local maximum of `P` at `|s| <= far_tol`, its position
+   refined by the same 3-point parabola `ridge_offsets` uses. Significance `z = (P_peak - b) / sd`.
+5. A segment HITS if `z >= far_min_z` and the refined `|s*| <= far_tol`.
+6. The line's fraction is `hits / segments used`, and it is written into `PaintCheck.lines` exactly
+   like any other line. **No new aggregation rule**: the shipped `min_line_frac` decides.
+
+`far_tol = far_tol_px_720 * frame_height / 720` (the repo's scaling convention).
+
+**The check reads no far-line position from the model it checks.** It samples at offsets FROM the
+camera's own prediction and asks whether paint is there; a wrong camera moves the peak off zero or
+loses it in the wings. That is the same independence `paint_check` already has.
+
+**What one pixel is worth here**, so the thresholds below can be read in centimetres
+(`f*h/D^2`, 1920x1080, hfov 100 deg, 3.0 m mount, 6.0 m setback):
+
+| line | ground distance | px per metre of perpendicular ground error |
+|---|---|---|
+| far baseline | 29.77 m | 2.73 px/m -> 20 cm = **0.55 px**, 50 cm = 1.36 px, 70 cm = 1.91 px |
+| far service | 24.29 m | 4.10 px/m -> 20 cm = **0.82 px** |
+
+### How the two new thresholds are set — the G4 procedure, not an invented number
+
+**0.35 is not used.** `far_min_z` and `far_tol_px_720` are set exactly the way G4 set the
+cross-ratio gate: a **NOISE-ONLY sweep** on DEVELOPMENT seeds, reporting the false-flag rate and the
+catch rate for every value, with the chosen value stated together with the whole table.
+
+- **Development population (seeds 300-305, never used before):** the tracking-sim renderer at
+  1920x1080. For each seed, 20 rendered frames. The RIGHT arm is the exact rendering camera. The
+  WRONG arm is that camera perturbed in pitch/height/depth by amounts that put the far baseline a
+  controlled 5, 10, 20, 50, 100 and 200 cm out and leave the near half within 10 cm — i.e. exactly
+  the failure the check exists to catch.
+- **Sweep grid:** `far_tol_px_720` in {0.10, 0.15, 0.20, 0.25, 0.35, 0.50, 0.75, 1.00} x
+  `far_min_z` in {3, 4, 5, 6, 8}. The full false-flag-vs-catch table goes into the results.
+- **Choice rule, fixed now:** the pair with the highest catch at >20 cm among those whose
+  development false-flag rate is <= 1%. Ties broken toward the LARGER `far_tol_px_720` (the more
+  conservative check).
+- This is development, on one scene, and it is declared as such. Everything below is scored on
+  seeds and a scene that played no part in it.
+
+### THE BAR for Part A — pre-registered
+
+Scored on **fresh** sim seeds 400-402 (full 120-frame tracking runs, never used) plus the two
+documented bad cases, the knock frames of sim seeds 101 and 201. Truth is the exact synthetic camera
+that rendered each frame.
+
+1. **CATCH.** Of the frames whose far-line error (worse of `far_baseline` / `far_service`, either
+   half, as C1 measures them) exceeds **20 cm**, at least **90%** must be reported NOT locked.
+2. **FALSE FLAG.** Of the frames whose every line is within **10 cm** (C1's `KILL_M`), at most
+   **2%** may be reported NOT locked *by the far-line instrument* (a frame already failing on a near
+   line is not a far-line false flag and is counted separately).
+3. **THE TWO KNOWN BAD CASES.** Seed 101 frame 60 (70.4 cm) and seed 201 frame 60 (56.8 cm) must
+   both be reported NOT locked. These are 2 frames, not a rate; they are the specific failures qa
+   named and they are reported individually.
+4. **NON-DEGRADATION on a HELD-OUT SCENE.** G7's arm-K population (CP1's renderer: lens distortion,
+   fence clutter, net tape, real libx265) re-run at `--n 400 --seed 0` with the far-line instrument
+   live. `paint_check(...).ok` must still catch **33 of 33** wrong cameras, and its false flags on
+   the right cameras must stay at or below **2%** (<= 7 of ~365; today it is 1, itself a confirmed
+   mislabel). Because the encoder is not deterministic (qa, audit section 6) the population will not
+   be trial-for-trial identical to G7's; the wrong/right labels are recomputed from the run actually
+   scored, as G7 did.
+5. **OBSERVABILITY, reported not gated.** The fraction of frames on which `far_baseline` and
+   `far_service` move from `unchecked` to `checked`, at native 1080p AND at 4K rendered and
+   area-downscaled to 1080p.
+6. **COST, reported not gated.** Median `paint_check` wall time per 1080p frame, with and without
+   the far path. The tracker calls it every frame. Above **20 ms** per frame the result is reported
+   as a cost problem for the phone even if it passes.
+
+**KILL.** If no `(far_tol_px_720, far_min_z)` pair on the development sweep reaches **50%** catch at
+>20 cm while holding false flags at or below 10%, the far lines are declared UNOBSERVABLE by this
+mechanism. **That is a valuable result, not a failure of the task**: it means the product must
+qualify what "locked" claims — Part C ships either way.
+
+**Secondary, one variable:** the same sweep and the same scoring, with the stacked profile replaced
+by a 3-level Gaussian pyramid ridge test (levels 1/1, 1/2, 1/4; `ridge_offsets` at each level, best
+level wins) — the founder's literal proposal. Reported side by side at equal false-flag rate. No bar
+attaches to it; it is measured so the choice of mechanism is evidenced rather than asserted.
+
+### Part B — pinning the encoder
+
+qa isolated CP1's non-determinism to the ENCODER: four encodes of one byte-identical 30-frame array
+gave four different files (about 1.8 M of 2.07 M pixels differing, up to 1.47 DN), and one arm-P
+trial re-run three times spread up to **0.66 cm** on the far baseline.
+
+**Changing CRF/preset/keyint changes the SCENE, not only its determinism.** So the pinned settings
+go behind a NEW named profile, selected by a flag, and the existing profile and every number stamped
+under it are untouched:
+
+```
+X265_DETERMINISTIC = crf 18, preset slow, keyint = min-keyint = 1 (all-intra),
+                     pools=1, frame-threads=1, wpp=0, no VBV, ffmpeg -threads 1
+```
+
+**Any run under `X265_DETERMINISTIC` is NOT comparable with CP1 stage 1 or with G1/G7, and must not
+be re-based onto them** (hard rules 2 and 7). It is a different scene: all-intra at CRF 18 is a
+different — and easier — compression than 16 Mbps VBV with a 60-frame GOP. Its purpose is A/B
+determinism inside itself, nothing else.
+
+**THE BAR for Part B.** Two consecutive runs of the SAME arm (arm P, `--n 4 --seed 900`, a seed
+never used) under the new profile produce **identical rows**, every value, excluding the three
+timing fields. Proven at small n before anything larger.
+
+**NULL CONTROL, mandatory, and it must FAIL.** The identical procedure under the EXISTING CP1
+profile must produce DIFFERING rows. If both profiles look identical at n=4 the test cannot detect
+non-determinism and proves nothing.
+
+### Predictions, recorded before the run
+
+- **(A1) The far lines become observable.** The stacked profile's single-sample SNR is about 3.7 on
+  this scene (6.7 DN of peak against 1.8 DN of noise); 8 segments of roughly 90 samples each should
+  give about 35, and a peak-position noise of a few hundredths of a pixel. I predict
+  `far_baseline` and `far_service` become `checked` on essentially every in-frame 1080p frame, and
+  that a `far_tol_px_720` near 0.15-0.25 clears the >20 cm catch bar at under 1% false flags.
+- **(A2) The binding limit will be BIAS, not noise.** I expect the development sweep to look better
+  than the held-out scene, because CP1's far baseline sits on a colour boundary and its position
+  moves about 1.3 cm per 5% of kappa error. I predict **1 to 4 NEW false flags** on G7's 365 right
+  cameras, i.e. a pass on bar 4 but with the margin visibly spent.
+- **(A3) The pyramid arm loses.** At equal false-flag rate I predict the pyramid catches materially
+  fewer >20 cm frames than the stacked profile, because decimation removes the sub-pixel offset the
+  decision rests on. If I am wrong the pyramid is simpler and should be preferred.
+- **(A4) The tracker gets STRICTER and its headline may get WORSE.** With far lines checked, frames
+  the tracker used to call `tracking` will call `lost`, and recovery attempts cost a pose-only paint
+  fit. I predict the locked-but-wrong count goes to 0 while the unlocked count rises. Reported, not
+  gated — the fixed tracker has no pre-registered gate and G3's KILL stands.
+- **(B1) The deterministic profile gives byte-identical rows** and the CP1-profile null control
+  differs on at least one far-baseline value at n=4.
+
+### Part C — honest lock semantics (ships either way, no bar)
+
+`paint_check` and `camtrack.TrackStep` report WHAT was verified, not just yes/no:
+`PaintCheck.scope` in {`whole_court`, `near_half`, `none`}, the checked and unchecked line names,
+and `TrackStep.lock_scope` carried through `camera.extra` into `setup_state`'s camera block so
+`match.json` can qualify the claim. Backward compatibility, or every caller updated, is stated in
+the results.
+
