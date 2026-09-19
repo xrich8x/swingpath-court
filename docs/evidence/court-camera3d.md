@@ -1269,3 +1269,315 @@ measurement can see."* That sentence is the honest state of the product, and it 
   changing it would move a scored G7 instrument. A test names it.
 - **Nothing here bears on 5 cm.** The finest far-line error this instrument separates is about
   25 cm on a clean court, and 0 cm on a court with a net in the way.
+
+## QA AUDIT 2026-09-19: G8, the far-line instrument and the renderer fault
+
+qa, independent of backend-dev, which did not call me. This audits the fix to a blind spot my own
+2026-09-18 audit found, so the bias to guard against is welcoming it. Everything below was
+re-derived from the committed raw rows or re-measured by running my own code; where I re-implemented
+something I say so. I changed no source file.
+
+**Chronology is clean.** The pre-registration is committed at `46e5fe7` (12:05), every artifact
+stamps `commit 46e5fe7` and was written 12:35-12:58, and the results commit `f3bddd6` is 13:18.
+Nothing above the RESULTS heading was edited afterwards.
+
+### Verdict per claim
+
+| # | claim | verdict |
+|---|---|---|
+| 1 | the far lines become observable; `checked`, frac 1.000 at 1080p and 4K->1080p | **CONFIRMED** (re-run by me), with two small corrections |
+| 2 | held-out seeds 400-402: catch 0.9167 at 0.0000 incremental false flags | **CONFIRMED as arithmetic, QUALIFIED as evidence** - a held-out NOISE DRAW, not a held-out scene, and the effective n is 24, not 72 |
+| 3 | BAR 3: both documented silent wrong locks caught on a one-variable paired A/B | **CONFIRMED** - 12 differing leaves in the whole file, and they are exactly the flag and the two frames |
+| 4 | BAR 4 fails totally, 369/369, attributed to CLUTTER not the lens; ships OFF and every pre-G8 number reproduces | **QUALIFIED - the failure is real but conditional on an UNDECLARED deviation from the pre-registration.** "Ships OFF is a no-op" is **CONFIRMED** independently |
+| 5 | `FAR_TOL_PX_720 = 0.75` from a noise-only sweep; `far_min_z` inert | **CONFIRMED with one exception** (not inert at tol 1.00); nothing tuned on the scoring seeds, but see claim 2 for what "scoring seeds" buys |
+| 6 | the renderer fault qualifies rather than overturns earlier tracking work | **CONFIRMED, and the qualification is LARGER than stated** - my paired control moves the headline 1.76x |
+| 7 | the encoder is pinned; the null control fails as required | **CONFIRMED INDEPENDENTLY** at the encoder level |
+| 8 | honest lock semantics; a hand-edited file cannot out-claim its scope | **CONFIRMED with a hole**: the claim never exceeds the scope, but the SCOPE itself is forgeable and is not cross-checked against `lock_unverified` |
+| 9 | backend-dev's own prediction was wrong; the pyramid wins | **CONFIRMED**; the reason for keeping the stacked arm anyway is thin but was fixed a priori |
+| - | suite 414 pass / 10 skip / 2 pre-existing failures | **CONFIRMED**, and the 394 -> 414 delta is exactly the 20 new tests |
+
+### 1. The two findings that matter most
+
+**(a) The committed tool does not run the instrument it scored.** `tools/court_far_line_gate.py`
+calls `camera3d.paint_check(img, cam, far_kw={"far_tol_px_720": tol, "far_min_z": z})` with no
+`far_lines=True`, and `camera3d.FAR_LINES_DEFAULT` is `False` at HEAD. I established this by
+INVOKING it, not by reading it: the tool-style call returns a `detail` dict containing no far line at
+any tolerance, while the same call with `far_lines=True` returns `ok=False, worst="far_baseline"`.
+Re-running the committed tool today therefore produces the **pre-G8 baseline in all 40 cells**
+(catch 0.8333 flat, no sweep at all). The committed artifacts must have been produced with
+`FAR_LINES_DEFAULT = True` in the working tree, which was flipped to `False` before the results
+commit without the tool being updated. **The numbers are not wrong - I reproduced 66/72 = 0.9167
+myself from a re-implementation - but the instrument and its result no longer agree at the same
+commit.** One keyword argument fixes it; I did not add it.
+
+**(b) An undeclared deviation from the pre-registration is what makes BAR 4 fail.** The
+pre-registration says the profile is sampled over `[-reach, +reach]` with **`reach = 3 * far_tol`**,
+i.e. 2.25 px @720 at the chosen tolerance. The shipped code hard-codes `reach_px_720: float = 8.0`
+- **3.56x wider** - and the results section declares only one deviation (the peak rule), never this
+one. The repo's own convention is the pre-registered one: `paint_check` calls `ridge_offsets` with
+`3.0 * tol`.
+
+It matters exactly here, because **the net tape sits 4.8-5.6 px from the far service line**: inside
+the shipped window, outside the pre-registered one. My control, CP1 arm-P trials 0/1/2, the exact
+rendering camera, one variable:
+
+| reach @720 | far_service stacked peak | `paint_check.ok` on the TRUE camera |
+|---|---|---|
+| **8.0 (shipped)** | -4.85 to -5.42 px (the net tape) | **False**, worst = `far_service`, on 3 of 3 |
+| **2.25 (pre-registered, 3 x far_tol)** | no peak in window -> `seen=False` -> `unchecked` | **True** on 3 of 3 |
+
+And on the held-out ladder, re-scored by my own re-implementation:
+
+| reach @720 | catch (>20 cm) | incremental false flags |
+|---|---|---|
+| 8.0 (shipped) | **66/72 = 0.9167** - reproduces the artifact exactly | 0/63 |
+| 2.25 (pre-registered) | **65/72 = 0.9028** | 0/63 |
+
+So **BAR 1 and BAR 2 survive the pre-registered reach** (0.9028, one frame above the 0.90 line), and
+**BAR 4's headline does not**. At the reach that was pre-registered, the instrument is not hostile on
+CP1's scene, it is **inert** there: the far lines go back to `unchecked` and the correct camera
+passes. The clutter *attribution* is confirmed - the peak genuinely is the net tape, at the offset
+claimed - but the sentence "the net tape defeats the instrument", and the projection of it onto the
+16 of 28 real calibrations with overlap, are conditional on a search window 3.6x wider than the one
+registered. **I ran 3 CP1 trials and only the true camera, so I am not claiming the 400-trial
+outcome.** The 400-trial re-run at `reach_px_720 = 2.25` is the experiment that would settle it, and
+it is backend-dev's to run, not mine. A failed gate stays failed; what is open is whether *this*
+gate was run as written.
+
+### 2. Claim 1 - observability, re-run by me
+
+Seeds 400 and 401, `subpixel=True`, `ss=2`: `far_baseline` and `far_service` both `seen`, **frac
+1.000**, `PaintCheck.scope = "whole_court"`, `unchecked = []` - at native 1080p **and** at 3840x2160
+rendered then `cv2.INTER_AREA`-downscaled to 1080p, which is my own construction, not backend-dev's.
+Confirmed. Two corrections:
+
+- **It is 6 and 4 segments, not 8.** `far_line_stacks` caps at `min(segments, len(idx) //
+  min_samples)`; with 150 and 114 kept samples that is 6 and 4. "8 segments" is the configured
+  maximum, not what runs.
+- **"Offset within 0.05 px of truth" is the NOISELESS figure.** On the noiseless true camera I get
+  -0.000 / +0.024 px. With the renderer's sensor noise on, per-segment offsets reach **+0.094 px**.
+  Still four times inside the 0.75 px @720 tolerance, but the 0.05 px should not be quoted as the
+  noisy number.
+
+### 3. Claim 2 - what "held-out" is worth here
+
+The sweep reproduces **exactly** from the raw rows, every cell of both tables, to four decimals, and
+`choose()` applies the registered rule correctly (tol 0.50 is excluded by its 0.0159 false-flag rate,
+not by preference). The held-out file also stores its own `stack_choice` of 0.50; it was **not** used
+- the scored figure is the dev choice of 0.75. Nothing was tuned on the scoring seeds in that sense.
+
+But the population is much weaker than 72 rows suggests, and this goes further than backend-dev's own
+caveat:
+
+- **`cases()` renders ONE frame per seed, from the true camera, and perturbs only the camera handed
+  to `paint_check`.** The ladder is deterministic, so the 57 far-line errors per seed are *identical*
+  across seeds. I checked: within dev and within held-out, each `(motion, magnitude)` has exactly one
+  distinct `far_err_m`, and the dev and held-out maps are **equal on all 57 keys**. Seeds 400-402 are
+  a **held-out noise realisation of the same scene and the same geometry**.
+- **The effective n is 24, not 72.** The 6 held-out misses are the same **2** ladder geometries
+  (pitch +/-0.05 deg, 25.82 and 26.27 cm) repeated on 3 seeds - and they are the same 2 that miss on
+  all **6** dev seeds. 22 of 24 distinct cases = 0.9167. One further distinct miss gives 0.875 and
+  **BAR 1 fails**. The margin is one geometric case.
+- **The entire gain over the pre-G8 check is 2 distinct cases.** The pre-G8 check misses exactly 4
+  distinct geometries, all pitch: +/-0.05 deg (25.8 / 26.3 cm) and +/-0.1 deg (51.2 / 53.0 cm). The
+  stacked profile catches the +/-0.1 deg pair and still misses the +/-0.05 deg pair. That is the
+  honest reading of 0.833 -> 0.917: **the instrument adds pure pitch of about a tenth of a degree.**
+- The 0.50 -> 0.75 step that set the shipped threshold was decided by **2 rows** - dev seeds 302 and
+  303, `height +0.01`, worst-line error **9.92 cm**, i.e. cameras 0.08 cm inside the 10 cm line that
+  defines "good".
+
+### 4. Claim 3 - the A/B is genuinely one-variable
+
+I diffed `seeds101-201_n120_sub_far.json` against `seeds101-201_n120_sub.json` leaf by leaf:
+**12 differing values in the entire pair of files.** Four are the flag itself (`far_lines`,
+`paint_check_far_lines`, twice each), four are `locked[60]` in the two places it is stored, four are
+the summary aggregates that follow. Every per-frame line error, every grid jump, both recovery
+figures: bit-identical. `locked` 240 -> 238, `locked_wrong` **2 -> 0**, `unlocked` 0 -> 2, knock
+recovery [1, 1] in both. The two frames are seed 101 frame 60 at **0.62270 m** and seed 201 frame 60
+at **0.49115 m**, both entirely on `far_baseline` / `far_service`. **BAR 3 PASS, confirmed.** These
+are the two cases my last audit named.
+
+### 5. Claim 6 - the renderer fault, and my ruling on its blast radius
+
+**The fault reproduces, emphatically.** Noiseless, true camera, median over segments of the raw peak:
+
+| render | far baseline amplitude | far service amplitude |
+|---|---|---|
+| `ss=2` shipped | **0.27 DN** | **22.38 DN** |
+| `ss=4` | 11.35 DN | 11.19 DN |
+| `ss=8` | 5.68 DN | 5.59 DN |
+| `ss=2` `subpixel=True` | 5.88 DN at **-0.000 px** | 8.79 DN at **+0.024 px** |
+
+Two lines that should read the same differ by **83x** on the shipped renderer, and the amplitude is
+**non-monotone in supersampling** (0.27 -> 11.35 -> 5.68), which is the phase-aliasing signature and
+proves supersampling is not the fix. Run through the *shipped* `_seg_hit` rule with sensor noise on,
+the pre-G8 renderer puts the far baseline's peak at **+9.11 and +6.79 px** with `frac = 0.0`.
+I could not reproduce the specific figures 0.49 DN / +3.96 px under my protocol; the mechanism is not
+in doubt but those two numbers are protocol-dependent and should not be quoted as exact.
+
+**My paired one-variable control, which backend-dev did not run.** Same seeds (101, 201), same 120
+frames, far lines off in both, the ONLY variable being the render order:
+
+| | worst-line p90 | steady jump | far baseline p90 (101 / 201) | knock frame (101 / 201) | locked-but-wrong |
+|---|---|---|---|---|---|
+| pre-G8 renderer | **2.595 cm** | 0.178 px | 2.81 / 2.43 cm | **70.39 / 56.82 cm** | 2 |
+| fixed renderer | **1.479 cm** | 0.126 px | 1.52 / 1.43 cm | **62.27 / 49.11 cm** | 2 |
+
+**Ruling: QUALIFIED. Nothing is overturned.** Specifically:
+
+- **G3's KILL is UNAFFECTED.** It failed at 11.0 m against a `court_lock_step` baseline of 13.4 m;
+  the same baseline here is 12.65 m against 13.54 m. A 1.8x renderer artefact cannot reach three
+  orders of magnitude, and hard rule 2 stands anyway.
+- **The 3.5 cm and 2.41 cm figures are QUALIFIED and now known to be PESSIMISTIC by about 1.8x.**
+  They are not bad arithmetic; they measure a tracker on a scene whose paint was quantised onto
+  pixel centres. They must not be quoted as the tracker's precision without naming the renderer.
+- **My own 2026-09-18 numbers are qualified too, and I say so here rather than leave it to someone
+  else.** The 70.4 / 56.8 cm silent wrong locks I reported reproduce *exactly* (70.39 / 56.82) - and
+  on a correctly rendered scene they are 62.27 / 49.11 cm. The finding survives, the magnitudes do
+  not.
+- **The fault is WIDER than backend-dev states.** It is not confined to the far lines: on the WIDE
+  `near_service` line - a line the fitter actually uses - the stacked offset moves **-0.19 px
+  (shipped) -> -0.09 px (subpixel)**. That is why the whole-court p90 moved 1.76x. "Those runs
+  measured a tracker whose far lines were effectively absent from the image" understates it; every
+  line moved, by about a tenth of a pixel.
+- **It is a live trap, not a closed one.** The defaults were deliberately left at the faulty values
+  so that no prior number moves - correct for reproducibility, but it means the DEFAULT renderer
+  still cannot place sub-pixel paint and any future run at defaults inherits the fault. The comment
+  in `court_track_sim.py` also says "G8 scores the far-line instrument at `ss=4`"; every G8 artifact
+  stamps **`ss = 2`**.
+
+### 6. Claim 4 - "ships OFF" really is a no-op, verified my way
+
+A git worktree at `46e5fe7` against HEAD, default arguments only: `render()` gives a **byte-identical
+image** (sha256 `7340fd1d...` both sides); `paint_check` is identical on three cameras (lines,
+support, worst, unchecked); `court_track_sim.run(seed=101, n=6)` is identical on setup error, status,
+locked, every per-frame line error and every jump. **Exactly one difference in the whole comparison:
+the new `TrackConfig.far_lines` field.** Rule 7 honoured.
+
+One caveat on the shipped comment. `camera3d.paint_check` says *"`support` stays WIDE-sample only, so
+it remains the same number G7 scored"*. With the far lines ON it does not: `far_service` joins
+`lines`, so its wide samples join the `checked` mask, and support moves on **4 of 400** trials, by up
+to **0.0114**. Immaterial while the instrument ships off; the comment is wrong as written.
+
+Two small numeric slips in the results table, neither changing a direction: `far_baseline` is
+`unchecked` on **394** of 400 CP1 trials (not 400), and `far_service` is checked on **389** of 400
+(not 394). The 369/369 and the `ceiling_true_camera.ok_rate 0.000` reproduce exactly, and the worst
+line on the 369 flagged right cameras is `far_service` on 368 of them - so the flag really is the far
+instrument.
+
+### 7. Claim 5 - threshold provenance
+
+The dev sweep is what it says: 342 rows over seeds 300-305, an 8 x 5 grid, and every cell of the
+published table reproduces to four decimals. `far_min_z` is inert across 3-8 at tolerances
+0.10-0.75 - **but not at 1.00**, where z = 8 catches 123/144 against 122/144 at z = 3-6. It does not
+change the choice (1.00 loses on catch at every z), but "every row above is identical at z = 3, 4, 5,
+6 and 8" is not true of the last row. `FAR_MIN_Z = 5.0` being "the value the code carried before the
+sweep" cannot be checked against git - the far-line code does not exist before `f3bddd6` - so it
+rests on backend-dev's word. It is honestly labelled as having no evidence.
+
+### 8. Claim 7 - the encoder pin, verified independently
+
+I reconstructed the pre-G8 ffmpeg argv literal by hand: `_encode_argv(X265, fn)` is **character-
+identical** to it, so the CP1 path is a proven no-op. Then, four encodes of **one byte-identical
+20-frame array** through each profile:
+
+| profile | distinct decoded sha256 over 4 encodes | bitrate | decoded-mean spread |
+|---|---|---|---|
+| `cp1` | **4** | 22414.9 - 22504.4 kbps | 0.022 DN |
+| `deterministic` | **1** | identical | **0** |
+
+Determinism confirmed, and the null direction confirmed. The "NOT comparable with CP1 stage 1, G1 or
+G7" declaration is correct and is in the code, the stamp and the prose. **One number that belongs in
+the writeup and is missing: on that array the deterministic profile encodes at 325,033 kbps against
+cp1's 22,461 - 14.5x the bitrate.** That is the clearest single statement that all-intra CRF 18 is a
+different, far easier scene; the writeup gives only the cp1 bitrates.
+
+### 9. Claim 8 - I tried to make a file out-claim its scope
+
+`normalize_camera` is on the real read path (`normalize()` calls it whenever `setup.camera` is
+present, and `CourtCamera.to_dict()` splats `extra`, so `lock_scope` and `lock_claim` do travel).
+Ten hand-edited camera blocks:
+
+| attack | result |
+|---|---|
+| forged `lock_claim` text beside `scope = near_half` | **defeated** - re-derived, "NOT checked: far_baseline, far_service" |
+| unknown scope string / scope absent / scope as a list | **defeated** - all read `unknown`, never `whole_court` |
+| `lock_unverified` as a bare string | **safe** - degrades to "some lines" |
+| **`lock_scope = "whole_court"` while `lock_unverified` still lists `far_baseline`, `far_service`** | **SUCCEEDS** - "Every court line was checked against the paint." |
+
+So the sentence "a hand-edited file cannot out-claim its scope" is literally true - the claim is
+always derived from the scope - but the protection a reader will assume is not there: **the scope
+itself is a free-text field and nothing cross-checks it against `lock_unverified`.** A file can
+assert `whole_court` while carrying the evidence that it is not. This is not a gate
+(`metrics_eligible` does not consult it), so it is a qualification rather than a defect that blocks
+anything, but it is the same class of check the 2026-09-10 setup work already enforced when it
+refused `_exact` as evidence of a confirmation. The fix is one condition; I did not apply it.
+
+### 10. Claim 9 - the prediction that was wrong, and the arm that was kept
+
+Confirmed from the raw rows: the pyramid arm catches **1.000** on both dev and held-out at **0.000**
+incremental false flags, against the stacked profile's 0.9167 - it catches the pitch +/-0.05 deg pair
+the stacked profile misses. It is reported plainly and against interest, which is right.
+
+The choice of mechanism was fixed **a priori** - the pre-registration names the stacked profile as
+primary with a stated reason, before any run - so it is not a post-hoc selection. But the decision to
+*keep* it after the secondary beat it on the only bar that was scored is not evidenced. The two
+reasons given are that the pyramid loses in the 10-20 cm band and was never run against bar 4. The
+second is true (`pyramid_far` lives only in the gate tool; nothing in `court_cost_separation.py` or
+`camera3d.py` touches it). The first rests on **2 distinct ladder cases** - `height +/-0.02`, 19.8 cm
+- in a band that **neither bar scores**: a row at 19.8 cm is above the 10 cm "good" line and below
+the 20 cm "wrong" line, so it is excluded from both the catch and the false-flag rates. That is a
+thin basis, and the pyramid is not in production code at all, so there is currently nothing to choose
+between.
+
+### 11. The suite
+
+414 passed, 10 skipped, 2 failed at HEAD in 108 s; the two are
+`test_recording_identity.py::test_the_known_alias_resolves_to_one_recording` and
+`::test_overlap_is_reported_not_silently_merged`. The pre-G8 worktree gives 391 / 10 / 5, the three
+extra failures being `test_refs_pool_strict16.py`, which needs the `data/incoming` clips a worktree
+does not have - so 391 + 3 = **394**, and 414 - 394 = **20** = `test_far_line_check.py` (14) +
+`test_codec_profile.py` (6). Exactly as claimed.
+
+### 12. What is still unmeasured - the one that matters
+
+**Nothing here has looked at a real court.** Every number in G8 - the observability, the catch, the
+false-flag rate, the net-tape attribution, the encoder spread - comes from two synthetic renderers,
+and one of them was found this week to be incapable of drawing the very thing the experiment is
+about. The far baseline's projected paint width, the net tape's clearance, the surface's flatness and
+the paint's edge convention are all *assumed* by those renderers, and the instrument's entire
+decision is a sub-pixel offset against exactly those assumptions. Until a far-line reading is taken
+on real footage, "the far lines are observable" means "they are observable in a picture we drew".
+
+### STATE rows this audit implies (text only; qa did not edit `docs/STATE.md`)
+
+Append to the G8 row in "What has worked":
+
+> **QA AUDIT 2026-09-19: CONFIRMED IN PART, and BAR 4's headline is QUALIFIED.** The sweep, the
+> held-out 0.9167 / 0.0000, the 369/369, the 2 -> 0 paired A/B and the encoder pin all reproduce
+> exactly from the raw rows or from qa's own re-implementation; "ships OFF" is a proven no-op (a
+> worktree diff at default arguments gives a byte-identical render and exactly one changed field).
+> **But two process faults:** the committed `tools/court_far_line_gate.py` omits `far_lines=True` and
+> so reproduces only the pre-G8 baseline at HEAD - the instrument and its result disagree at the same
+> commit; and the shipped search reach is **`reach_px_720 = 8.0`, 3.56x the pre-registered
+> `3 * far_tol`**, undeclared. **The net tape at 4.8-5.6 px is inside the shipped window and outside
+> the registered one:** on CP1 arm-P trials 0/1/2 the exact rendering camera FAILS at reach 8.0 and
+> **PASSES at reach 2.25**, where the far lines simply go `unchecked`. BAR 1/2 survive the registered
+> reach (0.9028 vs 0.9167); **BAR 4's "369 of 369" does not**, and the 400-trial re-run at the
+> registered reach is the open experiment. Also: "held-out" seeds 400-402 share the ladder geometry
+> exactly (57/57 keys equal to dev), so the effective n is **24 distinct cases, not 72**, the 6
+> misses are 2 geometries, and the whole gain over the pre-G8 check is **pure pitch of ~0.1 deg**;
+> `far_min_z` is not inert at tol 1.00; `support` moves on 4/400 with the far lines on, contra the
+> code comment; `far_baseline` is unchecked on 394/400, not 400/400.
+
+Append to the G3 row in "What has not worked":
+
+> **QA 2026-09-19, the renderer fault: QUALIFIED, not overturned - and the KILL is UNAFFECTED.** In
+> qa's paired one-variable control on the same seeds (101, 201), fixing the render order moves the
+> worst-line p90 **2.595 -> 1.479 cm** and the knock-frame far-baseline error **70.39 / 56.82 ->
+> 62.27 / 49.11 cm**, with `court_lock_step` at 13.54 -> 12.65 m. So every pre-G8 tracking precision
+> figure - G3's, the 3.5 cm on seeds 100-102 and the 2.41 cm on 200-202 - is **renderer-conditional
+> and pessimistic by about 1.8x**, and must name the renderer when quoted; none of them is wrong
+> arithmetic and no verdict flips. The fault is **not confined to the far lines**: the WIDE
+> `near_service` line's stacked offset moves -0.19 -> -0.09 px. Defaults were left faulty on purpose,
+> so this is a live trap for any future run at defaults.
