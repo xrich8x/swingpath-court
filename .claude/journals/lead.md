@@ -37,7 +37,29 @@ thing you try — re-dispatching the work that just died — is the thing it blo
 
 ## RUN STATE — the one thing that decides whether to wait for the founder
 
-`NOW` opens with a `RUN-STATE:` line. It has exactly three values. **Read it before anything
+`NOW` opens with a `RUN-STATE: PAUSED-BY-FOUNDER — 2026-09-19 — "Pause the task I ahve to turn pc off" — still running: nothing (backend-dev stopped mid-task; its partial edits are committed as `572fd6d`, UNVERIFIED).
+
+**RESUME POINT — branch `camera3d-pnp-paintfit`, HEAD `572fd6d`, nothing pushed.**
+1. **Re-run the suite first** (`cd backend && pytest tests/`, baseline 414 pass / 10 skip / 2
+   pre-existing fail). `572fd6d` is backend-dev's MID-FLIGHT work, stopped by the pause: it
+   was on Fault A's `cases()` call sites and the pyramid reach. Nothing in it is scored.
+2. **Finish the G8 re-decision** (the dispatched brief, in full): fix Fault A (the tool calls
+   `paint_check` without `far_lines=True`, so it cannot rerun its own published table);
+   re-run BAR 4 — and then 1/2/3 — at the PRE-REGISTERED reach `3 * far_tol` = 2.25 px@720
+   rather than the undeclared hard-coded 8.0; re-decide BAR 4 on those numbers and say what
+   it means for `FAR_LINES_DEFAULT`; DECLARE the deviation in the evidence rather than
+   rewriting it; run the founder's Gaussian-pyramid arm against BAR 4 (it wins on catch,
+   1.000 vs 0.9167, and was never scored on that bar); close qa's lock-claim hole
+   (`lock_scope: whole_court` + a non-empty `lock_unverified` still claims every line was
+   checked); record qa's smaller corrections (6 and 4 segments not 8; +0.094 px with noise;
+   394/389 not 400/394; `far_min_z` not inert at tol 1.00; the deterministic profile runs
+   at 14.5x CP1's bitrate).
+3. Then the queue: clay (`sAjkpeRq4P4` fails, `tc8CGFxyRE8` works); height-prior seeding
+   (the founder's Task 2 remainder); the 16-clip probe; the amateur detector.
+
+**The founder's correction is on the record and must not be quietly dropped:** the lead
+reported "the net tape defeats the instrument, 369/369" to them, and that verdict is
+CONDITIONAL on the undeclared reach widening. Re-state it honestly whichever way it lands.
 else: it is the whole answer to "should I be working right now?"**
 
 | RUN-STATE | Means | What you do |
@@ -293,6 +315,8 @@ C3 is the founder's visit. **Order: P2 finishes first**, per the founder.
   forever. Do not reopen the Sideloadly line without the founder.
 
 ## LOG — newest first (court only; older entries are in the archived journal)
+
+- **2026-09-19** — PAUSED by founder ("Pause the task I ahve to turn pc off"). Left running: nothing; backend-dev stopped mid-G8-re-decision, partial work committed UNVERIFIED as `572fd6d`.
 
 - **2026-09-18** — PAUSED by founder ("Pause first - I want to sleep and turn off the PC"). Left running: nothing.
 
