@@ -470,22 +470,36 @@ def normalize_camera(raw: Any) -> Optional[dict[str, Any]]:
     except (KeyError, TypeError, ValueError):
         return None
     scope = cam.get("lock_scope")
-    cam["lock_scope"] = scope if scope in LOCK_SCOPES else LOCK_UNKNOWN
+    scope = scope if scope in LOCK_SCOPES else LOCK_UNKNOWN
     unver = cam.get("lock_unverified")
-    cam["lock_unverified"] = ([str(x) for x in unver]
-                              if isinstance(unver, (list, tuple)) else [])
+    unver = [str(x) for x in unver] if isinstance(unver, (list, tuple)) else []
+    # The scope is a CLAIM; the unverified list is the EVIDENCE beside it. Until
+    # 2026-09-19 nothing compared the two, so hand-setting `whole_court` while
+    # still listing `far_baseline, far_service` produced "Every court line was
+    # checked against the paint" (qa audit, claim 8). An inconsistent pair is
+    # REFUSED, not reconciled: the file does not get to keep the stronger half.
+    if scope == LOCK_WHOLE_COURT and unver:
+        cam["lock_scope_refused"] = LOCK_WHOLE_COURT
+        scope = LOCK_UNKNOWN
+    cam["lock_scope"], cam["lock_unverified"] = scope, unver
     cam["lock_claim"] = camera_lock_claim(cam)
     return cam
 
 
 def camera_lock_claim(cam: Optional[dict[str, Any]]) -> str:
     """One sentence saying WHAT the paint check verified about this camera. Always
-    RE-DERIVED from the scope, so a hand-written `lock_claim` cannot assert more
-    than the scope beside it does."""
+    RE-DERIVED from the scope AND from the unverified list beside it, so neither a
+    hand-written `lock_claim` nor a hand-written scope can assert more than the
+    evidence in the same block: `whole_court` is only ever said when NOTHING is
+    listed unverified (`normalize_camera` refuses the pair otherwise)."""
     if not cam:
         return "No 3D camera was solved for this match."
     scope = cam.get("lock_scope", LOCK_UNKNOWN)
+    miss_all = ", ".join(cam.get("lock_unverified") or [])
     if scope == LOCK_WHOLE_COURT:
+        if miss_all:            # defensive: normalize_camera should have refused
+            return ("It is not recorded which court lines were checked against "
+                    f"the paint. NOT checked: {miss_all}.")
         return "Every court line was checked against the paint."
     if scope == LOCK_NEAR_HALF:
         miss = ", ".join(cam.get("lock_unverified") or []) or "some lines"
@@ -494,6 +508,9 @@ def camera_lock_claim(cam: Optional[dict[str, Any]]) -> str:
                 "this measurement can see.")
     if scope == LOCK_NONE:
         return "No court line could be checked against the paint."
+    if miss_all:
+        return ("It is not recorded which court lines were checked against the "
+                f"paint. NOT checked: {miss_all}.")
     return "It is not recorded which court lines were checked against the paint."
 
 

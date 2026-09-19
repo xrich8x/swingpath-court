@@ -28,7 +28,17 @@ variable; the instrument never sees it. The verdict scored is the whole
   GOOD  (false-flag population): every line within 10 cm (C1's KILL_M)
   WRONG (catch population):      a far line beyond 20 cm
 
+THE SEARCH WINDOW IS PART OF THE INSTRUMENT
+-------------------------------------------
+G8 registered `reach = 3 * far_tol`. The code that produced the committed G8
+tables carried a hard-coded 8.0 px @720 instead (qa, 2026-09-19), and that is not
+a detail: the net tape sits 4.8-5.6 px from the far service line, inside the 8.0
+window and outside the registered one. `--reach-mode registered` (the default)
+couples the window to the tolerance cell by cell, for the stacked arm and the
+pyramid arm alike; `--reach-mode fixed8` reproduces the committed G8 tables.
+
     cd backend && .venv/Scripts/python.exe ../tools/court_far_line_gate.py --seeds 300 301
+    ... --reach-mode fixed8        # reproduce the G8 tables as published
 """
 from __future__ import annotations
 
@@ -76,6 +86,15 @@ WRONG_M = 0.20         # G8's catch population: a far line beyond 20 cm
 
 TOL_GRID = (0.10, 0.15, 0.20, 0.25, 0.35, 0.50, 0.75, 1.00)
 Z_GRID = (3.0, 4.0, 5.0, 6.0, 8.0)
+# The window the profile is read over, per tolerance cell. "registered" is G8's
+# own wording (3 x far_tol); "fixed8" is what the committed G8 run actually did.
+REACH_FIXED_PX_720 = 8.0
+
+
+def reach_for(tol, mode):
+    return camera3d.FAR_REACH_MULT * tol if mode == "registered" else REACH_FIXED_PX_720
+
+
 # the pyramid arm (the founder's literal proposal), swept on its own two knobs
 PYR_TOL_GRID = TOL_GRID
 PYR_DN_GRID = (2.0, 3.0, 4.0, 6.0, 9.0)
@@ -176,7 +195,7 @@ def pyramid_far(grey, cam, *, levels=3, tol_px_720=0.20, min_dn=6.0,
 
 
 # ------------------------------------------------------------------ cases --
-def cases(seed, ss, verbose=True):
+def cases(seed, ss, verbose=True, reach_mode="registered"):
     """Every ladder case for one seed, scored on every threshold pair. The verdict
     is the WHOLE `paint_check`, not the far lines alone - the G8 bar is "reported
     NOT locked", and the near lines are part of that."""
@@ -197,15 +216,21 @@ def cases(seed, ss, verbose=True):
                "stack": {}, "pyramid": {}}
         for tol in TOL_GRID:
             for z in Z_GRID:
-                c = camera3d.paint_check(img, cam, far_kw={"far_tol_px_720": tol,
-                                                           "far_min_z": z})
+                # `far_lines=True` is LOAD-BEARING: camera3d.FAR_LINES_DEFAULT is
+                # False, so without it this tool scores the pre-G8 check in every
+                # cell and the sweep measures nothing (qa, 2026-09-19, fault A).
+                c = camera3d.paint_check(img, cam, far_lines=True,
+                                         far_kw={"far_tol_px_720": tol,
+                                                 "far_min_z": z,
+                                                 "reach_px_720": reach_for(tol, reach_mode)})
                 far_flag = any(c.detail.get(nm, {}).get("thin", (1.0,))[0] < 0.5
                                for nm in FAR)
                 row["stack"][f"{tol}|{z}"] = [bool(c.ok), bool(far_flag),
                                               sorted(set(c.unchecked) & set(FAR))]
         for tol in PYR_TOL_GRID:
             for dn in PYR_DN_GRID:
-                v = pyramid_far(img, cam, tol_px_720=tol, min_dn=dn)
+                v = pyramid_far(img, cam, tol_px_720=tol, min_dn=dn,
+                                reach_px_720=reach_for(tol, reach_mode))
                 seen_far = [nm for nm in FAR if v.get(nm, {}).get("seen")]
                 far_flag = any(v[nm]["frac"] < 0.5 for nm in seen_far)
                 ok = bool(base.ok) and not far_flag
@@ -284,11 +309,14 @@ def main():
     ap.add_argument("--seeds", type=int, nargs="+", default=list(DEV_SEEDS))
     ap.add_argument("--ss", type=int, default=2)
     ap.add_argument("--tag", default="dev")
+    ap.add_argument("--reach-mode", choices=("registered", "fixed8"), default="registered",
+                    help="registered = G8's own 3 x far_tol; fixed8 = the 8.0 px @720 "
+                         "the committed G8 run used")
     ap.add_argument("--out", default=None)
     a = ap.parse_args()
     rows, t_render = [], []
     for s in a.seeds:
-        r, tr = cases(s, a.ss)
+        r, tr = cases(s, a.ss, reach_mode=a.reach_mode)
         rows += r
         t_render.append(tr)
     st = sweep_table(rows, "stack", TOL_GRID, Z_GRID)
@@ -296,6 +324,10 @@ def main():
     res = {"stamp": {"tool": "tools/court_far_line_gate.py", "seeds": a.seeds,
                      "commit": _sha(),
                      "ss": a.ss, "subpixel": True, "tag": a.tag,
+                     "reach_mode": a.reach_mode,
+                     "reach_px_720": ("3 x tol per cell" if a.reach_mode == "registered"
+                                      else REACH_FIXED_PX_720),
+                     "far_lines": True,
                      "render_s_p50": float(np.median(t_render)),
                      "measured_against": "the exact synthetic camera that rendered "
                                          "each frame; the ladder target is the "

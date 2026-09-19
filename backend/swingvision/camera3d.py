@@ -472,6 +472,17 @@ FAR_LINES = ("far_baseline", "far_service")
 # NOT the 0.35 "contrast ratio" that was suggested: that number had no evidence.
 FAR_TOL_PX_720 = 0.75
 FAR_MIN_Z = 5.0
+# The SEARCH WINDOW, and it is a corrected number. G8 registered
+# "offsets s in [-reach, +reach] ... reach = 3 * far_tol" - the same 3x the
+# shipped `paint_check` uses for `ridge_offsets` - and the code that ran carried
+# a hard-coded `reach_px_720 = 8.0`, 3.56x wider, declared nowhere. qa found it
+# on 2026-09-19 and it was not cosmetic: the net tape sits 4.8-5.6 px from the
+# far service line, INSIDE the 8.0 window and OUTSIDE the registered 2.25 one,
+# which is the whole of G8's BAR 4 failure. The registered coupling is restored
+# here: the window is 3 x the tolerance, everywhere, and a caller that wants the
+# 8.0 behaviour must ask for it by name (see G8 REMEDIATION in the evidence).
+FAR_REACH_MULT = 3.0
+FAR_REACH_PX_720 = FAR_REACH_MULT * FAR_TOL_PX_720
 # OFF by default, and the reason is measured, not cautious. G8's non-degradation
 # bar was run on CP1's arm-P scene and FAILED: with the far lines checked, 369 of
 # 369 RIGHT cameras are flagged - including the exact rendering camera. Isolated
@@ -552,13 +563,19 @@ def _seg_hit(s, P, tol, min_z):
 
 
 def far_line_stacks(grey, cam: CourtCamera, *, segments: int = 8, min_samples: int = 24,
-                    step_px: float = 1.0, reach_px_720: float = 8.0,
+                    step_px: float = 1.0, reach_px_720: float = FAR_REACH_PX_720,
                     prof_step_px: float = 0.25, min_width_px_720: float = 0.67,
                     clear_m: float = 0.3) -> dict:
     """{line name: (offsets_px, [stacked profile per segment], n_samples)} for the
     paint too thin for the per-point ridge finder. Split out from
     `far_line_profile` so a threshold sweep can re-score one set of measurements
-    (G8) instead of re-reading the image once per threshold."""
+    (G8) instead of re-reading the image once per threshold.
+
+    `reach_px_720` is the search half-window and it is NOT free: G8 registered it
+    as `3 * far_tol`, so a sweep over tolerances must RE-MEASURE per tolerance
+    (`far_line_profile` does) rather than measure once at a wide reach and score
+    narrow - a wider window can find a confuser the registered one never looks
+    at. See FAR_REACH_MULT."""
     from scipy import ndimage
     g = np.asarray(grey, float)
     w, h = cam.image_wh
@@ -629,7 +646,7 @@ def score_far_stacks(stacks, *, far_tol_px_720: float = FAR_TOL_PX_720, far_min_
 
 def far_line_profile(grey, cam: CourtCamera, *, far_tol_px_720: float = FAR_TOL_PX_720,
                      far_min_z: float = FAR_MIN_Z, segments: int = 8, min_samples: int = 24,
-                     step_px: float = 1.0, reach_px_720: float = 8.0,
+                     step_px: float = 1.0, reach_px_720: float | None = None,
                      prof_step_px: float = 0.25, min_width_px_720: float = 0.67,
                      clear_m: float = 0.3, min_det_frac: float = 0.5) -> dict:
     """{line name: {"frac", "n_seg", "n_det", "n_samples", "z", "off", "seen"}}
@@ -641,7 +658,13 @@ def far_line_profile(grey, cam: CourtCamera, *, far_tol_px_720: float = FAR_TOL_
     which the line was SEEN at all; `seen` is False when fewer than
     `min_det_frac` of the segments found any ridge in the search window, and a
     line that was not seen is not evidence either way. Returns nothing for a line
-    whose thin part is out of frame or too short to make one segment."""
+    whose thin part is out of frame or too short to make one segment.
+
+    `reach_px_720=None` means the REGISTERED window, `FAR_REACH_MULT * far_tol`:
+    the search half-width follows the tolerance instead of being set apart from
+    it. Pass a number only to reproduce an older run."""
+    if reach_px_720 is None:
+        reach_px_720 = FAR_REACH_MULT * far_tol_px_720
     st = far_line_stacks(grey, cam, segments=segments, min_samples=min_samples,
                          step_px=step_px, reach_px_720=reach_px_720,
                          prof_step_px=prof_step_px, min_width_px_720=min_width_px_720,

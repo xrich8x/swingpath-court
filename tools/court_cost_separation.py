@@ -87,15 +87,46 @@ def ridge_residual(grey, cam, *, reach_px_720=RIDGE_REACH_PX_720, min_dn=RIDGE_M
             "found": float(found.mean()), "n": int(use.sum())}
 
 
+# --- G8 REMEDIATION: the far-line arms scored on this population -------------
+# BAR 4 was run at a search window of 8.0 px @720 that G8 never registered (qa,
+# 2026-09-19). All THREE far-line arms are now measured on the SAME image and the
+# SAME camera, so the difference between them is the instrument alone:
+#   ok        the registered instrument, reach = 3 x far_tol = 2.25 px @720
+#   ok_reach8 the window the committed G8 run actually used
+#   ok_pyr    the founder's 3-level Gaussian pyramid, at the registered window
+# The pyramid's two knobs come from the DEVELOPMENT sweep under the registered
+# window (seeds 300-305), never from this scoring population.
+PYR_TOL_PX_720 = 0.50
+PYR_MIN_DN = 3.0
+G8_REACH_PX_720 = 8.0
+
+
+def _pyr_flag(grey, cam, ok_pre_g8):
+    """The pyramid arm's verdict, built exactly as court_far_line_gate scores it:
+    the pre-G8 check's own ok, AND no far line that was SEEN sits off tolerance."""
+    import court_far_line_gate as G
+    v = G.pyramid_far(grey, cam, tol_px_720=PYR_TOL_PX_720, min_dn=PYR_MIN_DN,
+                      reach_px_720=camera3d.FAR_REACH_MULT * PYR_TOL_PX_720)
+    seen = [nm for nm in camera3d.FAR_LINES if v.get(nm, {}).get("seen")]
+    flag = any(v[nm]["frac"] < 0.5 for nm in seen)
+    return {"ok": bool(ok_pre_g8 and not flag), "flag": bool(flag),
+            "seen": seen, "frac": {nm: v[nm]["frac"] for nm in seen},
+            "level": {nm: v[nm]["level"] for nm in seen}}
+
+
 def check_row(grey, cam):
     """paint_check (instrument 1) + ridge_residual (instrument 2) as one dict.
 
-    BOTH paint checks are run on the SAME image: `ok_pre_g8` is the pre-G8 flag,
-    blind to the far baseline and far service line, and `ok` is the same check
-    with G8's far-line instrument live. Paired on one image, so the difference
-    between them is the instrument and nothing else."""
+    Every paint check is run on the SAME image: `ok_pre_g8` is the pre-G8 flag,
+    blind to the far baseline and far service line, `ok` is the same check with
+    G8's far-line instrument live at the REGISTERED window, and `ok_reach8` is it
+    at the wider window the committed G8 run used. Paired on one image, so the
+    difference between them is the instrument and nothing else."""
     c = camera3d.paint_check(grey, cam, far_lines=True)
     c0 = camera3d.paint_check(grey, cam, far_lines=False)
+    c8 = camera3d.paint_check(grey, cam, far_lines=True,
+                              far_kw={"reach_px_720": G8_REACH_PX_720})
+    pyr = _pyr_flag(grey, cam, c0.ok)
     # c.worst is renamed "too_few_lines" when the lines pass but the court does
     # not; take the worst FRACTION directly so it is always a number.
     worst_frac = min(v[0] for v in c.lines.values()) if c.lines else float("nan")
@@ -111,6 +142,10 @@ def check_row(grey, cam):
             "support_pre_g8": c0.support,
             "far": {k: c.detail.get(k, {}).get("thin") for k in camera3d.FAR_LINES},
             "far_unchecked": sorted(set(c.unchecked) & set(camera3d.FAR_LINES)),
+            "ok_reach8": bool(c8.ok), "worst_reach8": c8.worst,
+            "far_reach8": {k: c8.detail.get(k, {}).get("thin") for k in camera3d.FAR_LINES},
+            "far_unchecked_reach8": sorted(set(c8.unchecked) & set(camera3d.FAR_LINES)),
+            "ok_pyr": pyr["ok"], "pyr": pyr,
             "ridge_med": r["med"], "ridge_mean": r["mean"],
             "ridge_found": r["found"], "ridge_n": r["n"]}
 
@@ -360,6 +395,33 @@ def analyse(rows, split_seed=0, n_perm=1000, perm_seed=0):
             "far_lines_unchecked_rate_true_camera": float(np.mean(
                 [len(r["true"].get("far_unchecked", [])) > 0 for r in ok])),
             "note": "pre_g8 = the same check with far_lines=False on the same image"}
+    # G8 REMEDIATION: every far-line arm on the SAME rows, one variable apart.
+    # BAR 4 is read off this table: catch must stay 1.000 and the false-flag rate
+    # on RIGHT cameras must stay <= 0.02.
+    arms = {"pre_g8 (far lines off)": "ok_pre_g8",
+            "registered reach 3 x tol": "ok",
+            "G8-as-run reach 8.0": "ok_reach8",
+            "pyramid, registered reach": "ok_pyr"}
+    out["far_line_arms"] = {}
+    for label, key in arms.items():
+        if not all(key in r["fit"] for r in ok):
+            continue
+        f = np.array([r["fit"][key] for r in ok])
+        t = np.array([r["true"][key] for r in ok])
+        out["far_line_arms"][label] = {
+            "catch": float((~f[wrong]).mean()) if nw else float("nan"),
+            "false_flag_right": float((~f[~wrong]).mean()),
+            "n_flagged_right": int((~f[~wrong]).sum()), "n_right": int((~wrong).sum()),
+            "true_camera_ok_rate": float(t.mean()),
+            "far_unchecked_rate_true": float(np.mean(
+                [len(r["true"].get("far_unchecked_reach8" if key == "ok_reach8"
+                                   else "far_unchecked", [])) > 0 for r in ok]))
+            if key in ("ok", "ok_reach8") else None,
+            "bar4_pass": bool((nw and (~f[wrong]).mean() >= 1.0 - 1e-9)
+                              and (~f[~wrong]).mean() <= 0.02)}
+    out["far_line_arms_note"] = (
+        "BAR 4: catch 33/33 (here: all wrong cameras) and <= 2% false flags on the "
+        "right cameras. Arms are paired - same image, same camera, same fit.")
     # how wrong is wrong: worst line error on each group
     def worst_line(r):
         return max(max(v["M"], v["L"]) for v in r["lines"].values())
@@ -414,6 +476,15 @@ def main():
                                 "step_m": RIDGE_STEP_M,
                                 "censoring": "no ridge found scores the full reach"},
              "paint_check": "camera3d.paint_check shipped defaults",
+             "far_line_arms": {"registered_reach_px_720": camera3d.FAR_REACH_MULT
+                               * camera3d.FAR_TOL_PX_720,
+                               "g8_as_run_reach_px_720": G8_REACH_PX_720,
+                               "far_tol_px_720": camera3d.FAR_TOL_PX_720,
+                               "far_min_z": camera3d.FAR_MIN_Z,
+                               "pyramid": {"tol_px_720": PYR_TOL_PX_720,
+                                           "min_dn": PYR_MIN_DN,
+                                           "reach_px_720": camera3d.FAR_REACH_MULT
+                                           * PYR_TOL_PX_720}},
              "wrong_rule": a["wrong_rule"],
              "measured_against": "the exact rendering camera (court_fit_cp1.truth_camera); "
                                  "the wrong/right label is its focal length"}
