@@ -37,29 +37,7 @@ thing you try — re-dispatching the work that just died — is the thing it blo
 
 ## RUN STATE — the one thing that decides whether to wait for the founder
 
-`NOW` opens with a `RUN-STATE: PAUSED-BY-FOUNDER — 2026-09-19 — "Pause the task I ahve to turn pc off" — still running: nothing (backend-dev stopped mid-task; its partial edits are committed as `572fd6d`, UNVERIFIED).
-
-**RESUME POINT — branch `camera3d-pnp-paintfit`, HEAD `572fd6d`, nothing pushed.**
-1. **Re-run the suite first** (`cd backend && pytest tests/`, baseline 414 pass / 10 skip / 2
-   pre-existing fail). `572fd6d` is backend-dev's MID-FLIGHT work, stopped by the pause: it
-   was on Fault A's `cases()` call sites and the pyramid reach. Nothing in it is scored.
-2. **Finish the G8 re-decision** (the dispatched brief, in full): fix Fault A (the tool calls
-   `paint_check` without `far_lines=True`, so it cannot rerun its own published table);
-   re-run BAR 4 — and then 1/2/3 — at the PRE-REGISTERED reach `3 * far_tol` = 2.25 px@720
-   rather than the undeclared hard-coded 8.0; re-decide BAR 4 on those numbers and say what
-   it means for `FAR_LINES_DEFAULT`; DECLARE the deviation in the evidence rather than
-   rewriting it; run the founder's Gaussian-pyramid arm against BAR 4 (it wins on catch,
-   1.000 vs 0.9167, and was never scored on that bar); close qa's lock-claim hole
-   (`lock_scope: whole_court` + a non-empty `lock_unverified` still claims every line was
-   checked); record qa's smaller corrections (6 and 4 segments not 8; +0.094 px with noise;
-   394/389 not 400/394; `far_min_z` not inert at tol 1.00; the deterministic profile runs
-   at 14.5x CP1's bitrate).
-3. Then the queue: clay (`sAjkpeRq4P4` fails, `tc8CGFxyRE8` works); height-prior seeding
-   (the founder's Task 2 remainder); the 16-clip probe; the amateur detector.
-
-**The founder's correction is on the record and must not be quietly dropped:** the lead
-reported "the net tape defeats the instrument, 369/369" to them, and that verdict is
-CONDITIONAL on the undeclared reach widening. Re-state it honestly whichever way it lands.
+`NOW` opens with a `RUN-STATE:` line. It has exactly three values. **Read it before anything
 else: it is the whole answer to "should I be working right now?"**
 
 | RUN-STATE | Means | What you do |
@@ -131,69 +109,33 @@ Then, before doing anything else, read in this order:
 
 ## NOW — what is running
 
-RUN-STATE: RUNNING — cleared 2026-09-18 by the founder (resumed with the per-frame detection ruling below).
+RUN-STATE: PAUSED-BY-FOUNDER — 2026-09-19 — "Pause the task I ahve to turn pc off" — still running: nothing (backend-dev stopped mid-task; its partial edits are committed as `572fd6d`, UNVERIFIED).
 
-**RESUME POINT (branch `camera3d-pnp-paintfit`, last commit `aea8635`; work since is UNCOMMITTED on disk):**
-- Built since `aea8635`, dev seeds only, NOTHING scored:
-  - `camera3d.paint_check` (per-line on-paint lock check), `fit_camera_checked` (dolly/alley restarts);
-  - camtrack gated by `paint_check`, pose-only paint-fit recovery before any detector, `locked` flag,
-    q 1e-2 -> 100 (the filter lag was most of G3's steady error);
-  - sim `--knock-scale` and a `locked_wrong` metric; arm KC (`--checked`);
-  - `tools/court_track_video.py` (demo videos, sent to the founder);
-  - `tools/court_real_probe.py`.
-- Dev numbers:
-  - sim seeds 100-102: worst line p90 3.5 cm, knock recovered in 1 frame, 1 locked-but-wrong frame
-    (the knock frame; far lines are unchecked);
-  - knock x4: lost, never recovered (~85 px > the 40 px fit window), never falsely locked;
-  - KC dev seeds 101/102: 0 silently wrong, ~10% of setups flagged.
-- Suite at last run: `test_camtrack` + `test_camera3d` 46 pass.
-- Footage: 25 calibrated clips HARD-LINKED from `swingpath:data/incoming` into `data/incoming`
-  (git-ignored) - the founder asked for real footage.
-- NEXT on resume:
-  1. Rerun the dev probe:
-     `cd backend && ../tools/court_real_probe.py --clips L73ep7JHiJ4 HoHxFSX_gLk_s2 --out <scratch>`.
-     It is slow: each failed check costs up to 7 paint fits of ~11 s.
-  2. Fill "Development" in `docs/evidence/court-camera3d-real.md`, then COMMIT that
-     pre-registration (E1-E5, drafted, not yet committed) BEFORE the strict-16 run.
-  3. Run the pool (`--workers 8`) and record the results.
-  4. Separately pre-register the synthetic gates for KC and the checked tracker on fresh seeds;
-     G3's KILL stands.
+**RESUME POINT — branch `camera3d-pnp-paintfit`, HEAD `572fd6d`, nothing pushed.**
+1. **Re-run the suite first** (`cd backend && pytest tests/`, baseline 414 pass / 10 skip / 2
+   pre-existing fail). `572fd6d` is backend-dev's MID-FLIGHT work, stopped by the pause: it
+   was on Fault A's `cases()` call sites and the pyramid reach. Nothing in it is scored.
+2. **Finish the G8 re-decision** (the dispatched brief, in full): fix Fault A (the tool calls
+   `paint_check` without `far_lines=True`, so it cannot rerun its own published table);
+   re-run BAR 4 — and then 1/2/3 — at the PRE-REGISTERED reach `3 * far_tol` = 2.25 px@720
+   rather than the undeclared hard-coded 8.0; re-decide BAR 4 on those numbers and say what
+   it means for `FAR_LINES_DEFAULT`; DECLARE the deviation in the evidence rather than
+   rewriting it; run the founder's Gaussian-pyramid arm against BAR 4 (it wins on catch,
+   1.000 vs 0.9167, and was never scored on that bar); close qa's lock-claim hole
+   (`lock_scope: whole_court` + a non-empty `lock_unverified` still claims every line was
+   checked); record qa's smaller corrections (6 and 4 segments not 8; +0.094 px with noise;
+   394/389 not 400/394; `far_min_z` not inert at tol 1.00; the deterministic profile runs
+   at 14.5x CP1's bitrate).
+3. Then the queue: clay (`sAjkpeRq4P4` fails, `tc8CGFxyRE8` works); height-prior seeding
+   (the founder's Task 2 remainder); the 16-clip probe; the amateur detector.
 
-**SCOPE: THE COURT FEATURE ONLY (founder, 2026-09-17).** "Clear out ALL OTHER FEATURES aside from the
-court - save the information that has already been doen but all instruictioins aside from this court
-feature needs to be wiped from MD files so we dont randomly work on it." The pre-2026-09-17 journal —
-the P1-P7 queue, H1, P2, SwingVision's ball levers, every ball pre-registration — is preserved at
-`swingpath:docs/archive/2026-09-17-pre-court-only/.claude/journals/lead.md`. **It is history. Do not work from it.**
+**The founder's correction is on the record and must not be quietly dropped:** the lead
+reported "the net tape defeats the instrument, 369/369" to them, and that verdict is
+CONDITIONAL on the undeclared reach widening. Re-state it honestly whichever way it lands.
 
-**IN FLIGHT:** `backend-dev` — **CP1 stage 1**: the whole-court line fit on rendered courts with exact
-truth (spec: `docs/evidence/court-precision-routes.md` §7 + lead addendum). Stage 1 = renderer, real
-libx265 encode, the fit, three instrument controls, arm P and arm A3 (codec off). 400 trials per arm
-(200 only if >60 min, decided pre-run). The "seed" is an automatic detector's rough first guess
-(σ 14.78 px), never a human tap. **`backend-dev`'s own journal still carries non-court history —
-archive and trim it AFTER CP1 lands, not while it is working.**
-
-### THE COURT QUEUE — one direct child at a time
-
-1. **Verify CP1 stage 1** from its raw output (controls first), then brief stage 2's arms.
-2. **The AUTOMATIC court route** (lead; there is no research agent). The founder's ruling makes this the main line:
-   - a court model trained on AMATEUR low-mount footage (the 2026-09-09 named remedy);
-   - SYNTHETIC training data from the CP1 renderer — unlimited, exactly labelled courts;
-   - inferring out-of-view end points from the regulation dimensions;
-   - SwingVision's learned approach (patent US11893808B2: a network trained on 3D sensor truth);
-   - a rule-3 check against every branch in `docs/court/CLOSED.md`.
-3. **Live tracking test.** `calibration.court_lock_step` + `courtfit.CourtWatchdog` already track
-   the court per frame, but only in the offline `pipeline.analyze_video`. Measure their precision
-   under simulated phone movement. The watchdog's big-change recovery calls `courtfit.autodetect`,
-   which is the CLOSED search — it needs replacing with a re-fit or the new automatic finder.
-4. **Put tracking into the live path.** `live.py` uses one fixed court and never updates it. Build
-   after 3.
-5. **Field of view.** CP1 arm A8 measures how well the fit solves focal length. iOS gives calibration
-   data only with geometric distortion correction OFF (Apple forum 741815, lead-verified).
-6. **The iOS port of the court path** — later. The sideload line stays founder-paused.
-
-**Founder items (batch, do not interrupt):** `docs/DECISIONS_PENDING.md` A (the §1 drift numbers —
-not ready until CP1 and the tracking test report) and B (a blind click set — low priority).
-
+**Earlier context, still true:** the bounded-state ruling (SPEC §1), pm's roadmap feasibility
+check (DECISIONS_PENDING), G7 (an independent on-paint measurement separates right from wrong
+cameras; the fit's own cost is inverted), and qa's two audits.
 
 ## PRE-REGISTRATION — "P8": DOES 3D COURT MAPPING WORK? Founder ask 2026-09-16, runs AFTER P2.
 
