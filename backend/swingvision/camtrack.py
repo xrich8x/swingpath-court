@@ -58,6 +58,12 @@ class TrackConfig:
     q_rot: float = 100.0            # rad^2 s^-3
     q_pos: float = 100.0            # m^2 s^-3
     r_floor_px: float = 0.1         # measurement noise floor, px rms
+    # G8's far-line instrument, OFF for the reason recorded at
+    # camera3d.FAR_LINES_DEFAULT (it flags 369 of 369 right cameras on CP1's
+    # cluttered scene). With it ON, the knock frames of sim seeds 101 and 201 -
+    # which report `locked` while 0.62 / 0.49 m out on exactly those two lines -
+    # are correctly reported NOT locked, and nothing else in the run moves.
+    far_lines: bool = camera3d.FAR_LINES_DEFAULT
 
 
 @dataclass
@@ -67,6 +73,20 @@ class TrackStep:
     n_tracked: int
     resid_px: float
     locked: bool = True  # this frame's camera passed the paint check
+    # WHAT was verified, not just yes/no (G8). Before G8 `locked` could be True
+    # while the far baseline was 0.70 m out, because paint_check could not see
+    # that line at all and said so only in a field nobody carried forward.
+    lock_scope: str = "none"          # whole_court | near_half | none
+    lock_unverified: tuple = ()       # lines the check could NOT see this frame
+    lock_worst: str | None = None     # the line that failed, when it failed
+
+    def claim(self) -> str:
+        if not self.locked:
+            return f"not locked ({self.lock_worst or 'nothing checkable'})"
+        if self.lock_scope == "whole_court":
+            return "locked: whole court verified against the paint"
+        miss = ", ".join(self.lock_unverified) or "some lines"
+        return f"locked on the NEAR HALF only; NOT verified: {miss}"
 
 
 class _PoseKalman:
@@ -213,14 +233,15 @@ class CameraTracker:
         return sol.x[:3], sol.x[3:], float(np.sqrt(np.mean(r[inl] ** 2)))
 
     def _check(self, grey, cam):
-        return camera3d.paint_check(grey, cam).ok
+        """The full PaintCheck, not a bool: the caller needs WHAT was verified."""
+        return camera3d.paint_check(grey, cam, far_lines=self.cfg.far_lines)
 
     def _fit(self, frame, seed, grey):
         try:
             cam = self.paint_fit(frame, seed, pose_only=True).camera
         except Exception:
             return None
-        return cam if self._check(grey, cam) else None
+        return cam if self._check(grey, cam).ok else None
 
     def _recover(self, frame, grey, seeds):
         for seed in seeds:
@@ -250,7 +271,7 @@ class CameraTracker:
         grey = _grey8(frame)
         if self.prev is None:
             self.prev, self.t_prev, self.t_refit = grey, t, t
-            return TrackStep(self.cam, "tracking", 0, 0.0, self._check(grey, self.cam))
+            return self._stepped(self.cam, "tracking", 0, 0.0, self._check(grey, self.cam))
         dt = max(t - self.t_prev, 1e-3)
         got, n = self._flow(grey, boxes)
         pose = self._pose_from(*got) if got is not None else None
@@ -266,7 +287,8 @@ class CameraTracker:
             idx, img = got
             resid = float(np.median(np.abs(self._normal_resid(
                 cand, idx, cand.undistort(img)))))
-        ok = cand is not None and self._check(grey, cand)
+        chk = self._check(grey, cand) if cand is not None else None
+        ok = chk is not None and chk.ok
         self.fail_run = 0 if ok else self.fail_run + 1
         status = "tracking"
         if ok:
@@ -288,13 +310,21 @@ class CameraTracker:
             if cam is not None:
                 self._adopt(cam, t)
                 status, ok = "recovered", True
+                chk = self._check(grey, cam)
             else:
                 self.lost_for += 1
                 self.cam = self.good
                 self.kf.reset(self.good.rvec, self.good.tvec)
                 status = "lost"
         self.prev, self.t_prev = grey, t
-        return TrackStep(self.cam, status, n, resid, ok)
+        return self._stepped(self.cam, status, n, resid, chk, ok)
+
+    @staticmethod
+    def _stepped(cam, status, n, resid, chk, ok=None):
+        if chk is None:
+            return TrackStep(cam, status, n, resid, False, "none", (), None)
+        return TrackStep(cam, status, n, resid, chk.ok if ok is None else ok,
+                         chk.scope, tuple(chk.unchecked), chk.worst)
 
 
 def ground_lines_px(cam: camera3d.CourtCamera, n: int = 50) -> list:

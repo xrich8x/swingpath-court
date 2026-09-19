@@ -1031,3 +1031,241 @@ and `TrackStep.lock_scope` carried through `camera.extra` into `setup_state`'s c
 `match.json` can qualify the claim. Backward compatibility, or every caller updated, is stated in
 the results.
 
+
+### G8 RESULTS — **the far lines ARE observable, and the instrument is DEFEATED BY THE NET TAPE; the encoder pin holds**
+
+Run after the pre-registration was committed at `46e5fe7`. Artifacts:
+`data/output/court_far_line_gate/dev_seeds300-301-302-303-304-305.json` and `heldout_seeds400-401-402.json`,
+`data/output/court_cost_separation/G8_nondegrade_seed0_n400.json`,
+`data/output/court_track_sim/seeds101-201_n120_sub_far.json` (far lines ON) and
+`seeds101-201_n120_sub.json` (the pre-G8 control); each stamps `paint_check_far_lines`.
+Tests: `backend/tests/test_far_line_check.py` (14), `test_codec_profile.py` (6). Suite
+**394 → 414 pass**, 10 skip, the same 2 pre-existing failures (`test_recording_identity.py`).
+
+#### 0. A renderer fault found first, and it invalidates far-line numbers taken before it
+
+`tools/court_track_sim.py`'s renderer **cannot place paint thinner than a pixel**, for two
+independent reasons, both measured on the TRUE camera with no noise:
+
+| | far baseline (0.19 px of paint) | far service (0.25 px) |
+|---|---|---|
+| shipped `ss=2`, PSF after binning | **0.49 DN**, stacked peak at **+3.96 px** | 21.5 DN |
+| `ss=4` | 10.6 DN at −0.135 px | 10.6 DN |
+| `ss=8` | 5.1 DN at −0.130 px | 5.2 DN |
+| `ss=16` | 7.9 DN at −0.133 px | 7.9 DN |
+| **`subpixel=True`** (jittered sub-samples + PSF before binning), `ss=2` | **z 6.8–9.5, offset −0.04 to +0.05 px** | z 7.2–9.1, +0.01 to +0.05 px |
+
+Fixed-grid sub-samples hit or miss a sub-pixel band by PHASE — which is why one far line reads
+2.7× too bright and the other 16× too dim — and applying the PSF after binning quantises the line
+onto a pixel centre, an error of up to half a pixel that **no amount of supersampling removes**
+(the far baseline reads 0.5 px off at 1280×720 even at `ss=8`). The fix is CP1's own render order,
+already forced there for the same reason. It is a **different scene**: `subpixel` and `ss` default
+to the pre-G8 values so no earlier tracking number moves, and every G8 tracking figure below is run
+with `--subpixel` and is **not comparable with G3 or with the 100–102 / 200–202 runs**.
+Cost 0.73 → 1.09 s per 1080p frame.
+
+**This qualifies, rather than overturns, the earlier tracking work:** those runs measured a tracker
+whose far lines were effectively absent from the image. The far-line ERRORS they report are
+geometric, computed against the rendering camera, and stand.
+
+#### 1. The thresholds, set by the pre-registered NOISE-ONLY sweep (G4's procedure)
+
+Development seeds 300–305, 288 ladder cases per seed pair over an 8 × 5 grid, 1,728 scored
+combinations. `false` is the INCREMENTAL false-flag rate over the good cases the pre-G8 check
+already passed; `false total` includes the pre-G8 floor.
+
+| `far_tol_px_720` | catch (far error > 20 cm) | false (incremental) | false (total) |
+|---|---|---|---|
+| 0.10 | 1.000 | 0.389 | 0.442 |
+| 0.15 | 1.000 | 0.310 | 0.370 |
+| 0.20 | 1.000 | 0.190 | 0.261 |
+| 0.25 | 1.000 | 0.143 | 0.217 |
+| 0.35 | 1.000 | 0.048 | 0.130 |
+| 0.50 | 0.979 | 0.016 | 0.101 |
+| **0.75** | **0.917** | **0.000** | 0.087 |
+| 1.00 | 0.847 | 0.000 | 0.087 |
+
+**`far_min_z` is INERT.** Every row above is identical at z = 3, 4, 5, 6 and 8 — the stacked ridge
+stands tens of sigma clear, so the significance threshold selects nothing. The registered choice
+rule (highest catch at ≤ 1% incremental false flags, ties to the larger tolerance) therefore fixes
+`FAR_TOL_PX_720 = 0.75` and leaves `FAR_MIN_Z` undetermined; it is kept at 5.0, the value the code
+carried **before** the sweep. **The suggested 0.35 "contrast ratio" is not used anywhere**: it had
+no evidence behind it, and the quantity that actually decides is a sub-pixel OFFSET, not a ratio.
+
+Two things the sweep exposed about the SHIPPED check, neither of them about the far lines:
+
+- The pre-G8 check already catches **83.3%** of > 20 cm far-line errors, through the near lines.
+  The 24 it misses are **all pitch** — the one motion that moves the far half and leaves the near
+  half alone.
+- Its 8.7% false-flag floor on good cases is **all depth**, 12 of 12, at a worst-line error of
+  5.0 cm. The shipped near-line check already refuses a camera 5 cm out in depth.
+
+#### 2. Held-out score (fresh seeds 400–402), against the bars
+
+| | catch (> 20 cm) | false flag (incremental) | verdict |
+|---|---|---|---|
+| pre-G8 check | 0.833 | 0.087 (total) | — |
+| **stacked profile, tol 0.75** | **0.9167** (66/72) | **0.0000** (0/63) | **BAR 1 PASS** (≥ 0.90), **BAR 2 PASS** (≤ 0.02) |
+| pyramid, tol 0.50 / min_dn 3 | 1.0000 | 0.0000 | secondary arm, no bar |
+
+By far-line error band (held-out; fraction reported NOT locked):
+
+| far error | n | pre-G8 | stacked | pyramid |
+|---|---|---|---|---|
+| ≤ 5 cm | 57 | 0.105 | 0.105 | 0.105 |
+| 5–10 cm | 24 | 0.500 | 0.500 | 0.500 |
+| 10–20 cm | 18 | 0.333 | **0.667** | 0.333 |
+| 20–50 cm | 18 | 0.667 | 0.667 | **1.000** |
+| 50–100 cm | 18 | 0.667 | **1.000** | **1.000** |
+| > 1 m | 36 | 1.000 | 1.000 | 1.000 |
+
+**BAR 3 PASS — the two documented bad cases are caught, and the A/B is paired.** Sim seeds 101 and
+201 re-run with `--subpixel`, 120 frames each, the ONLY difference between arms being
+`TrackConfig.far_lines`:
+
+| | locked | locked-but-wrong (> 10 cm) | unlocked | worst line p90 | steady jump | knock recovery |
+|---|---|---|---|---|---|---|
+| far lines OFF (pre-G8) | 240 | **2** | 0 | 1.48 cm | 0.13 px | 1, 1 frames |
+| far lines ON | 238 | **0** | **2** | 1.48 cm | 0.13 px | 1, 1 frames |
+
+The two frames are exactly the knock frames: seed 101 frame 60 (**62.27 cm**, all of it far
+baseline / far service) and seed 201 frame 60 (**49.11 cm**). Nothing else in either run moves.
+
+**BAR 4 FAILS, and it fails completely.** G7's arm-K population re-run at `--n 400 --seed 0` with
+the instrument live: 400 fits, 31 labelled wrong by fitted focal, 369 right (not 33/365 — the
+encoder is not deterministic, as Part B addresses).
+
+| | catch | false flag on RIGHT cameras |
+|---|---|---|
+| `paint_check.ok`, far lines OFF | 31/31 | **2 / 369 (0.5%)** |
+| `paint_check.ok`, far lines ON | 31/31 | **369 / 369 (100%)** |
+
+**Including the exact rendering camera on all 400 trials** (`ceiling_true_camera.ok_rate` 0.000).
+The bar allowed ≤ 2%. A failed gate stays failed.
+
+#### 3. Why it fails — one variable at a time, on CP1's renderer, true camera
+
+| arm | far service: stacked offset | stacked amplitude | far baseline |
+|---|---|---|---|
+| `ctl1` (no lens, no clutter, no noise) | **+0.09 px** | 14.8 DN | 5.8 DN, no ridge → `unchecked` |
+| `+ lens distortion` only | **+0.00 to +0.02 px** | 15.8 DN | 5.8 DN, no ridge → `unchecked` |
+| `+ clutter` only | **−4.83 to −5.56 px** | **110 DN** | **68.6 DN**, no paint ridge |
+| `+ lens + clutter` (arm P/A3) | −4.84 to −5.35 px | 110 DN | 69.5 DN |
+
+**It is the NET TAPE and the fence, not the lens.** At CP1's 3 m mount and 6 m setback the net tape
+projects about 5 px from the far service line and over the far baseline, an order of magnitude
+brighter than 0.2 px of paint, and the "nearest significant peak" rule takes it. Lens distortion —
+the thing I expected to bite — is handled to 0.02 px. This is the "net tape near the far baseline
+on low mounts" bias the route notes already named, now measured on an instrument rather than
+argued: **`net_tape_clearance` says 16 of 28 real calibrations OVERLAP**, and on every one of them
+this instrument would do what it just did on 369 cameras.
+
+**Consequence, and it is a product decision, not a tuning one:** the instrument ships **measured
+but OFF** (`camera3d.FAR_LINES_DEFAULT = False`, pinned by a test). Enabling it would refuse every
+correct camera on the repository's own reference scene, which is worse than the blind spot. A
+confuser guard — reject a ridge whose amplitude is implausible for 5 cm of paint, or exclude the
+net's image band using the already-shipped `net_tape_clearance` geometry — is the obvious next
+move and is a **NEW experiment needing its own pre-registration**. With the instrument off, every
+pre-G8 number is reproduced exactly: the far path only ever touches samples the width filter
+dropped, and `test_far_line_check.py` asserts the previously-checked fractions are bit-identical.
+
+#### 4. Observability and cost — reported, not gated
+
+| | far baseline | far service | scope |
+|---|---|---|---|
+| native 1080p, tracking-sim scene (2 seeds) | **checked, frac 1.000** | checked, 1.000 | `whole_court` |
+| 4K rendered, area-downscaled to 1080p (2 seeds) | **checked, frac 1.000** | checked, 1.000 | `whole_court` |
+| CP1 arm-P scene (400 trials) | **`unchecked` on 400/400** | checked on 394/400 | `near_half` on 400/400 |
+
+So the far lines become observable **on a court with nothing else near them**, at 1080p and at 4K
+downscaled alike; on the cluttered scene the far baseline is not merely wrong, it is unseeable.
+
+`paint_check` per 1080p frame, 25 calls, one desktop CPU core (not a phone):
+
+| | p50 | p90 |
+|---|---|---|
+| pre-G8 | 3.36 ms | 3.91 ms |
+| with the far lines | **9.57 ms** | 11.17 ms |
+| the stacking alone | 5.84 ms | — |
+
+Under the 20 ms/frame figure the pre-registration set, with the tracker calling it every frame.
+
+#### 5. Part B — the encoder pin HOLDS, and the null control fails as required
+
+`tools/court_fit_cp1.py` gains `X265_DETERMINISTIC` (CRF 18, preset slow, keyint 1,
+`pools=1:frame-threads=1:wpp=0`, ffmpeg `-threads 1`, no VBV), selected by `--codec-profile
+deterministic`. `X265` and every number stamped under it are untouched; `test_codec_profile.py`
+pins the CP1 argv character for character against the pre-G8 literal, and the stamp records the
+RESOLVED profile.
+
+Arm P, `--n 4 --seed 900`, two consecutive runs of each profile, all values compared except the
+three timing fields:
+
+| profile | differing fields | far baseline `L` (cm), run 1 → run 2 | bitrates |
+|---|---|---|---|
+| **deterministic** | **0** | 0.9225, 0.5066, 0.4622, 0.4224 → **identical** | identical to 0.1 kbps |
+| cp1 (**null control, must differ**) | **28** | 1.2024 → 1.7625; 2.0506 → 1.1809; 1.1255 → 0.5047 | 20620 → 20609, 19498 → 19506 … |
+
+**BAR PASS, null control FAILS as required.** The CP1 profile's per-trial spread reaches **0.87 cm**
+on the far baseline, larger than the 0.66 cm qa measured. **Any run under the new profile is NOT
+comparable with CP1 stage 1, G1 or G7 and must not be re-based onto them** — and the numbers show
+why: the deterministic profile's far-baseline errors (0.42–0.92 cm) are less than half the CP1
+profile's (0.50–2.05 cm), because all-intra at CRF 18 is a much easier compression. It is an
+instrument for A/B determinism inside itself, nothing more.
+
+#### 6. Part C — what a lock now CLAIMS
+
+Backward compatible; no caller was changed except to pass the new flag through.
+
+- `PaintCheck` gains `scope` (`whole_court` / `near_half` / `none`), `checked`, `unchecked`,
+  `far` (the per-segment offsets and significances) and `detail` (per line, the wide-sample and
+  thin-sample fractions separately), plus `claim()`. New fields have defaults, so the existing
+  positional construction still works and `support` is still computed over WIDE samples only —
+  it is the same number G7 scored.
+- A line whose stacked profile shows NO ridge anywhere in the search window goes back to
+  `unchecked`, never to failed: a blank profile cannot tell a wrong camera from paint too faint to
+  see, and calling that a failure would be the same dishonesty in the other direction.
+- `camtrack.TrackStep` gains `lock_scope`, `lock_unverified`, `lock_worst` and `claim()`;
+  `locked` keeps its meaning and its position.
+- `camera3d.fit_camera_checked` writes `lock_scope`, `lock_unverified` and `lock_claim` into
+  `camera.extra`, so they travel through `CourtCamera.to_dict()` into `setup.camera`.
+- `setup_state.normalize_camera` validates the scope against a closed list and **re-derives
+  `lock_claim` on every read** (`setup_state.camera_lock_claim`), so a hand-edited file cannot
+  claim more than its scope: an unknown or absent scope reads `unknown`, never `whole_court`.
+  Three tests pin that.
+
+Today, with the instrument off, every camera this repository produces reports
+`lock_scope = "near_half"` and the claim *"The near half was checked against the paint. NOT
+checked: far_baseline, far_service — the court may be further out there than anywhere this
+measurement can see."* That sentence is the honest state of the product, and it is now in
+`match.json`.
+
+#### 7. Predictions, scored
+
+| | prediction | outcome |
+|---|---|---|
+| A1 | the far lines become observable; tol 0.15–0.25 clears 20 cm at < 1% false | **RIGHT on observability, WRONG on the number**: the working tolerance is 0.75 px @720, 3–5× looser, because the binding term is bias, not noise |
+| A2 | bias, not noise, binds; 1–4 new false flags on G7's 365 right cameras | **RIGHT on the mechanism, WRONG by two orders of magnitude** — 369 of 369 — and the bias is the net tape, not the paint-edge/kappa convention I named |
+| A3 | the pyramid loses at equal false-flag rate | **WRONG.** The founder's pyramid catches 1.000 against the stacked profile's 0.917 at the same 0.000 incremental false flags, on development AND held-out seeds. It wins by being LESS precise per point — 25 cm of far-line error scatters enough of its per-point offsets past tolerance to fail the 50% rule — and it loses in the 10–20 cm band (0.333 against 0.667). **It was never run against bar 4**, so nothing here says it survives the net tape |
+| A4 | the tracker gets stricter; locked-but-wrong → 0, unlocked rises | **RIGHT**, and cheaply: 2 → 0 and 0 → 2 on a 240-frame paired A/B with every other figure unmoved and no extra recovery |
+| B1 | identical rows under the new profile; the control differs | **RIGHT**, 0 fields against 28 |
+
+#### 8. What this does NOT establish
+
+- **Synthetic only, and the "held-out" seeds are weaker than they sound.** Seeds 400–402 change
+  the sensor-noise realisation and nothing else — the ladder geometry is identical — so they test
+  noise robustness, not scene generalisation. The only genuinely held-out SCENE here is CP1's, and
+  the instrument failed on it.
+- **`far_min_z` has no evidence behind its value.** The sweep could not distinguish 3 from 8, and
+  on a noiseless image the robust sigma collapses and `z` runs to 10⁷ — the significance test is
+  not doing work and should not be quoted as if it were.
+- **The peak rule deviates from the pre-registration's wording**, declared before any scored run
+  and recorded in `_seg_hit`: the peak nearest zero in the whole window, tested against the
+  tolerance afterwards, rather than the largest local maximum inside the tolerance. It removes a
+  boundary artefact when the tolerance is finer than the profile step. It is also, in hindsight,
+  the rule the net tape exploits.
+- **`ridge_residual` in `tools/court_cost_separation.py` still has the width filter**, so every G7
+  ridge number keeps the blind spot `paint_check` can now optionally lose. Recorded, not fixed —
+  changing it would move a scored G7 instrument. A test names it.
+- **Nothing here bears on 5 cm.** The finest far-line error this instrument separates is about
+  25 cm on a clean court, and 0 cm on a court with a net in the way.

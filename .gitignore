@@ -127,6 +127,10 @@ data/output/session_i_ab/*.png
 !data/output/court_camera3d_seed/*.json
 !data/output/court_track_sim/
 !data/output/court_track_sim/*.json
+!data/output/court_cost_separation/
+!data/output/court_cost_separation/*.json
+!data/output/court_far_line_gate/
+!data/output/court_far_line_gate/*.json
 data/*.mp4
 data/*.mov
 

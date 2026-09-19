@@ -56,6 +56,35 @@ SURFACE_DN, SKY_DN, FENCE_DN, POST_DN = 95.0, 150.0, 45.0, 30.0
 FENCE_Y = court.Y_FAR_BASELINE + 6.40
 KNOCK_S = 2.0
 KNOCK_WINDOW = 6          # frames from the knock excluded from the steady grid-jump figure
+# Supersampling. 2 is what every tracking number before G8 was measured at, and it
+# is kept as the default so none of them move. It ALIASES sub-pixel paint: the far
+# baseline's 0.19 px of paint is hit by almost no sub-sample, so its stacked normal
+# profile reads 0.49 DN at an offset of +3.96 px (noiseless, true camera) against
+# 7.9 DN at -0.133 px at ss=16 - the line is effectively absent from the image, and
+# far_service is aliased the other way (21.5 DN against 7.9). The OFFSET converges
+# from ss=4 (-0.135 / -0.130 / -0.133 at ss 4 / 8 / 16); the amplitude never does,
+# because a near-horizontal line has a near-constant sub-pixel phase that stacking
+# cannot average. G8 scores the far-line instrument at ss=4. Cost per 1080p frame:
+# 0.73 / 2.70 / 10.62 s at ss 2 / 4 / 8.
+SS_DEFAULT = 2
+# The PSF order. False - blur AFTER binning - is what every pre-G8 tracking number
+# was measured at and is kept as the default so none of them move. It cannot place
+# a sub-pixel line: binning first collapses a line thinner than a pixel onto that
+# pixel's centre. True is CP1's order and is what G8 scores at.
+# False is what every pre-G8 tracking number was measured at, and it is kept as the
+# default so none of them move. It CANNOT place paint thinner than a pixel, for two
+# independent reasons, both measured on the true camera with no noise:
+#   * the sub-samples are a fixed grid, so a 0.13-0.19 px band is hit or missed by
+#     PHASE - far_service read 21.5 DN and far_baseline 0.49 DN at ss=2 where both
+#     should read ~7.9;
+#   * the PSF is applied AFTER binning, so a line that lands inside one pixel row is
+#     quantised to that row's centre - the far baseline read 0.5 px off at 1280x720,
+#     ss=8, and no amount of supersampling removes it.
+# True switches to CP1's renderer order (docs/evidence/court-fit-cp1.md s7): JITTERED
+# stratified sub-samples, PSF applied at sub-sample resolution, then binned. That is
+# what G8 scores the far-line instrument at, and it is a DIFFERENT SCENE: numbers
+# from it are not comparable with G3 or with the 100-102 / 200-202 tracking runs.
+SUBPIXEL_DEFAULT = False
 OUT = REPO / "data" / "output" / "court_track_sim"
 
 
@@ -82,16 +111,27 @@ def base_pitch(wh=(W, H)):
     return math.radians(frame_the_court(MOUNT_M, SETBACK_M, HFOV_DEG, *wh)[1])
 
 
-def render(cam: camera3d.CourtCamera, rng, contrast=110.0, psf=0.9, noise=True, ss=2):
-    """Grey float image of the court, the far fence and its posts."""
+def render(cam: camera3d.CourtCamera, rng, contrast=110.0, psf=0.9, noise=True, ss=SS_DEFAULT,
+           subpixel=SUBPIXEL_DEFAULT):
+    """Grey float image of the court, the far fence and its posts.
+
+    `subpixel` switches to CP1's render order - jittered stratified sub-samples
+    and the PSF applied BEFORE binning - which is what it takes to place paint
+    thinner than a pixel at all. See SUBPIXEL_DEFAULT for the measurements.
+    False keeps every pre-G8 tracking number exactly where it was."""
     from scipy import ndimage
     w, h = cam.image_wh
     pf = cam.to_paintfit()
     off = (np.arange(ss) + 0.5) / ss - 0.5
     ys, xs = np.mgrid[0:h, 0:w]
-    acc = np.zeros((h, w))
-    for oy in off:
-        for ox in off:
+    acc = np.zeros((h * ss, w * ss), np.float32) if subpixel else np.zeros((h, w))
+    for iy in range(ss):
+        for ix in range(ss):
+            if subpixel:    # jittered inside the stratum: coverage is then unbiased
+                ox = (ix + rng.random(h * w)) / ss - 0.5
+                oy = (iy + rng.random(h * w)) / ss - 0.5
+            else:
+                ox, oy = off[ix], off[iy]
             uv = np.column_stack([xs.ravel() + ox, ys.ravel() + oy])   # pixel centres on integers
             d = pf.rays(uv)
             C = pf.C
@@ -114,8 +154,15 @@ def render(cam: camera3d.CourtCamera, rng, contrast=110.0, psf=0.9, noise=True, 
             val[on_f] = FENCE_DN
             post = on_f & (np.abs(((fx + 1.5) % 3.0) - 1.5) < 0.04)
             val[post] = POST_DN
-            acc += val.reshape(h, w)
-    img = ndimage.gaussian_filter(acc / (ss * ss), psf)
+            if subpixel:
+                acc[iy::ss, ix::ss] = val.reshape(h, w)
+            else:
+                acc += val.reshape(h, w)
+    if subpixel:
+        img = ndimage.gaussian_filter(acc, psf * ss).reshape(h, ss, w, ss).mean((1, 3))
+        img = img.astype(float)
+    else:
+        img = ndimage.gaussian_filter(acc / (ss * ss), psf)
     if noise:
         img = img + rng.normal(0.0, 1.0, img.shape) * np.sqrt(3.0 / 128.0 * img + 1.0)
     return np.clip(img, 0, 255)
@@ -201,7 +248,8 @@ def summarise(runs):
 
 
 # ----------------------------------------------------------------- arms ----
-def run(seed=0, n=120, seed_sigma=14.78, verbose=True, knock_scale=1.0):
+def run(seed=0, n=120, seed_sigma=14.78, verbose=True, knock_scale=1.0, ss=SS_DEFAULT,
+        subpixel=SUBPIXEL_DEFAULT, far_lines=camtrack.TrackConfig.far_lines):
     r_path, r_img, r_seed = [np.random.default_rng(s) for s in
                              np.random.SeedSequence(seed).spawn(3)]
     p0 = base_pitch()
@@ -210,7 +258,7 @@ def run(seed=0, n=120, seed_sigma=14.78, verbose=True, knock_scale=1.0):
 
     # setup on frame 0 exactly as the product would: keypoints -> PnP -> paint fit
     t0 = time.time()
-    f0 = render(truths[0], r_img)
+    f0 = render(truths[0], r_img, ss=ss, subpixel=subpixel)
     kps = {nm: tuple(np.array(uv) + r_seed.normal(0, seed_sigma, 2))
            for nm, uv in zip(court.KEYPOINTS_3D,
                              truths[0].project(list(court.LANDMARKS_3D.values())))
@@ -223,7 +271,8 @@ def run(seed=0, n=120, seed_sigma=14.78, verbose=True, knock_scale=1.0):
               f"f {setup.f_px:.1f} (true {truths[0].f_px:.1f}), {time.time() - t0:.0f}s",
               flush=True)
 
-    tracker = camtrack.CameraTracker(setup)
+    tracker = camtrack.CameraTracker(
+        setup, cfg=camtrack.TrackConfig(far_lines=far_lines))
     Hb = setup.ground_homography()
     res = {"camtrack": [], "lock_step": []}
     jumps = {"camtrack": [], "lock_step": []}
@@ -232,7 +281,7 @@ def run(seed=0, n=120, seed_sigma=14.78, verbose=True, knock_scale=1.0):
     frame = f0
     for i, tc in enumerate(truths):
         if i:
-            frame = render(tc, r_img)
+            frame = render(tc, r_img, ss=ss, subpixel=subpixel)
         img8 = np.clip(frame, 0, 255).astype(np.uint8)
         st = tracker.step(img8, i / FPS)
         status.append(st.status)
@@ -265,8 +314,10 @@ def run(seed=0, n=120, seed_sigma=14.78, verbose=True, knock_scale=1.0):
                   "hfov_deg": HFOV_DEG, "seed_sigma_px": seed_sigma,
                   "tracker_cfg": vars(camtrack.TrackConfig()),
                   "measured_against": "the exact synthetic camera that rendered each frame",
-                  "renderer": "flat court, 5 cm paint, 2x2 supersample, blur 0.9 px, "
+                  "supersample": ss, "subpixel": subpixel,
+                  "renderer": f"flat court, 5 cm paint, {ss}x{ss} supersample, blur 0.9 px, "
                               "sensor noise, far fence with posts; no lens, no codec"},
+        "paint_check_far_lines": far_lines,
         "setup_worst_m": max(setup_err.values()),
         "setup_check": setup.extra.get("paint_check"),
         "status": status,
@@ -283,10 +334,22 @@ def main():
     ap.add_argument("--n", type=int, default=120)
     ap.add_argument("--out", default=None)
     ap.add_argument("--knock-scale", type=float, default=1.0)
+    ap.add_argument("--far-lines", action="store_true",
+                    help="G8's far-line instrument (shipped OFF; see "
+                         "camera3d.FAR_LINES_DEFAULT)")
+    ap.add_argument("--subpixel", action="store_true",
+                    help="CP1's render order; required for any far-line measurement")
+    ap.add_argument("--ss", type=int, default=SS_DEFAULT,
+                    help="renderer supersampling; 2 reproduces every pre-G8 number, "
+                         "4 is what G8 needs to render sub-pixel paint at all")
     a = ap.parse_args()
-    got = [run(s, a.n, knock_scale=a.knock_scale) for s in a.seeds]
+    got = [run(s, a.n, knock_scale=a.knock_scale, ss=a.ss,
+               subpixel=a.subpixel, far_lines=a.far_lines) for s in a.seeds]
     summ = {arm: summarise([g["runs"][arm] for g in got]) for arm in ("camtrack", "lock_step")}
     tag = "" if a.knock_scale == 1.0 else f"_knock{a.knock_scale:g}"
+    tag += "" if a.ss == SS_DEFAULT else f"_ss{a.ss}"
+    tag += "_sub" if a.subpixel else ""
+    tag += "_far" if a.far_lines else ""
     out = Path(a.out or OUT / f"seeds{'-'.join(map(str, a.seeds))}_n{a.n}{tag}.json")
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(json.dumps({"summary": summ, "runs": got}, indent=1), encoding="utf-8")

@@ -433,20 +433,54 @@ X265 = {"codec": "libx265", "profile": "main", "preset": "medium", "bitrate": "1
         "fps": 60, "keyint": 60, "vbv_maxrate_kbps": 16000, "vbv_bufsize_kbps": 16000,
         "pix_fmt": "yuv420p", "range": "Y plane passed through"}
 
+# A SECOND, NAMED profile - not an edit of the one above. qa isolated CP1's
+# run-to-run scatter to the encoder itself (2026-09-18 audit s6: four encodes of a
+# byte-identical 30-frame array differed on ~1.8 M of 2.07 M pixels, and one arm-P
+# trial's far baseline spread 0.66 cm over three repeats). Thread count is the
+# cause, so `pools` and `frame-threads` are pinned to 1 and WPP is off; CRF
+# replaces the VBV rate control, whose lookahead state is also thread-dependent,
+# and keyint 1 makes every frame intra so no frame depends on another.
+#
+# ANY RUN UNDER THIS PROFILE IS A DIFFERENT SCENE. All-intra at CRF 18 is a
+# different, and easier, compression than 16 Mbps VBV with a 60-frame GOP. Numbers
+# from it are NOT comparable with CP1 stage 1, G1 or G7 and must not be re-based
+# onto them (hard rules 2 and 7). It exists so that an A/B inside itself is not
+# measuring the encoder's thread scheduler. Pre-registered: G8, Part B.
+X265_DETERMINISTIC = {"codec": "libx265", "profile": "main", "preset": "slow", "crf": 18,
+                      "fps": 60, "keyint": 1, "threads": 1,
+                      "x265_extra": "pools=1:frame-threads=1:wpp=0",
+                      "pix_fmt": "yuv420p", "range": "Y plane passed through",
+                      "NOT_COMPARABLE_WITH": "CP1 stage 1, G1, G7 (different scene)"}
 
-def codec_mean(frames, workdir):
-    """Encode with REAL ffmpeg libx265 (1080p60, 16 Mbps, main), decode, and
-    return the mean decoded luma plus the achieved bitrate."""
+CODEC_PROFILES = {"cp1": X265, "deterministic": X265_DETERMINISTIC}
+
+
+def _encode_argv(cfg, fn):
+    """ffmpeg argv for one codec profile - the RESOLVED settings, so the stamp and
+    the encode can never disagree (the provenance trap, docs/TRAPS.md)."""
+    common = ["ffmpeg", "-y", "-loglevel", "error", "-f", "rawvideo", "-pix_fmt", "yuv420p",
+              "-s", f"{W}x{H}", "-r", str(cfg["fps"]), "-i", "-", "-c:v", "libx265",
+              "-profile:v", cfg["profile"], "-preset", cfg["preset"]]
+    if "crf" in cfg:
+        rate = ["-crf", str(cfg["crf"])]
+        params = (f"keyint={cfg['keyint']}:min-keyint={cfg['keyint']}:"
+                  f"{cfg['x265_extra']}:log-level=error")
+        common += ["-threads", str(cfg["threads"])]
+    else:
+        rate = ["-b:v", cfg["bitrate"]]
+        params = (f"keyint={cfg['keyint']}:min-keyint={cfg['keyint']}:"
+                  f"vbv-maxrate={cfg['vbv_maxrate_kbps']}:"
+                  f"vbv-bufsize={cfg['vbv_bufsize_kbps']}:log-level=error")
+    return common + rate + ["-x265-params", params, "-pix_fmt", "yuv420p", str(fn)]
+
+
+def codec_mean(frames, workdir, cfg=None):
+    """Encode with REAL ffmpeg libx265, decode, and return the mean decoded luma
+    plus the achieved bitrate. `cfg` defaults to the CP1 profile."""
+    cfg = cfg or X265
     fn = Path(workdir) / "clip.hevc"
     uvb = np.full((H // 2) * (W // 2) * 2, 128, np.uint8).tobytes()
-    enc = subprocess.Popen(
-        ["ffmpeg", "-y", "-loglevel", "error", "-f", "rawvideo", "-pix_fmt", "yuv420p",
-         "-s", f"{W}x{H}", "-r", str(X265["fps"]), "-i", "-", "-c:v", "libx265",
-         "-profile:v", X265["profile"], "-preset", X265["preset"], "-b:v", X265["bitrate"],
-         "-x265-params", (f"keyint={X265['keyint']}:min-keyint={X265['keyint']}:"
-                          f"vbv-maxrate={X265['vbv_maxrate_kbps']}:"
-                          f"vbv-bufsize={X265['vbv_bufsize_kbps']}:log-level=error"),
-         "-pix_fmt", "yuv420p", str(fn)], stdin=subprocess.PIPE)
+    enc = subprocess.Popen(_encode_argv(cfg, fn), stdin=subprocess.PIPE)
     nf = 0
     for fr in frames:
         enc.stdin.write(fr.tobytes())
@@ -455,7 +489,7 @@ def codec_mean(frames, workdir):
     enc.stdin.close()
     if enc.wait() != 0:
         raise RuntimeError("x265 encode failed")
-    kbps = fn.stat().st_size * 8 / (nf / X265["fps"]) / 1000.0
+    kbps = fn.stat().st_size * 8 / (nf / cfg["fps"]) / 1000.0
     dec = subprocess.run(["ffmpeg", "-loglevel", "error", "-i", str(fn), "-f", "rawvideo",
                           "-pix_fmt", "yuv420p", "-"], capture_output=True, check=True)
     fsz = W * H * 3 // 2
@@ -593,6 +627,7 @@ def _coverage_for(arm_cfg):
 def run_trial(job):
     arm, trial, seed = job["arm"], job["trial"], job["seed"]
     a = ARMS[arm]
+    codec_cfg = CODEC_PROFILES[job.get("codec_profile", "cp1")]
     t0 = time.time()
     ss = np.random.SeedSequence([seed, trial])
     r_scene, r_seed, r_noise = [np.random.default_rng(x) for x in ss.spawn(3)]
@@ -611,7 +646,7 @@ def run_trial(job):
     if a["codec"]:
         tc = time.time()
         with tempfile.TemporaryDirectory(dir=job.get("tmp")) as td:
-            img, kbps = codec_mean(frames, td)
+            img, kbps = codec_mean(frames, td, codec_cfg)
         t_codec = time.time() - tc
     else:
         acc = np.zeros((H, W))
@@ -725,7 +760,7 @@ def summarise(rows, arm):
     }
 
 
-def stamp(arm, n, seed, workers):
+def stamp(arm, n, seed, workers, codec_profile="cp1"):
     a = ARMS[arm]
     rcam, kp, pitch = truth_camera(a["distortion"], a["shift_v"])
     return {
@@ -756,18 +791,20 @@ def stamp(arm, n, seed, workers):
                   "render_version": RENDER_VERSION, "net_tape_h": TAPE_H,
                   "mesh": [MESH_PITCH, MESH_CORD], "fence_y": FENCE_Y,
                   "truss_ys": TRUSS_YS},
-        "codec": X265 if a["codec"] else None,
+        "codec": CODEC_PROFILES[codec_profile] if a["codec"] else None,
+        "codec_profile": codec_profile if a["codec"] else None,
         "fitter": FitConfig.as_dict(),
         "bars": {"pass_m": BAR_M, "kill_m": KILL_M, "capture_px": 2.0},
     }
 
 
-def run_arm(arm, n, seed, workers, out, verbose=True):
+def run_arm(arm, n, seed, workers, out, verbose=True, codec_profile="cp1"):
     from concurrent.futures import ProcessPoolExecutor
     _coverage_for(ARMS[arm])          # build/cached once, before forking workers
     tmp = OUT_DIR / "tmp"
     tmp.mkdir(parents=True, exist_ok=True)
-    jobs = [{"arm": arm, "trial": i, "seed": seed, "tmp": str(tmp)} for i in range(n)]
+    jobs = [{"arm": arm, "trial": i, "seed": seed, "tmp": str(tmp),
+             "codec_profile": codec_profile} for i in range(n)]
     t0 = time.time()
     rows = []
     if workers <= 1:
@@ -782,7 +819,8 @@ def run_arm(arm, n, seed, workers, out, verbose=True):
     wall = time.time() - t0
     summ = summarise(rows, arm)
     summ["wall_s"] = wall
-    res = {"stamp": stamp(arm, n, seed, workers), "summary": summ, "rows": rows}
+    res = {"stamp": stamp(arm, n, seed, workers, codec_profile), "summary": summ,
+           "rows": rows}
     out = Path(out)
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(json.dumps(_jsonable(res), indent=1), encoding="utf-8")
@@ -812,9 +850,14 @@ def main():
     ap.add_argument("--seed", type=int, default=0)
     ap.add_argument("--workers", type=int, default=max(1, (os.cpu_count() or 2) - 2))
     ap.add_argument("--out", default=None)
+    ap.add_argument("--codec-profile", default="cp1", choices=sorted(CODEC_PROFILES),
+                    help="cp1 reproduces every stamped CP1/G1/G7 number; "
+                         "deterministic pins the encoder and is a DIFFERENT scene (G8)")
     args = ap.parse_args()
-    out = args.out or str(OUT_DIR / f"{args.arm}_seed{args.seed}_n{args.n}.json")
-    res = run_arm(args.arm, args.n, args.seed, args.workers, out)
+    tag = "" if args.codec_profile == "cp1" else f"_{args.codec_profile}"
+    out = args.out or str(OUT_DIR / f"{args.arm}_seed{args.seed}_n{args.n}{tag}.json")
+    res = run_arm(args.arm, args.n, args.seed, args.workers, out,
+                  codec_profile=args.codec_profile)
     print_summary(res["summary"])
     print("wrote", out)
 

@@ -58,12 +58,18 @@ def test_ridge_residual_grows_and_censors_for_a_dolly_zoomed_camera(true_cam):
     assert bad["med"] <= S.RIDGE_REACH_PX_720 + 1e-9
 
 
-def test_ridge_residual_shares_paint_checks_far_line_blind_spot(true_cam):
-    """Declared in G7: the width filter hides the far lines from BOTH
-    instruments, so neither judges a camera on them."""
-    chk = camera3d.paint_check(_image_of(true_cam), true_cam)
-    assert "far_baseline" in chk.unchecked and "far_service" in chk.unchecked
-    assert S.RIDGE_MIN_WIDTH_PX_720 == 0.67     # paint_check's own value
+def test_ridge_residual_STILL_has_the_far_line_blind_spot_paint_check_lost(true_cam):
+    """G7 declared that the width filter hid the far lines from BOTH instruments.
+    G8 removed it from `paint_check` only - `ridge_residual` still censors those
+    samples, so every G7 ridge number keeps its blind spot and the two are no
+    longer measuring the same court. Recorded, not fixed: re-deriving the ridge
+    residual would change a scored G7 instrument."""
+    img = _image_of(true_cam)
+    assert S.RIDGE_MIN_WIDTH_PX_720 == 0.67     # paint_check's PRE-G8 value
+    pre = camera3d.paint_check(img, true_cam, far_lines=False)
+    assert "far_baseline" in pre.unchecked and "far_service" in pre.unchecked
+    now = camera3d.paint_check(img, true_cam, far_lines=True)
+    assert set(now.unchecked) < set(pre.unchecked) or not now.unchecked
 
 
 def test_wrong_label_comes_from_the_fitted_focal_not_from_truth():

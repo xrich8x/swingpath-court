@@ -430,6 +430,17 @@ CAMERA_UNREADABLE = ("A 3D camera was attached to this match but could not be "
                      "read, so it was ignored.")
 _CAMERA_VECTORS = {"image_wh": 2, "rvec": 3, "tvec": 3, "position_m": 3}
 
+# WHAT a lock claims (G8). `camera3d.paint_check` used to answer yes/no while it
+# could not see the far baseline or far service line at all, so a camera 0.70 m
+# out on those two lines was reported locked. The scope travels with the camera
+# into match.json, and an OLDER file - or a file that names a scope this build
+# does not know - reads as `unknown`, never as `whole_court`.
+LOCK_WHOLE_COURT = "whole_court"
+LOCK_NEAR_HALF = "near_half"
+LOCK_NONE = "none"
+LOCK_UNKNOWN = "unknown"
+LOCK_SCOPES = (LOCK_WHOLE_COURT, LOCK_NEAR_HALF, LOCK_NONE, LOCK_UNKNOWN)
+
 
 def normalize_camera(raw: Any) -> Optional[dict[str, Any]]:
     """A `setup.camera` block with its required fields type-checked, or None.
@@ -458,7 +469,32 @@ def normalize_camera(raw: Any) -> Optional[dict[str, Any]]:
         cam["pinned_by"] = str(cam.get("pinned_by", ""))
     except (KeyError, TypeError, ValueError):
         return None
+    scope = cam.get("lock_scope")
+    cam["lock_scope"] = scope if scope in LOCK_SCOPES else LOCK_UNKNOWN
+    unver = cam.get("lock_unverified")
+    cam["lock_unverified"] = ([str(x) for x in unver]
+                              if isinstance(unver, (list, tuple)) else [])
+    cam["lock_claim"] = camera_lock_claim(cam)
     return cam
+
+
+def camera_lock_claim(cam: Optional[dict[str, Any]]) -> str:
+    """One sentence saying WHAT the paint check verified about this camera. Always
+    RE-DERIVED from the scope, so a hand-written `lock_claim` cannot assert more
+    than the scope beside it does."""
+    if not cam:
+        return "No 3D camera was solved for this match."
+    scope = cam.get("lock_scope", LOCK_UNKNOWN)
+    if scope == LOCK_WHOLE_COURT:
+        return "Every court line was checked against the paint."
+    if scope == LOCK_NEAR_HALF:
+        miss = ", ".join(cam.get("lock_unverified") or []) or "some lines"
+        return ("The near half was checked against the paint. NOT checked: "
+                f"{miss} - the court may be further out there than anywhere "
+                "this measurement can see.")
+    if scope == LOCK_NONE:
+        return "No court line could be checked against the paint."
+    return "It is not recorded which court lines were checked against the paint."
 
 
 def with_camera(state: Any, camera) -> dict[str, Any]:

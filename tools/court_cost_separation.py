@@ -88,16 +88,29 @@ def ridge_residual(grey, cam, *, reach_px_720=RIDGE_REACH_PX_720, min_dn=RIDGE_M
 
 
 def check_row(grey, cam):
-    """paint_check (instrument 1) + ridge_residual (instrument 2) as one dict."""
-    c = camera3d.paint_check(grey, cam)
+    """paint_check (instrument 1) + ridge_residual (instrument 2) as one dict.
+
+    BOTH paint checks are run on the SAME image: `ok_pre_g8` is the pre-G8 flag,
+    blind to the far baseline and far service line, and `ok` is the same check
+    with G8's far-line instrument live. Paired on one image, so the difference
+    between them is the instrument and nothing else."""
+    c = camera3d.paint_check(grey, cam, far_lines=True)
+    c0 = camera3d.paint_check(grey, cam, far_lines=False)
     # c.worst is renamed "too_few_lines" when the lines pass but the court does
     # not; take the worst FRACTION directly so it is always a number.
     worst_frac = min(v[0] for v in c.lines.values()) if c.lines else float("nan")
+    wf0 = min(v[0] for v in c0.lines.values()) if c0.lines else float("nan")
     r = ridge_residual(grey, cam)
     return {"support": c.support, "ok": bool(c.ok), "worst": c.worst,
             "worst_frac": float(worst_frac), "n_lines": len(c.lines),
             "lines": {k: v[0] for k, v in c.lines.items()},
             "unchecked": list(c.unchecked),
+            "scope": c.scope,
+            "ok_pre_g8": bool(c0.ok), "worst_pre_g8": c0.worst,
+            "worst_frac_pre_g8": float(wf0),
+            "support_pre_g8": c0.support,
+            "far": {k: c.detail.get(k, {}).get("thin") for k in camera3d.FAR_LINES},
+            "far_unchecked": sorted(set(c.unchecked) & set(camera3d.FAR_LINES)),
             "ridge_med": r["med"], "ridge_mean": r["mean"],
             "ridge_found": r["found"], "ridge_n": r["n"]}
 
@@ -333,6 +346,20 @@ def analyse(rows, split_seed=0, n_perm=1000, perm_seed=0):
         "catch": float((~okflag[wrong]).mean()) if nw else float("nan"),
         "false_flag": float((~okflag[~wrong]).mean()),
         "note": "catch = wrong cameras the shipped ok flag calls NOT ok"}
+    # G8: the SAME flag with the far-line instrument switched off, paired on the
+    # same images - the non-degradation comparison, not a second population
+    if all("ok_pre_g8" in r["fit"] for r in ok):
+        pre = np.array([r["fit"]["ok_pre_g8"] for r in ok])
+        far_unchk = np.array([len(r["fit"].get("far_unchecked", [])) for r in ok])
+        out["paint_check_ok_flag_pre_g8"] = {
+            "catch": float((~pre[wrong]).mean()) if nw else float("nan"),
+            "false_flag": float((~pre[~wrong]).mean()),
+            "newly_flagged_right": int(np.sum(pre[~wrong] & ~okflag[~wrong])),
+            "newly_flagged_wrong": int(np.sum(pre[wrong] & ~okflag[wrong])) if nw else 0,
+            "far_lines_unchecked_rate": float((far_unchk > 0).mean()),
+            "far_lines_unchecked_rate_true_camera": float(np.mean(
+                [len(r["true"].get("far_unchecked", [])) > 0 for r in ok])),
+            "note": "pre_g8 = the same check with far_lines=False on the same image"}
     # how wrong is wrong: worst line error on each group
     def worst_line(r):
         return max(max(v["M"], v["L"]) for v in r["lines"].values())

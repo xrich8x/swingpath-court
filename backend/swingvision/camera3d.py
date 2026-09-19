@@ -447,24 +447,249 @@ def _samples(step_m):
     return _SUPPORT_SAMPLES[step_m]
 
 
+# ------------------------------------------------- the FAR-LINE instrument -
+# Why this exists: the per-point ridge finder above cannot see a line whose
+# projected paint is thinner than a pixel, and at 1080p / 3 m mount / 6 m
+# setback the far baseline's 5 cm of paint runs in DEPTH and projects about
+# 0.14 px wide. `paint_check`'s `min_width_px_720` filter therefore DROPPED the
+# far baseline and far service line on 398 of 398 G7 trials, and the tracker
+# reported `locked` while those two lines were 0.57-0.70 m out (qa audit
+# 2026-09-18, section 7). The contrast is still there - about 6.7 DN of peak
+# against 1.8 DN of sensor noise - it is just spread too thin for ONE profile.
+# So integrate ALONG the line: average the normal profiles of ~90 samples and
+# the ridge stands ~9x clearer, with a peak position good to hundredths of a
+# pixel. Segmented, because a camera rotated about the line's midpoint puts
+# equal and opposite offsets at the two ends, which one pooled average hides.
+# Pre-registered in docs/evidence/court-camera3d.md, G8.
+FAR_LINES = ("far_baseline", "far_service")
+# Set by G8's NOISE-ONLY development sweep on sim seeds 300-305 (1,728 cases over
+# a 8 x 5 grid), scored by catch rate against incremental false-flag rate exactly
+# as G4 set the cross-ratio gate. 0.75 px @720 is the registered choice: the
+# highest catch among pairs costing <= 1% false flags over the good cases the
+# pre-G8 check already passed (catch 0.917, false 0.000; 0.50 reaches 0.979 but
+# costs 1.6%). FAR_MIN_Z was INERT across 3-8 on that sweep - it does not select
+# anything - so it is left at the value the code carried before the sweep.
+# NOT the 0.35 "contrast ratio" that was suggested: that number had no evidence.
+FAR_TOL_PX_720 = 0.75
+FAR_MIN_Z = 5.0
+# OFF by default, and the reason is measured, not cautious. G8's non-degradation
+# bar was run on CP1's arm-P scene and FAILED: with the far lines checked, 369 of
+# 369 RIGHT cameras are flagged - including the exact rendering camera. Isolated
+# by a one-variable arm sweep to CLUTTER, not to the lens: on that scene at a 3 m
+# mount and 6 m setback the NET TAPE sits 4.8-5.6 px from the far service line
+# and swamps the far baseline (stacked amplitude 5.8 DN with no paint ridge -> 69
+# DN of net), so the "nearest significant peak" rule locks onto the net. With no
+# clutter the same instrument reads the true camera at +0.09 px, and adding LENS
+# DISTORTION alone leaves it at +0.02 px. A failed gate stays failed (hard rule
+# 2), so a confuser guard is a NEW experiment needing its own pre-registration.
+# Until then the instrument ships measured but OFF, and `PaintCheck.scope` says
+# out loud that the far lines were not verified.
+FAR_LINES_DEFAULT = False
+FAR_DENSE_STEP_M = 0.02
+_FAR_DENSE = {}
+
+
+def _far_dense(clear_m=0.3, step_m=FAR_DENSE_STEP_M):
+    """Dense world centreline samples per painted line, crossings cleared."""
+    key = (clear_m, step_m)
+    if key not in _FAR_DENSE:
+        lines = paintfit.paint_lines()
+        out = []
+        for L in lines:
+            n = max(2, int(np.linalg.norm(L.b - L.a) / step_m))
+            t = np.linspace(0.0, 1.0, n)[:, None]
+            g = (1 - t) * L.a + t * L.b
+            near = np.zeros(len(g), bool)
+            for M in lines:
+                if M is L:
+                    continue
+                lo, hi = np.minimum(M.a, M.b), np.maximum(M.a, M.b)
+                d = np.linalg.norm(g - np.clip(g, lo, hi), axis=1)
+                near |= d < clear_m + M.width / 2
+            g = g[~near]
+            u = (L.b - L.a) / np.linalg.norm(L.b - L.a)
+            out.append((L.name, float(L.width),
+                        np.column_stack([g, np.zeros(len(g))]),
+                        np.repeat(np.array([u[0], u[1], 0.0])[None], len(g), 0)))
+        _FAR_DENSE[key] = out
+    return _FAR_DENSE[key]
+
+
+def _seg_hit(s, P, tol, min_z):
+    """(detected, hit, z, refined offset) for one stacked profile. The peak
+    NEAREST zero that stands `min_z` robust sigmas above the profile's baseline,
+    refined by the same 3-point parabola `ridge_offsets` uses. `detected` means a
+    peak was found ANYWHERE in the search window; `hit` adds |offset| <= tol.
+
+    The two are separate on purpose. A profile with no peak at all cannot tell a
+    WRONG camera from paint too faint to see, and reporting that as a failed line
+    would be the same dishonesty G8 exists to remove - it is reported as
+    UNCHECKABLE instead (see `paint_check`).
+
+    Deviation from G8's wording ("the largest local maximum at |s| <= tol"), made
+    before any scored run and recorded in G8's results: searching the whole
+    profile and testing the offset afterwards removes a boundary artefact when
+    `tol` is finer than the profile step, and matches shipped `ridge_offsets`."""
+    b = float(np.median(P))
+    wing = np.abs(s) > tol
+    if wing.sum() >= 5:
+        w = P[wing]
+        sd = 1.4826 * float(np.median(np.abs(w - np.median(w))))
+    else:
+        sd = float(np.std(P))
+    sd = max(sd, 1e-6)
+    pk = np.zeros(len(s), bool)
+    pk[1:-1] = (P[1:-1] >= P[:-2]) & (P[1:-1] > P[2:])
+    pk &= (P - b) >= min_z * sd
+    if not pk.any():
+        return False, False, 0.0, float("nan")
+    k = int(np.flatnonzero(pk)[np.argmin(np.abs(s[np.flatnonzero(pk)]))])
+    y0, y1, y2 = P[k - 1], P[k], P[k + 1]
+    den = y0 - 2 * y1 + y2
+    frac = 0.5 * (y0 - y2) / den if abs(den) > 1e-12 else 0.0
+    off = float(s[k] + np.clip(frac, -0.5, 0.5) * (s[1] - s[0]))
+    return True, bool(abs(off) <= tol), float((y1 - b) / sd), off
+
+
+def far_line_stacks(grey, cam: CourtCamera, *, segments: int = 8, min_samples: int = 24,
+                    step_px: float = 1.0, reach_px_720: float = 8.0,
+                    prof_step_px: float = 0.25, min_width_px_720: float = 0.67,
+                    clear_m: float = 0.3) -> dict:
+    """{line name: (offsets_px, [stacked profile per segment], n_samples)} for the
+    paint too thin for the per-point ridge finder. Split out from
+    `far_line_profile` so a threshold sweep can re-score one set of measurements
+    (G8) instead of re-reading the image once per threshold."""
+    from scipy import ndimage
+    g = np.asarray(grey, float)
+    w, h = cam.image_wh
+    s_scale = h / 720.0
+    reach = reach_px_720 * s_scale
+    sv = np.arange(-reach, reach + 1e-9, prof_step_px * s_scale)
+    out = {}
+    for name, width, world, wdir in _far_dense(clear_m):
+        uv = cam.project(world)
+        inb = (np.isfinite(uv).all(1) & (uv[:, 0] >= 8) & (uv[:, 0] < w - 8)
+               & (uv[:, 1] >= 8) & (uv[:, 1] < h - 8))
+        if inb.sum() < min_samples:
+            continue
+        n3 = np.column_stack([-wdir[inb, 1], wdir[inb, 0], np.zeros(int(inb.sum()))])
+        half = width / 2.0
+        wpx = np.linalg.norm(cam.project(world[inb] + n3 * half)
+                             - cam.project(world[inb] - n3 * half), axis=1)
+        thin = np.flatnonzero(inb)[wpx < min_width_px_720 * s_scale]
+        if len(thin) < min_samples:
+            continue
+        # keep ~step_px apart in the IMAGE: oversampling correlates the noise
+        pxy = uv[thin]
+        d = np.r_[0.0, np.cumsum(np.linalg.norm(np.diff(pxy, axis=0), axis=1))]
+        keep = [0]
+        for i in range(1, len(d)):
+            if d[i] - d[keep[-1]] >= step_px * s_scale:
+                keep.append(i)
+        idx = thin[np.array(keep)]
+        if len(idx) < min_samples:
+            continue
+        nrm = line_normals(cam, world[idx], wdir[idx])
+        nseg = max(1, min(segments, len(idx) // min_samples))
+        bounds = np.linspace(0, len(idx), nseg + 1).astype(int)
+        profs = []
+        for a, b in zip(bounds[:-1], bounds[1:]):
+            q, nq = uv[idx[a:b]], nrm[a:b]
+            xy = q[:, None, :] + sv[None, :, None] * nq[:, None, :]
+            prof = ndimage.map_coordinates(
+                g, [xy[..., 1].ravel(), xy[..., 0].ravel()], order=1,
+                mode="nearest").reshape(b - a, len(sv))
+            profs.append(prof.mean(0))
+        out[name] = (sv, profs, int(len(idx)))
+    return out
+
+
+def score_far_stacks(stacks, *, far_tol_px_720: float = FAR_TOL_PX_720, far_min_z: float = FAR_MIN_Z,
+                     s_scale: float = 1.0, min_det_frac: float = 0.5) -> dict:
+    """`far_line_stacks` output -> the per-line verdict dict. Pure arithmetic on
+    already-measured profiles: no image is read, so a threshold sweep is cheap."""
+    tol = far_tol_px_720 * s_scale
+    out = {}
+    for name, (sv, profs, n_samples) in stacks.items():
+        zs, offs, hits, dets = [], [], [], []
+        for P in profs:
+            det, hit, z, off = _seg_hit(sv, P, tol, far_min_z)
+            dets.append(det)
+            hits.append(hit)
+            zs.append(round(z, 3))
+            offs.append(None if not np.isfinite(off) else round(off, 4))
+        nseg = len(profs)
+        n_det = int(np.sum(dets))
+        seen = n_det >= max(1, int(np.ceil(min_det_frac * nseg)))
+        out[name] = {"frac": float(np.sum(hits) / n_det) if n_det else 0.0,
+                     "seen": bool(seen), "n_seg": nseg, "n_det": n_det,
+                     "n_samples": n_samples, "z": zs, "off": offs}
+    return out
+
+
+def far_line_profile(grey, cam: CourtCamera, *, far_tol_px_720: float = FAR_TOL_PX_720,
+                     far_min_z: float = FAR_MIN_Z, segments: int = 8, min_samples: int = 24,
+                     step_px: float = 1.0, reach_px_720: float = 8.0,
+                     prof_step_px: float = 0.25, min_width_px_720: float = 0.67,
+                     clear_m: float = 0.3, min_det_frac: float = 0.5) -> dict:
+    """{line name: {"frac", "n_seg", "n_det", "n_samples", "z", "off", "seen"}}
+    for the paint that is TOO THIN for the per-point ridge finder - the samples
+    `paint_check` drops.
+
+    Reads the image only at offsets FROM the camera's own prediction, so it takes
+    no far-line position from the model it checks. `frac` is over the segments in
+    which the line was SEEN at all; `seen` is False when fewer than
+    `min_det_frac` of the segments found any ridge in the search window, and a
+    line that was not seen is not evidence either way. Returns nothing for a line
+    whose thin part is out of frame or too short to make one segment."""
+    st = far_line_stacks(grey, cam, segments=segments, min_samples=min_samples,
+                         step_px=step_px, reach_px_720=reach_px_720,
+                         prof_step_px=prof_step_px, min_width_px_720=min_width_px_720,
+                         clear_m=clear_m)
+    return score_far_stacks(st, far_tol_px_720=far_tol_px_720, far_min_z=far_min_z,
+                            s_scale=cam.image_wh[1] / 720.0, min_det_frac=min_det_frac)
+
+
 @dataclass
 class PaintCheck:
     ok: bool
-    support: float                 # over every sample on a checked line
+    support: float                 # over every WIDE sample on a checked line
     lines: dict                    # name -> (fraction on paint, n samples)
     unchecked: list                # lines too thin (or out of frame) to check
     worst: str | None
+    scope: str = "none"            # whole_court | near_half | none
+    checked: list = field(default_factory=list)
+    far: dict = field(default_factory=dict)     # far_line_profile detail
+    detail: dict = field(default_factory=dict)  # name -> {"wide": ..., "thin": ...}
+
+    @property
+    def far_lines_checked(self) -> bool:
+        return all(n in self.lines for n in FAR_LINES)
+
+    def claim(self) -> str:
+        """One sentence saying WHAT was verified - never just yes/no."""
+        if not self.ok:
+            return f"not verified ({self.worst or 'nothing checkable'})"
+        if self.scope == "whole_court":
+            return "whole court verified against the paint"
+        miss = ", ".join(self.unchecked) or "some lines"
+        return f"near half verified; NOT verified: {miss}"
 
 
 def paint_check(grey, cam: CourtCamera, *, tol_px_720: float = 1.5, min_dn: float = 6.0,
                 min_line_frac: float = 0.5, min_width_px_720: float = 0.67,
                 min_samples: int = 6, min_across: int = 2, min_along: int = 2,
-                step_m: float = 0.4) -> PaintCheck:
+                step_m: float = 0.4, far_lines: bool = FAR_LINES_DEFAULT,
+                far_kw: dict | None = None) -> PaintCheck:
     """Does `cam` put the court ON THE PAINT? For every painted line whose
-    projected paint is at least `min_width_px_720` wide (thinner lines, usually
-    the far ones, are listed as unchecked - a ridge finder cannot see them), the
-    fraction of its in-frame samples with a paint ridge within `tol_px_720` of
-    where `cam` puts them. `ok` needs EVERY checked line >= `min_line_frac`:
+    projected paint is at least `min_width_px_720` wide, the fraction of its
+    in-frame samples with a paint ridge within `tol_px_720` of where `cam` puts
+    them. Paint THINNER than that - the far baseline and far service line, whose
+    5 cm runs in depth and projects under a pixel - is measured by
+    `far_line_profile`, which integrates ALONG the line instead (G8); with
+    `far_lines=False` those lines go back to being listed `unchecked`, which is
+    the pre-G8 behaviour. A line measured both ways takes the WORSE fraction.
+    `ok` needs EVERY checked line >= `min_line_frac`:
     a court slid in depth keeps its long sidelines on paint and loses one
     baseline, which a court-wide average hides. It also needs at least
     `min_across` checkable cross-court lines and `min_along` long lines: a camera
@@ -490,20 +715,33 @@ def paint_check(grey, cam: CourtCamera, *, tol_px_720: float = 1.5, min_dn: floa
         wpx[inb] = np.linalg.norm(cam.project(world[inb] + n3 * half)
                                   - cam.project(world[inb] - n3 * half), axis=1)
     use = inb & (wpx >= min_width_px_720 * s)
-    lines, unchecked = {}, []
+    lines, unchecked, detail = {}, [], {}
     hits = np.zeros(len(world), bool)
     if use.any():
         tol = tol_px_720 * s
         off, found = ridge_offsets(grey, uv[use], nrm[use], 3.0 * tol, min_dn)
         hits[use] = found & (np.abs(off) <= tol)
+    far = (far_line_profile(grey, cam, min_width_px_720=min_width_px_720,
+                            **(far_kw or {})) if far_lines else {})
     for i, nm in enumerate(names):
         m = use & (ids == i)
-        if m.sum() < min_samples:
+        wide = (float(hits[m].mean()), int(m.sum())) if m.sum() >= min_samples else None
+        thin = far.get(nm)
+        if thin is not None and not thin["seen"]:
+            thin = None          # too faint to SEE is not evidence of a wrong camera
+        if wide is None and thin is None:
             unchecked.append(nm)
             continue
-        lines[nm] = (float(hits[m].mean()), int(m.sum()))
+        d = {}
+        if wide is not None:
+            d["wide"] = wide
+        if thin is not None:
+            d["thin"] = (thin["frac"], thin["n_samples"], thin["n_seg"])
+        detail[nm] = d
+        frac = min([v[0] for v in d.values()])
+        lines[nm] = (float(frac), int(sum(v[1] for v in d.values())))
     if not lines:
-        return PaintCheck(False, float("nan"), {}, unchecked, None)
+        return PaintCheck(False, float("nan"), {}, unchecked, None, "none", [], far, detail)
     worst = min(lines, key=lambda k: lines[k][0])
     checked = use & np.isin(ids, [names.index(k) for k in lines])
     across = sum(1 for k in lines if abs(wdir[ids == names.index(k)][0, 0]) > 0.5)
@@ -511,7 +749,10 @@ def paint_check(grey, cam: CourtCamera, *, tol_px_720: float = 1.5, min_dn: floa
           and len(lines) - across >= min_along)
     if lines[worst][0] >= min_line_frac and not ok:
         worst = "too_few_lines"
-    return PaintCheck(ok, float(hits[checked].mean()), lines, unchecked, worst)
+    # `support` stays WIDE-sample only, so it remains the same number G7 scored
+    sup = float(hits[checked].mean()) if checked.any() else float("nan")
+    scope = "whole_court" if not unchecked else "near_half"
+    return PaintCheck(ok, sup, lines, unchecked, worst, scope, sorted(lines), far, detail)
 
 
 def paint_support(grey, cam: CourtCamera, **kw) -> float:
@@ -572,5 +813,10 @@ def fit_camera_checked(frames, seed: CourtCamera, *, restarts=RESTARTS, cfg=None
     chk, res = max(tried, key=lambda cr: (cr[0].ok, min((v[0] for v in cr[0].lines.values()),
                                                          default=-1.0)))
     res.camera.extra.update(paint_check="pass" if chk.ok else f"FAIL:{chk.worst}",
-                            starts=len(tried))
+                            starts=len(tried),
+                            # WHAT was verified, carried into setup.camera and
+                            # so into match.json (G8, hard rule 5)
+                            lock_scope=chk.scope,
+                            lock_unverified=list(chk.unchecked),
+                            lock_claim=chk.claim())
     return res
