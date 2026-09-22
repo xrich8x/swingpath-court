@@ -1825,3 +1825,75 @@ locked / unlocked counts; `lock_scope` on every locked frame.
 - **(G9-4)** Setup can land in G1's wrong-camera tail (8.75% per setup). With 6 setups the chance of
   at least one is ~42%; if it happens it will likely KILL the main arm, and it will be reported as
   a setup failure the tracker inherited, not re-rolled.
+
+
+### G9 RESULTS — **KILL on the silent-failure bar: steady tracking passes easily, and 5 of 6 knocks produce a confident wrong lock**
+
+Run after the pre-registration was committed at `c2d4537`. Artifact
+`data/output/court_track_g9/G9.json` stamps commit `c2d4537`, `dirty: false`, resolved tracker
+config `far_lines: False`, `subpixel: true`, `ss: 2`, no codec, no lens. Wall time 13 min for 12 runs.
+Measured against the exact synthetic camera that rendered each frame.
+
+| arm | B1 worst line p90 | B2 steady jump | B3 knock recovery | B4 locked-but-wrong | verdict |
+|---|---|---|---|---|---|
+| **main** (500–505, knock ×1) | **1.45 cm** (`far_baseline`) — PASS | **0.15 px** — PASS | **1 frame on 6 of 6** — PASS | **5 frames** — **FAIL** | **KILL** |
+| **knock3** (500–502) | **130.4 m** — FAIL | 1.88 px — PASS | **never, on 3 of 3** — FAIL | **0** — PASS | **KILL** |
+| **knock4** (500–502) | **177.5 m** — FAIL | 1.92 px — PASS | **never, on 3 of 3** — FAIL | **0** — PASS | **KILL** |
+
+**G9's headline is the main arm: KILL.** It is not a precision failure. Setup landed within
+0.07–0.95 cm on all six seeds. Every line's p90 over 720 frames is ≤ 1.45 cm, and the near lines are
+≤ 0.29 cm. The steady grid jump is 0.15 px against a 2 px bar, and every knock recovers in one frame.
+**It fails because on 5 of the 6 knock frames the tracker says `locked` while the court is 41–65 cm
+out:**
+
+| seed | knock-frame worst line | lines > 10 cm | reported |
+|---|---|---|---|
+| 500 | 40.99 cm | far baseline, far service, far doubles L | `locked`, `near_half` |
+| 501 | 72.97 cm | not tallied (only locked frames are listed) | **not locked** (the only one caught) |
+| 502 | 61.29 cm | far baseline, far service, far doubles L, far singles L | `locked`, `near_half` |
+| 503 | 63.87 cm | same four | `locked`, `near_half` |
+| 504 | 61.09 cm | same four | `locked`, `near_half` |
+| 505 | 64.92 cm | same four **+ `near_doubles_sideline_L`** | `locked`, `near_half` |
+
+Each wrong lock lasts exactly one frame, the knock frame itself. The pose is wrong there and back
+within 5 cm on the next frame, which fits a pose that lags the step by one frame (an inference, not
+measured separately). There are **0 wrong locks on the other 714 frames**.
+Four of the five are entirely on the far half, which the check cannot see (far lines off, per the
+G8 re-decision). Seed 505 also has a NEAR-half line past 10 cm, so the near-half check itself
+passed a frame it could in principle have caught. Every one of these locks claimed only
+`near_half`, so each is **honest in scope and wrong in fact**. The product record would say "the far
+half was not verified" on a frame where the far half is 60 cm out. G9 registered that as a KILL, and
+a failed gate stays failed.
+
+**The large knocks are lost honestly.** At ×3 and ×4 the court is lost at the knock on all six runs
+and never recovered in the remaining 60 frames. All 180 post-knock frames of each arm are reported
+unlocked and **none is locked while wrong**. The dev run's lost ×4 knock reproduces on fresh seeds and
+at ×3 as well. The tracker does not search a 4.5–6° rotation.
+
+**Baseline, no gate:** `calibration.court_lock_step` worst-line p90 **13.6 m** on the main arm (141 m
+and 1,781 m on the large-knock arms).
+
+#### Predictions, scored
+
+| | prediction | outcome |
+|---|---|---|
+| G9-1 | main arm passes B1–B3 comfortably | **RIGHT**: 1.45 cm, 0.15 px, 1-frame recovery |
+| G9-2 | main arm fails B4 with 1 or 2 wrong locks, all far-only, all at a knock | **RIGHT on the verdict and the timing, WRONG on the count and the scope**: **5 of 6** knocks, not 1 or 2, and one of them also puts a near line past 10 cm. The dev/qa rate of 1 in 3 seeds understated it |
+| G9-3 | both large-knock arms KILL on B3, with 0 wrong locks | **RIGHT**, and B1 fails with them (130 / 177 m) |
+| G9-4 | a wrong-camera setup might KILL the main arm | **did not occur**: 6 of 6 setups within 0.95 cm |
+
+#### What this means, and what it does NOT establish
+
+- **The tracker's precision is not the problem.** On this renderer it holds every line to ~1.5 cm
+  p90 through sway, and it recovers G3's knock in one frame. G3's KILL was about losing the court.
+  G9's KILL is about **claiming a lock on the one frame where the pose is stale**.
+- **Two remedies are visible, neither scored, and each needs its own pre-registration:** (a) do not
+  report `locked` on a frame whose predicted motion or flow residual jumps, i.e. a one-frame hold-off
+  after a detected shock. That is logic, not perception. (b) A far-line check that works, which G8's
+  remediation shows does not exist yet on a cluttered scene. Both are hypotheses. Nothing here was
+  tuned on seeds 500–505, and neither remedy may be scored on them.
+- **Synthetic only**: a flat court, a 5 cm paint renderer with CP1's render order, sensor noise and a
+  fence. No lens, no codec, no players, no real footage, one mount (3 m, 6 m setback, hfov 100°).
+  The knock is an instantaneous held step, the harshest form. A real knock rings.
+- G3's KILL stands. G9 does not reopen it and does not replace it: it is a different tracker, and it
+  also KILLs.

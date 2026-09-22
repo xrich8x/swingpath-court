@@ -30,3 +30,4 @@ monolithic file; nothing was dropped.
 - [A second profile, never an edit](a-second-profile-never-an-edit.md) — determinism and fidelity fixes change the SCENE; flag them, default to the old behaviour, null-control must FAIL
 - [Undetected is not failed](undetected-is-not-failed.md) — three outcomes, not two; and a search window narrower than the errors you must catch hides them as "unobservable"
 - [Narrow window turns misses into unseen](narrow-window-turns-misses-into-unseen.md) — 3x-tol window + wing MAD: an off-tol ridge reads unseen and leaves the denominator; 49 cm locked
+- [Tracker fails on the stale knock frame](tracker-fails-on-the-stale-knock-frame.md) — G9 KILL: 1.45 cm p90 but 5/6 knock frames locked 41-65 cm out; seeds 500-505 spent

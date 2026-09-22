@@ -17,25 +17,10 @@ lock-scope forgery hole (scope vs `lock_unverified`) + test; (7) record qa's sma
 
 ## STATE
 
-RESUMED 2026-09-22 (founder Phase 1: PART 1 G8 re-decide at reach 2.25, then PART 2 G9 tracking gate
-under --subpixel, pre-registered on fresh seeds). Suite on 572fd6d: 412 pass/10 skip/4 fail = the 2
-pre-existing + 2 caused by WIP (test coupling in test_far_line_check; test_cost_separation asserted
-far lines become checked on CP1 true cam - at 2.25 they go UNCHECKED, which is qa's prediction).
-DECISION: BUILD ON 572fd6d (edits match the plan), fix the 2 tests.
-
-OLD PLAN (still valid): Read journal, CLAUDE.md, STATE.md, G8 prereg+results, QA AUDIT 2026-09-19. Plan fixed:
-
-- camera3d: add `FAR_REACH_MULT = 3.0`, `FAR_REACH_PX_720 = 2.25`; `far_line_stacks` default reach
-  8.0 -> 2.25; `far_line_profile` reach defaults to `3 * far_tol` (registered coupling). 8.0 stays
-  reachable explicitly so the published table reproduces.
-- gate tool: add `far_lines=True` (Fault A) + `--reach-mode {fixed,registered}` (fixed = 8.0,
-  reproduces published; registered = 3*tol per cell, pyramid too).
-- BAR 4: `court_cost_separation.py --n 400 --seed 0` with a PAIRED third arm at the registered
-  reach + a pyramid arm, all on the same image/camera.
-- BAR 3: re-run tracking sim seeds 101/201 far-lines-ON at registered reach, compare to the
-  committed OFF arm.
-
-NEXT IF RESUMED: see LOG for the last completed step.
+DONE 2026-09-22 (founder Phase 1, both parts). Commits 0783ff0 (instrument), c2d4537 (G8 re-decision
++ G9 prereg), then the G9 results commit. G8 at registered reach: B1 PASS 0.9028, B2 PASS, B3 FAIL,
+B4 vacuous PASS; pyramid FAILS B4 263/368; FAR_LINES_DEFAULT stays False. G9: main KILL on B4 (5/6
+knock frames locked 41-65 cm), x3/x4 KILL honestly. Nothing pushed. If restarted: nothing to resume.
 
 ## LOG
 - CARRIED FORWARD: `python` is a broken Store shim -> use the CPU venv at
@@ -77,3 +62,10 @@ NEXT IF RESUMED: see LOG for the last completed step.
   B4 PASS-vacuous. FAR_LINES_DEFAULT stays False. Pyramid does not ship. G9 runs far lines OFF.
 - NEXT: update camera3d comments + test docstring; commit G9 prereg (scratchpad/g9_prereg.md) + tool;
   THEN run G9; then evidence G8 REMEDIATION + G9 results + STATE rows.
+- c2d4537: Part 1 results + G9 prereg committed. G9 RUNNING -> data/output/court_track_g9/G9.json
+- G9 DONE (G9.json, commit c2d4537 clean, 13 min): MAIN KILL on B4 - p90 1.45 cm far_baseline (B1 PASS),
+  steady jump 0.15 px (B2 PASS), recovery 1 frame x6 (B3 PASS), LOCKED-BUT-WRONG 5/6 knock frames
+  (41-65 cm; 4 far-half-only, seed 505 also near_doubles_sideline_L). 0 in steady sway. Setup 0.07-0.95 cm.
+  knock3 / knock4: KILL, never recovered, p90 130 m / 177 m, 0 locked-wrong, 180/180 post-knock unlocked.
+  lock_step p90 13.6 m. Predictions: G9-1 RIGHT, G9-2 WRONG (5 not 1-2), G9-3 RIGHT, G9-4 did not occur.
+- NEXT: evidence G9 RESULTS, STATE row, commit.

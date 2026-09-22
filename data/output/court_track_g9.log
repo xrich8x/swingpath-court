@@ -1,0 +1,13 @@
+E:\Claude Outputs\Cowork Tasks\Swing Vision\backend\.venv\Lib\site-packages\numpy\lib\_function_base_impl.py:4608: RuntimeWarning: invalid value encountered in scalar subtract
+  diff_b_a = b - a
+main    KILL          worst p90     1.45 cm (far_baseline)  steady jump 0.15 px  recovery [1, 1, 1, 1, 1, 1]  locked-but-wrong 5 (far-only 4)  unlocked 1  scopes {'near_half': 719}
+        bars {'B1_every_line_p90_le_5cm': True, 'B2_steady_jump_le_2px': True, 'B3_every_knock_recovered_le_15': True, 'B4_zero_locked_but_wrong': False}
+knock3  KILL          worst p90 13043.44 cm (far_baseline)  steady jump 1.88 px  recovery [None, None, None]  locked-but-wrong 0 (far-only 0)  unlocked 180  scopes {'near_half': 180}
+        bars {'B1_every_line_p90_le_5cm': False, 'B2_steady_jump_le_2px': True, 'B3_every_knock_recovered_le_15': False, 'B4_zero_locked_but_wrong': True}
+knock4  KILL          worst p90 17746.03 cm (far_service_line)  steady jump 1.92 px  recovery [None, None, None]  locked-but-wrong 0 (far-only 0)  unlocked 180  scopes {'near_half': 180}
+        bars {'B1_every_line_p90_le_5cm': False, 'B2_steady_jump_le_2px': True, 'B3_every_knock_recovered_le_15': False, 'B4_zero_locked_but_wrong': True}
+wrote E:\Claude Outputs\Cowork Tasks\Swing Path - Court\data\output\court_track_g9\G9.json
+
+real	13m1.033s
+user	0m0.000s
+sys	0m0.031s
