@@ -109,7 +109,14 @@ Then, before doing anything else, read in this order:
 
 ## NOW — what is running
 
-RUN-STATE: RUNNING — cleared 2026-09-22 by the founder, who resumed with a four-phase plan (Phase 1: re-decide G8 at the registered 2.25 px window, then score the tracking fixes). Corrections given to the founder: the encoder does not touch the tracking sim; 2.25 px measured 0.90 catch, not 100%; net POSTS are CLOSED as a calibration reference - use the net TAPE; bounded state stands.
+RUN-STATE: PAUSED-BY-FOUNDER — 2026-09-22 — "After QA does the checking lets pause and see if things work" — still running: nothing. Phase 1 done and audited; the founder is reviewing before Phase 2.
+
+**WHERE PHASE 1 LANDED (qa-audited 2026-09-22, see evidence QA AUDIT 2026-09-22):**
+- G8 at the registered 2.25 px window FAILS bar 3; bar 4 passes only because the check sees nothing on CP1. `FAR_LINES_DEFAULT` stays False.
+- The far-baseline failure is the SURFACE/RUN-OFF BRIGHTNESS STEP (+0.9-1.0 px ridge bias, no clutter needed) — NOT the net tape. The lead told the founder 'net tape'; corrected 2026-09-22. The tracking sim has no run-off step, so G8 bars 1-3 and G9 ran without this bias.
+- G9: precision passes (p90 1.45 cm), KILL on the silent-failure bar: 5/6 knock frames locked while 41-65 cm out. Cause: 27-34 coherent same-sign sideline outliers on the knock frame bend the pose; it passes because far lines are unchecked and whole-length sidelines are pooled. NOT a lag.
+- Open process faults: lock-claim forgery via a self-consistent `whole_court` block; G8 bar-3 OFF-arm file stamped `far_lines: True`; four G8R artifacts written before `0783ff0` (they reproduce bit-exactly).
+- Candidate next steps, none scored: a shock-triggered lock hold-off; per-half sideline scoring; a far-line instrument that models the run-off step; add a run-off step to the tracking sim. Never score a remedy on seeds 500-505.
 
 **RESUME POINT — branch `camera3d-pnp-paintfit`, HEAD `572fd6d`, nothing pushed.**
 1. **Re-run the suite first** (`cd backend && pytest tests/`, baseline 414 pass / 10 skip / 2
@@ -257,6 +264,8 @@ C3 is the founder's visit. **Order: P2 finishes first**, per the founder.
   forever. Do not reopen the Sideloadly line without the founder.
 
 ## LOG — newest first (court only; older entries are in the archived journal)
+
+- **2026-09-22** — PAUSED by founder ("After QA does the checking lets pause and see if things work"). Left running: nothing.
 
 - **2026-09-22** — RESUMED by founder (a four-phase plan; Phase 1 dispatched to backend-dev).
 
