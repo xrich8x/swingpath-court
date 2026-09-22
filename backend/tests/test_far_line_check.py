@@ -63,8 +63,10 @@ def test_no_ridge_at_all_is_NOT_reported_as_a_failed_line():
 def test_the_instrument_is_SHIPPED_OFF_and_says_so(scene):
     """G8's non-degradation bar FAILED on CP1's cluttered scene (369 of 369 right
     cameras flagged; the net tape captures the ridge), so the instrument ships
-    measured but OFF. A failed gate stays failed - do not flip this default
-    without a new pre-registration."""
+    measured but OFF. Re-decided 2026-09-22 at the REGISTERED window (3 x
+    far_tol): bar 3 fails there instead (a 49 cm knock frame locks as whole_court)
+    and bar 4 passes only because the far lines go unchecked. A failed gate stays
+    failed - do not flip this default without a new pre-registration."""
     cam, img, _ = scene
     assert camera3d.FAR_LINES_DEFAULT is False
     d = camera3d.paint_check(img, cam)

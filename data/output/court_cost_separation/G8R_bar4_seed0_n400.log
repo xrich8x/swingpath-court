@@ -1,0 +1,31 @@
+  25/400  114s
+  50/400  226s
+  75/400  330s
+  100/400  418s
+  125/400  530s
+  150/400  630s
+  175/400  714s
+  200/400  823s
+  225/400  916s
+  250/400  1018s
+  275/400  1136s
+  300/400  1221s
+  325/400  1331s
+  350/400  1452s
+  375/400  1544s
+  400/400  1628s
+n_ok=400  wrong=32  right=368
+instrument                   held-out catch  false flag  verdict
+paint_check.support                   1.000       0.005  SEPARATES
+paint_check.worst_line                1.000       0.005  SEPARATES
+ridge_residual.median                 1.000       0.799  PARTIAL
+ridge_residual.mean                   1.000       0.005  SEPARATES
+ridge_residual.frac_found             1.000       0.005  SEPARATES
+fit_own_cost.px_median                1.000       1.000  FAILS
+fit_own_cost.weighted                 0.938       1.000  FAILS
+ceiling (true camera): {'support': 0.9644, 'worst_frac': 0.9434, 'ridge_med': 0.0543, 'ridge_mean': 0.1512, 'ridge_found': 1.0}
+wrote ..\data\output\court_cost_separation\G8R_bar4_seed0_n400.json
+
+real	27m9.679s
+user	0m0.015s
+sys	0m0.000s

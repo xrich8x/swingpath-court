@@ -481,9 +481,22 @@ FAR_MIN_Z = 5.0
 # which is the whole of G8's BAR 4 failure. The registered coupling is restored
 # here: the window is 3 x the tolerance, everywhere, and a caller that wants the
 # 8.0 behaviour must ask for it by name (see G8 REMEDIATION in the evidence).
+# Re-scored at this window on 2026-09-22, it is NOT a fix: on CP1's scene the
+# far lines go back to `unchecked` (0 of 400 true cameras checked - the check is
+# identical to the pre-G8 one on 400 of 400 trials), and on the clean sim scene
+# an off-tolerance ridge falls inside the noise wing, reads as "not seen" and
+# leaves the denominator, so sim seed 201's knock frame, 49 cm out, is LOCKED
+# with scope `whole_court`. The 8.0 window is a separate, unregistered arm.
 FAR_REACH_MULT = 3.0
 FAR_REACH_PX_720 = FAR_REACH_MULT * FAR_TOL_PX_720
-# OFF by default, and the reason is measured, not cautious. G8's non-degradation
+# OFF by default, and the reason is measured, not cautious. RE-DECIDED 2026-09-22
+# at the REGISTERED window (G8 REMEDIATION): bar 1 PASS (catch 0.9028), bar 2
+# PASS (0/63), bar 3 FAIL (sim seed 201's 49 cm knock frame is locked, claiming
+# the whole court), bar 4 passes only VACUOUSLY (1/368 false flags because the
+# far lines are never checked on that scene). The founder's pyramid arm fails
+# bar 4 outright at the registered window (263/368 right cameras flagged). A
+# failed gate stays failed, so this stays False.
+# The ORIGINAL reason, at the unregistered 8.0 px window: G8's non-degradation
 # bar was run on CP1's arm-P scene and FAILED: with the far lines checked, 369 of
 # 369 RIGHT cameras are flagged - including the exact rendering camera. Isolated
 # by a one-variable arm sweep to CLUTTER, not to the lens: on that scene at a 3 m
@@ -772,7 +785,11 @@ def paint_check(grey, cam: CourtCamera, *, tol_px_720: float = 1.5, min_dn: floa
           and len(lines) - across >= min_along)
     if lines[worst][0] >= min_line_frac and not ok:
         worst = "too_few_lines"
-    # `support` stays WIDE-sample only, so it remains the same number G7 scored
+    # `support` is over WIDE samples only - but "checked" means every line in
+    # `lines`, and with the far lines ON a far line that becomes checked brings its
+    # few WIDE samples in with it. So with far_lines=False it is exactly the number
+    # G7 scored; with them ON it can move (qa 2026-09-19: 4 of 400 CP1 trials, by
+    # up to 0.0114, at the 8.0 px window; 0 of 400 at the registered window).
     sup = float(hits[checked].mean()) if checked.any() else float("nan")
     scope = "whole_court" if not unchecked else "near_half"
     return PaintCheck(ok, sup, lines, unchecked, worst, scope, sorted(lines), far, detail)

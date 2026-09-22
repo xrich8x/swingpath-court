@@ -29,3 +29,4 @@ monolithic file; nothing was dropped.
 - [The net tape OWNS the far lines](the-net-tape-owns-the-far-lines.md) — clutter moved a far-line ridge 5 px where the lens moved it 0.02; 369/369 right cameras flagged
 - [A second profile, never an edit](a-second-profile-never-an-edit.md) — determinism and fidelity fixes change the SCENE; flag them, default to the old behaviour, null-control must FAIL
 - [Undetected is not failed](undetected-is-not-failed.md) — three outcomes, not two; and a search window narrower than the errors you must catch hides them as "unobservable"
+- [Narrow window turns misses into unseen](narrow-window-turns-misses-into-unseen.md) — 3x-tol window + wing MAD: an off-tol ridge reads unseen and leaves the denominator; 49 cm locked

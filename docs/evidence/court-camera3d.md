@@ -1581,3 +1581,247 @@ Append to the G3 row in "What has not worked":
 > arithmetic and no verdict flips. The fault is **not confined to the far lines**: the WIDE
 > `near_service` line's stacked offset moves -0.19 -> -0.09 px. Defaults were left faulty on purpose,
 > so this is a live trap for any future run at defaults.
+
+## G8 REMEDIATION 2026-09-22: G8 re-decided at the search window it REGISTERED
+
+backend-dev, founder's Phase 1, part 1. **Nothing in G8's pre-registration, results, or either qa
+audit above has been edited.** This section records a declared deviation and its consequences.
+
+### The deviation, declared
+
+| | G8 pre-registration | what the committed G8 run did |
+|---|---|---|
+| search window | `reach = 3 * far_tol` = **2.25 px @720** at the chosen tolerance | `reach_px_720 = 8.0`, hard-coded, **3.56x wider**, declared nowhere |
+| tool invocation | the far-line instrument live | `court_far_line_gate.py` omitted `far_lines=True`; with `FAR_LINES_DEFAULT = False` it scored the pre-G8 check in all 40 cells |
+
+**qa found both on 2026-09-19 (Faults B and A); the lead verified them.** backend-dev did not
+declare either. G8's published tables stand as a record of the 8.0 px window, which is now treated as
+a separate, unregistered arm with no bar of its own.
+
+### Fault A: fixed, and the tool reproduces its own table
+
+`court_far_line_gate.py` now passes `far_lines=True` and takes `--reach-mode {registered, fixed8}`.
+**`--reach-mode fixed8` on seeds 400–402 reproduces the published `heldout_seeds400-401-402.json`
+exactly: 0 of 13,680 scored cells differ**, and the published cell (tol 0.75, z 5) is again
+**0.9167 / 0.0000**. Commit `0783ff0` contains the instrument, committed before any scored run.
+
+Code changes, in order (all in `0783ff0` and the results commit):
+- `camera3d`: `FAR_REACH_MULT = 3.0`, `FAR_REACH_PX_720 = 2.25`; `far_line_stacks` defaults to it and
+  `far_line_profile(reach_px_720=None)` couples the window to the tolerance, as registered.
+  **With `FAR_LINES_DEFAULT = False` this changes nothing on the default path.**
+- `court_far_line_gate.pyramid_far`: a pyramid level whose window holds fewer than 3 profile samples
+  is skipped (at the registered window, tol ≤ ~0.3 px @720 made `ridge_offsets` index past a
+  1-sample profile and crash). A level-skip cannot occur at 8.0, so `fixed8` is unaffected, as the
+  0-cell diff shows.
+- `court_cost_separation.py`: five far-line arms scored on the same image and the same camera (off;
+  registered window; registered window with z 3; 8.0; pyramid), plus how often each one actually
+  checked both far lines on a right camera's fit.
+- `court_track_sim.py`: the stamp recorded `vars(TrackConfig())`, the CLASS DEFAULTS, so a
+  `--far-lines` run was stamped `far_lines: False`. It now records the RESOLVED config and the
+  far-line window, plus `lock_scope` per frame.
+
+### The re-run: every bar at the registered window
+
+**Development sweep re-run at the registered window** (seeds 300–305, noise-only, G8's own rule).
+`g8r/dev_registered.json`:
+
+| tol @720 | catch (z 3 / 4 / 5 / 6 / 8) | incremental false | far lines unchecked on good cases |
+|---|---|---|---|
+| 0.10 – 0.50 | 0.833 at every z (= the pre-G8 check) | 0.000 | **1.000**: the instrument never sees them |
+| **0.75** | 0.917 / 0.917 / **0.903** / 0.861 / 0.840 | 0.000 | 0.000 (0.297 at z 8) |
+| 1.00 | 0.847 at every z | 0.000 | 0.000 |
+
+At the registered window the stacked profile is **blind at every tolerance up to 0.50 px @720**: the
+window (3 × tol) is too narrow to hold a peak plus the wings the noise estimate needs. **`far_min_z`
+is not inert here.** The registered rule still picks tol **0.75**, and picks **z 3** (it has no z
+tie-break; z 3 and 4 tie), not the shipped 5. The shipped (0.75, z 5) was scored as the primary arm,
+because it is what ships; z 3 was scored beside it and differs by that one variable. The pyramid's
+registered choice at this window is **tol 0.50, min_dn 2.0** (catch 0.944), not the 0.50 / 3.0 that
+`572fd6d` had hard-coded.
+
+| G8 bar | at 8.0 px (as run, unregistered) | **at 2.25 px (registered)** | verdict at 2.25 |
+|---|---|---|---|
+| 1. catch > 20 cm, held-out 400–402 | 0.9167 (66/72) | **0.9028 (65/72)**, qa's re-implementation exactly | **PASS**, by one frame (effective n 24: one more distinct geometry fails it) |
+| 2. incremental false flags | 0/63 | **0/63** | **PASS** |
+| 3. sim 101 / 201 knock frames NOT locked | 2/2 | **1/2: seed 201 frame 60, 49.11 cm out, is reported `locked`, scope `whole_court`** | **FAIL** |
+| 4. CP1 arm K, n 400 seed 0: catch all wrong, ≤ 2% false on right | 32/32, **368/368** false | **32/32, 1/368 = 0.27%** false | **PASS by the letter, VACUOUS** (see below) |
+
+**Bar 3, the mechanism.** On seed 201's knock frame the far baseline's six stacked segments put
+their ridges at −0.84 to −1.21 px @1080 against a tolerance of 1.125 px. At 8.0 all six are seen, 2
+hit, frac 2/6 = 0.33, the line fails. At 2.25 the two ridges just past tolerance sit INSIDE the wing
+the noise is estimated from, so their z collapses to 0 and they count as **not seen**. Unseen
+segments leave the denominator: frac 2/4 = **0.50 = `min_line_frac`**, a pass. The far service line
+is at exactly 0.50 too. **A narrow window turns a miss into a non-observation, and the rule that
+treats a non-observation as "no evidence" then passes the line.** The paired A/B against the
+reach-8 arm differs on exactly this one `locked` flag. Every per-frame error, jump and recovery is
+bit-identical. Reproduced by capturing the tracker's own camera on that frame (the diagnosis must
+use `n=120`: `sway_path`'s draws depend on `n`).
+
+**Bar 4 is vacuous.** On all 400 trials the registered-window check gives the **same `ok` as the
+far-lines-off check on the fitted, the true and the seed camera**, and `support` moves on none of
+them. Both far lines are checked on **0 of 400** true cameras (at 8.0, `far_service` was checked on
+400/400 and read the net tape). The 1/368 is the pre-G8 check's own flag (`centre_service`). qa
+predicted this on 3 trials: at the registered window the instrument is **inert** on the cluttered
+scene, not hostile. The "near zero false flags" the founder named is real, and the reason is that
+the instrument checks nothing there.
+
+### The decision: G8, as registered, FAILS (bar 3). `FAR_LINES_DEFAULT` stays `False`.
+
+The founder's instruction was to re-enable far-line checking if false flags drop to near zero, and
+the decision rule is G8's registered bars. **Bars 1 and 2 pass, bar 3 fails, and bar 4 passes only
+because the far lines are never checked on that scene.** Enabling it would buy nothing on CP1's
+scene. On the clean scene it would add one new failure mode: a frame 49 cm out that claims the WHOLE
+court was verified, where today it claims only the near half. A failed gate stays failed.
+
+### The founder's pyramid arm, against bar 4: FAILS, worse than the stacked profile
+
+| arm (registered window) | held-out catch | bar 4 false flags on right | true camera `ok` | both far lines seen, right fits |
+|---|---|---|---|---|
+| stacked, tol 0.75, z 5 (shipped) | 0.9028 | 1/368 (0.27%) | 400/400 | 0/368 |
+| stacked, tol 0.75, z 3 (rule) | 0.917 | 1/368 (0.27%) | 400/400 | 0/368 |
+| **pyramid, tol 0.50, min_dn 2** | **0.958** | **263/368 (71.5%)** | **126/400 (31.5%)** | 151/368 (41%) |
+| stacked, 8.0 px (unregistered) | 0.9167 | 368/368 (100%) | 0/400 | 0/368 |
+
+The pyramid **SEES** the far lines on CP1's scene where the stacked profile does not (both on
+163/400 true cameras), and what it sees is not paint: 262 of its 263 flags come from a far line
+(the other is the pre-G8 check's own `centre_service` flag), the worse far line reads frac 0.0 at the
+median and below 0.1 on 229 of them, and all of them at pyramid level 0. The net tape lies over the far baseline, so a ±1.5 px window cannot exclude
+it. **It fails bar 4 and does not ship.** It is the better instrument on the clean scene (catch
+0.958 vs 0.903; it also catches seed 201's knock frame, measured in the diagnosis only, not as a
+bar), and the clean scene is exactly where every instrument here already works. Its knobs came from
+the dev sweep at the registered window, never from the scoring population.
+
+### The 8.0 px window, as a new arm
+
+It has merit on the clean scene (bars 1–3 all pass) and none on CP1's scene (368/368). It was not
+registered, so it carries no verdict. If it is ever proposed, it needs its own pre-registration and
+a confuser guard. That guard is the next experiment for both windows: exclude the net's image band
+using `net_tape_clearance`'s shipped geometry, or reject a ridge too bright to be 5 cm of paint.
+
+### qa's lock-claim hole: closed
+
+`setup_state.normalize_camera` now **refuses** `lock_scope = "whole_court"` beside ANY unverified
+evidence, and records `lock_scope_refused`. The scope reads `unknown` and the claim names the
+unverified lines. "Any" means a list, a bare string (`"far_baseline"`, which `572fd6d` still coerced
+to `[]` and let through), or an unreadable value. `camera_lock_claim` refuses the pair as well, for a
+block that bypassed normalisation. Five tests in `test_far_line_check.py`: qa's attack verbatim, the
+bare-string and odd-type variants, a second read, a consistent `whole_court` block that must still
+say so, and the claim function on its own.
+
+### qa's smaller corrections, recorded (the G8 text above is not edited)
+
+- **6 and 4 segments, not 8**: `far_line_stacks` caps at `len(idx) // min_samples`, so on the sim
+  scene the far baseline runs 6 and the far service 4. "8" is the configured maximum.
+- **"Offset within 0.05 px" is the NOISELESS figure**: with the renderer's sensor noise,
+  per-segment offsets reach **+0.094 px**.
+- **394 / 389, not 400 / 394**: on G8's CP1 run `far_baseline` was unchecked on 394 of 400 and
+  `far_service` checked on 389 of 400.
+- **`support` moves on 4/400 trials with the far lines on** (by up to 0.0114, at the 8.0 window), so
+  the code comment was wrong as written. It is now corrected in `camera3d.paint_check`. At the
+  registered window it moves on 0/400.
+- **`far_min_z` is not inert at tol 1.00** at the 8.0 window (z 8 catches 123/144 against 122/144).
+  At the registered window it is not inert at 0.75 either (table above).
+- **The deterministic encoder profile runs at 325,033 kbps against CP1's 22,461: 14.5x the
+  bitrate**, on qa's 20-frame array. That is the clearest single statement that all-intra CRF 18 is
+  a different and far easier scene.
+
+### Suite
+
+414 → **419 pass**, 10 skip, the same 2 pre-existing failures (`test_recording_identity.py`). The
++5 are the forgery tests. Two tests were re-pointed rather than weakened. `test_the_sweep_scores_...`
+now stacks at the same (registered) window it scores. `test_ridge_residual_STILL_has_...` now
+asserts the CP1 true camera's far lines are UNCHECKED at the registered window and are only "seen"
+at 8.0, which is qa's finding written as a test.
+
+Artifacts: `data/output/court_far_line_gate/g8r/{heldout_fixed8, dev_registered,
+heldout_registered}.json`, `data/output/court_cost_separation/G8R_bar4_seed0_n400.json` (commit
+`0783ff0`, clean), `data/output/court_track_sim/g8r/seeds101-201_n120_sub_far_reach2.25.json`.
+Measured against the exact synthetic rendering camera throughout; on CP1, the wrong/right label is
+the fitted focal length (> 1% from 805.54 px), recomputed from this run.
+
+## G9: the FIXED tracker, scored for the first time — PRE-REGISTRATION
+
+**Written and committed BEFORE any scored run** (hard rule 2). backend-dev, 2026-09-22, branch
+`camera3d-pnp-paintfit`. Nothing below the "G9 RESULTS" heading existed when the runs started;
+nothing above it is edited afterwards except by adding results.
+
+### What this scores, and what it does not overturn
+
+**G3 was a KILL (worst line p90 11.0 m) and it STANDS.** Since G3, `camtrack` gained an independent
+paint check every frame, a looser Kalman (`q_rot`/`q_pos` 1e-2 → 100), detector-free recovery by a
+pose-only paint re-fit, and restarts along G1's two false-basin families (G5). Those fixes have only
+DEVELOPMENT numbers (seeds 100–102; qa's 200–202), and qa ruled on 2026-09-19 that they were measured
+on a renderer that cannot place sub-pixel paint, pessimistic by about 1.8x (2.595 → 1.479 cm on a
+paired control). G9 is the first gate the fixed tracker has ever had. A G9 PASS would be a new
+result about a different tracker; it does not reopen G3.
+
+### Setup — fixed now
+
+- **Tool:** `tools/court_track_g9.py`, which calls `tools/court_track_sim.run` unchanged and adds only
+  the scoring below. Committed with this pre-registration.
+- **Renderer:** `court_track_sim` with **`subpixel=True`** (CP1's render order: jittered sub-samples,
+  PSF before binning) and `ss = 2` — exactly what qa's paired control and G8 used. 1920x1080, 30 fps,
+  120 frames per seed, hfov 100°, 3.0 m mount, 6.0 m setback, fence sway as in G3.
+  **No codec and no lens.** The pinned encoder (`X265_DETERMINISTIC`) has no bearing on G9 because
+  nothing here is encoded.
+- **Setup on frame 0** as the product would do it: noisy keypoints (σ 14.78 px) → PnP seed →
+  `camera3d.fit_camera_checked`.
+- **Tracker:** `camtrack.TrackConfig()` as shipped at the scoring commit, stamped RESOLVED (the sim's
+  stamp recorded the class defaults until 2026-09-22; fixed before this run).
+- **Far lines:** **OFF**, per the Part 1 re-decision above (G8 REMEDIATION: bar 3 fails at
+  the registered window, so `camera3d.FAR_LINES_DEFAULT` stays `False`). Every lock is therefore a
+  **`near_half`** lock, and **the far half is UNVERIFIED by the tracker's own check.** B1–B4 still
+  score the far lines against truth: an error on `far_baseline` counts in B1 and in B4 exactly like
+  any other line, so the unverified half cannot hide.
+- **Truth:** the exact synthetic camera that rendered each frame; C1's 14 line halves, worst
+  perpendicular ground error of 11 points per line (`court_track_sim.line_errors`).
+
+**Seeds never used before.** 100–102, 200–202, 300–305 and 400–402 are spent.
+
+| arm | seeds | knock | frames |
+|---|---|---|---|
+| **main** | 500, 501, 502, 503, 504, 505 | ×1 (+1.5° pitch, +1° yaw at 2.0 s, held) — G3's knock | 720 |
+| **knock3** | 500, 501, 502 | **×3** (+4.5° pitch, +3° yaw) | 360 |
+| **knock4** | 500, 501, 502 | **×4** (+6° pitch, +4° yaw) — the knock the dev run lost | 360 |
+
+The large-knock arms reuse the main arm's first three seeds on purpose: `sway_path` draws the sway
+before adding the knock, so each pair differs in knock size and nothing else. **The large-knock arms
+are scored and reported SEPARATELY and are never pooled into the main arm.** A lost 4x knock must
+show in the result, not be averaged away.
+
+### THE BARS — each arm, separately
+
+- **B1.** Every line's p90 over ALL frames of the arm (knock frames included, as G3) ≤ **5 cm**.
+- **B2.** The largest frame-to-frame far-baseline jump beyond the true motion ≤ **2 px**, outside the
+  6 frames starting at each knock (G3's definition, `court_track_sim.summarise`).
+- **B3.** After each knock, every line back within 5 cm within **15 frames** (0.5 s).
+- **B4 — NEW, the silent failure G3 exposed.** **Zero** frames on which the tracker reports
+  `locked=True` while ANY line is more than **10 cm** out. Counted over every frame of the arm; each
+  such frame is listed with its lines, and whether all its >10 cm lines are far-half lines.
+
+**Verdict per arm.** **PASS** if B1–B4 all hold. **KILL** if any line's p90 > 10 cm, OR any knock
+never recovers within the clip, OR **any** locked-but-wrong frame (B4 fails). A confident wrong lock
+is the failure the product cannot survive, so it is KILL-class, not INDETERMINATE. Otherwise
+INDETERMINATE.
+
+**G9's headline is the main arm's verdict.** The large-knock arms carry their own verdicts beside
+it. The tracker is NOT described as knock-robust unless a large-knock arm passes.
+
+**Reported, not gated:** `calibration.court_lock_step` on the same frames; setup error per seed;
+locked / unlocked counts; `lock_scope` on every locked frame.
+
+### Predictions, recorded before the run
+
+- **(G9-1)** The main arm PASSES B1–B3 comfortably: dev/qa put the worst p90 at 1.48 cm under
+  `--subpixel` on 101/201, with 1-frame knock recovery and 0.13 px steady jump.
+- **(G9-2)** **The main arm FAILS B4, and so KILLs.** With the far lines unverified, the
+  dev and qa runs each had one knock frame in three seeds reported `locked` while 0.5–0.7 m out,
+  entirely on the far lines. I predict **1 or 2 locked-but-wrong frames over the 6 seeds, all at
+  a knock and all far-lines-only**, and no locked-but-wrong frame in steady sway.
+- **(G9-3)** Both large-knock arms KILL on B3: a 3x/4x knock takes the court beyond the tracker's
+  flow and ridge search, and recovery (pose-only re-fit around the last pose, restarts along depth
+  and one alley) does not search a 4–6° rotation. I predict 0 locked-but-wrong frames there (qa: 0 of
+  180 at x4 on 200–202): the court is lost honestly, not wrongly.
+- **(G9-4)** Setup can land in G1's wrong-camera tail (8.75% per setup). With 6 setups the chance of
+  at least one is ~42%; if it happens it will likely KILL the main arm, and it will be reported as
+  a setup failure the tracker inherited, not re-rolled.

@@ -1,0 +1,52 @@
+setup: worst line 0.10 cm, f 805.6 (true 805.5), 17s
+  frame   0 tracking  camtrack worst    0.10 cm | lock_step worst    0.11 cm  (17s)
+  frame  20 tracking  camtrack worst    0.68 cm | lock_step worst   86.53 cm  (53s)
+  frame  40 tracking  camtrack worst    0.37 cm | lock_step worst   80.96 cm  (89s)
+  frame  60 tracking  camtrack worst   62.27 cm | lock_step worst 1149.58 cm  (120s)
+  frame  80 tracking  camtrack worst    0.71 cm | lock_step worst 1171.77 cm  (150s)
+  frame 100 tracking  camtrack worst    0.93 cm | lock_step worst 1146.74 cm  (177s)
+setup: worst line 0.31 cm, f 805.5 (true 805.5), 18s
+  frame   0 tracking  camtrack worst    0.31 cm | lock_step worst    0.37 cm  (18s)
+  frame  20 tracking  camtrack worst    1.70 cm | lock_step worst  113.58 cm  (44s)
+  frame  40 tracking  camtrack worst    1.02 cm | lock_step worst   83.09 cm  (71s)
+  frame  60 tracking  camtrack worst   49.11 cm | lock_step worst  970.25 cm  (98s)
+  frame  80 tracking  camtrack worst    0.56 cm | lock_step worst 1006.53 cm  (123s)
+  frame 100 tracking  camtrack worst    0.40 cm | lock_step worst 1356.02 cm  (149s)
+camtrack   worst p90     1.48 cm  PASS          steady jump 0.13 px (all 2.46)  knock recovery [1, 1] frames
+    locked 239  locked-but-wrong(>10 cm) 1  unlocked 1  worst-line p90 while locked 1.48 cm
+    near_doubles_sideline_L    p50     0.07  p90     0.12  max     9.42 cm
+    near_doubles_sideline_R    p50     0.06  p90     0.13  max     0.21 cm
+    near_singles_sideline_L    p50     0.06  p90     0.10  max     6.98 cm
+    near_singles_sideline_R    p50     0.05  p90     0.10  max     1.14 cm
+    far_doubles_sideline_L     p50     0.10  p90     0.25  max    17.66 cm
+    far_doubles_sideline_R     p50     0.09  p90     0.25  max     0.37 cm
+    far_singles_sideline_L     p50     0.08  p90     0.20  max    14.16 cm
+    far_singles_sideline_R     p50     0.07  p90     0.21  max     0.73 cm
+    near_centre_service        p50     0.04  p90     0.09  max     1.79 cm
+    far_centre_service         p50     0.05  p90     0.10  max     3.96 cm
+    near_baseline              p50     0.14  p90     0.24  max     2.14 cm
+    far_baseline               p50     0.66  p90     1.48  max    62.27 cm
+    near_service_line          p50     0.14  p90     0.27  max     8.57 cm
+    far_service_line           p50     0.39  p90     0.90  max    39.20 cm
+lock_step  worst p90  1264.86 cm  KILL          steady jump 3.09 px (all 25.97)  knock recovery [None, None] frames
+    near_doubles_sideline_L    p50    68.13  p90   158.31  max   180.43 cm
+    near_doubles_sideline_R    p50    35.00  p90    92.28  max   107.73 cm
+    near_singles_sideline_L    p50    54.14  p90   127.26  max   146.96 cm
+    near_singles_sideline_R    p50    23.31  p90    62.94  max    74.66 cm
+    far_doubles_sideline_L     p50   121.24  p90   307.32  max   354.41 cm
+    far_doubles_sideline_R     p50    64.66  p90   181.91  max   216.26 cm
+    far_singles_sideline_L     p50    97.61  p90   245.82  max   289.11 cm
+    far_singles_sideline_R     p50    42.41  p90   125.28  max   150.12 cm
+    near_centre_service        p50    19.95  p90    40.39  max    47.40 cm
+    far_centre_service         p50    28.32  p90    58.34  max    70.31 cm
+    near_baseline              p50    28.66  p90    47.06  max    59.78 cm
+    far_baseline               p50   503.40  p90  1264.86  max  1409.38 cm
+    near_service_line          p50    72.29  p90   144.62  max   174.75 cm
+    far_service_line           p50   317.06  p90   764.14  max   864.80 cm
+seed 101: setup worst line 0.10 cm (check pass), tracker status {'tracking': 120}
+seed 201: setup worst line 0.31 cm (check pass), tracker status {'tracking': 120}
+wrote ..\data\output\court_track_sim\g8r\seeds101-201_n120_sub_far_reach2.25.json
+
+real	6m15.588s
+user	0m0.000s
+sys	0m0.015s

@@ -59,10 +59,11 @@ class TrackConfig:
     q_pos: float = 100.0            # m^2 s^-3
     r_floor_px: float = 0.1         # measurement noise floor, px rms
     # G8's far-line instrument, OFF for the reason recorded at
-    # camera3d.FAR_LINES_DEFAULT (it flags 369 of 369 right cameras on CP1's
-    # cluttered scene). With it ON, the knock frames of sim seeds 101 and 201 -
-    # which report `locked` while 0.62 / 0.49 m out on exactly those two lines -
-    # are correctly reported NOT locked, and nothing else in the run moves.
+    # camera3d.FAR_LINES_DEFAULT (re-decided 2026-09-22 at the registered
+    # window: G8's bar 3 fails there). At the unregistered 8.0 px window it
+    # caught both documented knock frames (sim seeds 101/201, 0.62 / 0.49 m out)
+    # but flagged 369 of 369 right cameras on CP1's scene; at the registered
+    # window it catches 101 and LOCKS 201 with scope whole_court.
     far_lines: bool = camera3d.FAR_LINES_DEFAULT
 
 

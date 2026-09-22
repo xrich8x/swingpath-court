@@ -60,3 +60,20 @@ NEXT IF RESUMED: see LOG for the last completed step.
 - FAULT A DONE: `--reach-mode fixed8` on 400-402 == published heldout artifact, 0/13,680 cells differ;
   0.75|5 = 0.9167/0.0000. File: data/output/court_far_line_gate/g8r/heldout_fixed8.json
 - RUNNING: dev sweep registered reach -> g8r/dev_registered.json (for pyramid knobs + re-choice).
+- Instrument committed 0783ff0 (suite 419/10/2). BAR 4 RUNNING -> data/output/court_cost_separation/G8R_bar4_seed0_n400.json
+- REGISTERED-REACH dev sweep: stacked BLIND (far unchecked on 100% good) at tol<=0.50; rule picks 0.75|z3
+  (z NOT inert: 0.917 z3-4, 0.903 z5). Pyramid rule pick 0.50|dn2 (0.944). Held-out 400-402 @reach 3xtol:
+  stacked 0.75|5 catch 0.9028 (65/72) false 0/63 = qa's number -> BAR1 PASS, BAR2 PASS; z3 0.917; pyr 0.958.
+- BAR 3 @2.25 FAILS: seed 101 f60 caught, seed 201 f60 (49.11 cm) LOCKED, scope whole_court. Cause: 2/6
+  far_baseline segs 1.14-1.21 px off go z=0 (peak inside wing -> MAD) -> unseen -> out of denominator ->
+  frac 2/4=0.5 = min_line_frac -> pass. At 8.0 it is 2/6 -> fail. NOTE diag must use n=120 (sway_path
+  draws depend on n). File: data/output/court_track_sim/g8r/seeds101-201_n120_sub_far_reach2.25.json
+- BAR 4 DONE (G8R_bar4_seed0_n400.json, commit 0783ff0 clean, 27 min): 400 fits, 32 wrong/368 right.
+  registered 0.75|5: catch 32/32, false 1/368 (0.27%, centre_service, same as pre-G8) = PASS by letter
+  but VACUOUS: ok identical to pre-G8 on 400/400 fit+true+seed; far both checked on 0/400 true.
+  z3 arm identical. reach 8.0: 368/368 flagged (reproduces 369/369). PYRAMID 0.50|dn2|1.5: 263/368
+  = 71.5% false, true cam ok 31.5% -> BAR 4 FAIL.
+- DECISION: G8 as registered = B1 PASS 0.9028, B2 PASS 0/63, B3 FAIL (201 locked whole_court 49 cm),
+  B4 PASS-vacuous. FAR_LINES_DEFAULT stays False. Pyramid does not ship. G9 runs far lines OFF.
+- NEXT: update camera3d comments + test docstring; commit G9 prereg (scratchpad/g9_prereg.md) + tool;
+  THEN run G9; then evidence G8 REMEDIATION + G9 results + STATE rows.

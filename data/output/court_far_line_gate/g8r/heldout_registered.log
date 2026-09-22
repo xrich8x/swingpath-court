@@ -1,0 +1,265 @@
+  seed 400 none     +0.000 far     0.00 cm worst     0.00 cm pre-G8 ok=True (2s)
+  seed 400 pitch    +0.005 far     2.60 cm worst     2.60 cm pre-G8 ok=True (3s)
+  seed 400 pitch    -0.005 far     2.61 cm worst     2.61 cm pre-G8 ok=True (4s)
+  seed 400 pitch    +0.010 far     5.20 cm worst     5.20 cm pre-G8 ok=True (5s)
+  seed 400 pitch    -0.010 far     5.22 cm worst     5.22 cm pre-G8 ok=True (6s)
+  seed 400 pitch    +0.020 far    10.38 cm worst    10.38 cm pre-G8 ok=True (7s)
+  seed 400 pitch    -0.020 far    10.45 cm worst    10.45 cm pre-G8 ok=True (8s)
+  seed 400 pitch    +0.050 far    25.82 cm worst    25.82 cm pre-G8 ok=True (9s)
+  seed 400 pitch    -0.050 far    26.27 cm worst    26.27 cm pre-G8 ok=True (10s)
+  seed 400 pitch    +0.100 far    51.20 cm worst    51.20 cm pre-G8 ok=True (11s)
+  seed 400 pitch    -0.100 far    53.00 cm worst    53.00 cm pre-G8 ok=True (12s)
+  seed 400 pitch    +0.250 far   124.81 cm worst   124.81 cm pre-G8 ok=False (13s)
+  seed 400 pitch    -0.250 far   136.10 cm worst   136.10 cm pre-G8 ok=False (14s)
+  seed 400 pitch    +0.600 far   283.09 cm worst   283.09 cm pre-G8 ok=False (15s)
+  seed 400 pitch    -0.600 far   348.76 cm worst   348.76 cm pre-G8 ok=False (16s)
+  seed 400 yaw      +0.005 far     0.05 cm worst     0.26 cm pre-G8 ok=True (17s)
+  seed 400 yaw      -0.005 far     0.05 cm worst     0.26 cm pre-G8 ok=True (19s)
+  seed 400 yaw      +0.010 far     0.10 cm worst     0.52 cm pre-G8 ok=True (20s)
+  seed 400 yaw      -0.010 far     0.10 cm worst     0.52 cm pre-G8 ok=True (21s)
+  seed 400 yaw      +0.020 far     0.19 cm worst     1.04 cm pre-G8 ok=True (22s)
+  seed 400 yaw      -0.020 far     0.19 cm worst     1.04 cm pre-G8 ok=True (23s)
+  seed 400 yaw      +0.050 far     0.48 cm worst     2.60 cm pre-G8 ok=True (23s)
+  seed 400 yaw      -0.050 far     0.48 cm worst     2.60 cm pre-G8 ok=True (24s)
+  seed 400 yaw      +0.100 far     0.96 cm worst     5.20 cm pre-G8 ok=True (25s)
+  seed 400 yaw      -0.100 far     0.96 cm worst     5.20 cm pre-G8 ok=True (26s)
+  seed 400 yaw      +0.250 far     2.42 cm worst    12.99 cm pre-G8 ok=False (27s)
+  seed 400 yaw      -0.250 far     2.42 cm worst    12.99 cm pre-G8 ok=False (28s)
+  seed 400 yaw      +0.600 far     5.91 cm worst    31.20 cm pre-G8 ok=False (29s)
+  seed 400 yaw      -0.600 far     5.91 cm worst    31.20 cm pre-G8 ok=False (30s)
+  seed 400 height   +0.010 far     9.92 cm worst     9.92 cm pre-G8 ok=True (31s)
+  seed 400 height   -0.010 far     9.92 cm worst     9.92 cm pre-G8 ok=True (32s)
+  seed 400 height   +0.020 far    19.85 cm worst    19.85 cm pre-G8 ok=True (33s)
+  seed 400 height   -0.020 far    19.85 cm worst    19.85 cm pre-G8 ok=True (33s)
+  seed 400 height   +0.050 far    49.62 cm worst    49.62 cm pre-G8 ok=False (34s)
+  seed 400 height   -0.050 far    49.62 cm worst    49.62 cm pre-G8 ok=False (35s)
+  seed 400 height   +0.100 far    99.23 cm worst    99.23 cm pre-G8 ok=False (36s)
+  seed 400 height   -0.100 far    99.23 cm worst    99.23 cm pre-G8 ok=False (37s)
+  seed 400 height   +0.250 far   248.08 cm worst   248.08 cm pre-G8 ok=False (38s)
+  seed 400 height   -0.250 far   248.08 cm worst   248.08 cm pre-G8 ok=False (39s)
+  seed 400 height   +0.600 far   595.40 cm worst   595.40 cm pre-G8 ok=False (41s)
+  seed 400 height   -0.600 far   595.40 cm worst   595.40 cm pre-G8 ok=False (42s)
+  seed 400 height   +1.500 far  1488.50 cm worst  1488.50 cm pre-G8 ok=False (43s)
+  seed 400 height   -1.500 far  1488.50 cm worst  1488.50 cm pre-G8 ok=False (44s)
+  seed 400 depth    +0.010 far     1.00 cm worst     1.00 cm pre-G8 ok=True (45s)
+  seed 400 depth    -0.010 far     1.00 cm worst     1.00 cm pre-G8 ok=True (46s)
+  seed 400 depth    +0.020 far     2.00 cm worst     2.00 cm pre-G8 ok=True (47s)
+  seed 400 depth    -0.020 far     2.00 cm worst     2.00 cm pre-G8 ok=True (48s)
+  seed 400 depth    +0.050 far     5.00 cm worst     5.00 cm pre-G8 ok=False (49s)
+  seed 400 depth    -0.050 far     5.00 cm worst     5.00 cm pre-G8 ok=False (51s)
+  seed 400 depth    +0.100 far    10.00 cm worst    10.00 cm pre-G8 ok=False (52s)
+  seed 400 depth    -0.100 far    10.00 cm worst    10.00 cm pre-G8 ok=False (53s)
+  seed 400 depth    +0.250 far    25.00 cm worst    25.00 cm pre-G8 ok=False (54s)
+  seed 400 depth    -0.250 far    25.00 cm worst    25.00 cm pre-G8 ok=False (55s)
+  seed 400 depth    +0.600 far    60.00 cm worst    60.00 cm pre-G8 ok=False (56s)
+  seed 400 depth    -0.600 far    60.00 cm worst    60.00 cm pre-G8 ok=False (57s)
+  seed 400 depth    +1.500 far   150.00 cm worst   150.00 cm pre-G8 ok=False (58s)
+  seed 400 depth    -1.500 far   150.00 cm worst   150.00 cm pre-G8 ok=False (59s)
+  seed 401 none     +0.000 far     0.00 cm worst     0.00 cm pre-G8 ok=True (3s)
+  seed 401 pitch    +0.005 far     2.60 cm worst     2.60 cm pre-G8 ok=True (4s)
+  seed 401 pitch    -0.005 far     2.61 cm worst     2.61 cm pre-G8 ok=True (5s)
+  seed 401 pitch    +0.010 far     5.20 cm worst     5.20 cm pre-G8 ok=True (6s)
+  seed 401 pitch    -0.010 far     5.22 cm worst     5.22 cm pre-G8 ok=True (7s)
+  seed 401 pitch    +0.020 far    10.38 cm worst    10.38 cm pre-G8 ok=True (9s)
+  seed 401 pitch    -0.020 far    10.45 cm worst    10.45 cm pre-G8 ok=True (11s)
+  seed 401 pitch    +0.050 far    25.82 cm worst    25.82 cm pre-G8 ok=True (12s)
+  seed 401 pitch    -0.050 far    26.27 cm worst    26.27 cm pre-G8 ok=True (14s)
+  seed 401 pitch    +0.100 far    51.20 cm worst    51.20 cm pre-G8 ok=True (15s)
+  seed 401 pitch    -0.100 far    53.00 cm worst    53.00 cm pre-G8 ok=True (17s)
+  seed 401 pitch    +0.250 far   124.81 cm worst   124.81 cm pre-G8 ok=False (18s)
+  seed 401 pitch    -0.250 far   136.10 cm worst   136.10 cm pre-G8 ok=False (19s)
+  seed 401 pitch    +0.600 far   283.09 cm worst   283.09 cm pre-G8 ok=False (20s)
+  seed 401 pitch    -0.600 far   348.76 cm worst   348.76 cm pre-G8 ok=False (22s)
+  seed 401 yaw      +0.005 far     0.05 cm worst     0.26 cm pre-G8 ok=True (23s)
+  seed 401 yaw      -0.005 far     0.05 cm worst     0.26 cm pre-G8 ok=True (24s)
+  seed 401 yaw      +0.010 far     0.10 cm worst     0.52 cm pre-G8 ok=True (25s)
+  seed 401 yaw      -0.010 far     0.10 cm worst     0.52 cm pre-G8 ok=True (26s)
+  seed 401 yaw      +0.020 far     0.19 cm worst     1.04 cm pre-G8 ok=True (27s)
+  seed 401 yaw      -0.020 far     0.19 cm worst     1.04 cm pre-G8 ok=True (29s)
+  seed 401 yaw      +0.050 far     0.48 cm worst     2.60 cm pre-G8 ok=True (30s)
+  seed 401 yaw      -0.050 far     0.48 cm worst     2.60 cm pre-G8 ok=True (31s)
+  seed 401 yaw      +0.100 far     0.96 cm worst     5.20 cm pre-G8 ok=True (32s)
+  seed 401 yaw      -0.100 far     0.96 cm worst     5.20 cm pre-G8 ok=True (33s)
+  seed 401 yaw      +0.250 far     2.42 cm worst    12.99 cm pre-G8 ok=False (34s)
+  seed 401 yaw      -0.250 far     2.42 cm worst    12.99 cm pre-G8 ok=False (35s)
+  seed 401 yaw      +0.600 far     5.91 cm worst    31.20 cm pre-G8 ok=False (36s)
+  seed 401 yaw      -0.600 far     5.91 cm worst    31.20 cm pre-G8 ok=False (38s)
+  seed 401 height   +0.010 far     9.92 cm worst     9.92 cm pre-G8 ok=True (39s)
+  seed 401 height   -0.010 far     9.92 cm worst     9.92 cm pre-G8 ok=True (40s)
+  seed 401 height   +0.020 far    19.85 cm worst    19.85 cm pre-G8 ok=True (41s)
+  seed 401 height   -0.020 far    19.85 cm worst    19.85 cm pre-G8 ok=True (42s)
+  seed 401 height   +0.050 far    49.62 cm worst    49.62 cm pre-G8 ok=False (43s)
+  seed 401 height   -0.050 far    49.62 cm worst    49.62 cm pre-G8 ok=False (43s)
+  seed 401 height   +0.100 far    99.23 cm worst    99.23 cm pre-G8 ok=False (44s)
+  seed 401 height   -0.100 far    99.23 cm worst    99.23 cm pre-G8 ok=False (46s)
+  seed 401 height   +0.250 far   248.08 cm worst   248.08 cm pre-G8 ok=False (47s)
+  seed 401 height   -0.250 far   248.08 cm worst   248.08 cm pre-G8 ok=False (48s)
+  seed 401 height   +0.600 far   595.40 cm worst   595.40 cm pre-G8 ok=False (49s)
+  seed 401 height   -0.600 far   595.40 cm worst   595.40 cm pre-G8 ok=False (50s)
+  seed 401 height   +1.500 far  1488.50 cm worst  1488.50 cm pre-G8 ok=False (51s)
+  seed 401 height   -1.500 far  1488.50 cm worst  1488.50 cm pre-G8 ok=False (52s)
+  seed 401 depth    +0.010 far     1.00 cm worst     1.00 cm pre-G8 ok=True (53s)
+  seed 401 depth    -0.010 far     1.00 cm worst     1.00 cm pre-G8 ok=True (54s)
+  seed 401 depth    +0.020 far     2.00 cm worst     2.00 cm pre-G8 ok=True (55s)
+  seed 401 depth    -0.020 far     2.00 cm worst     2.00 cm pre-G8 ok=True (56s)
+  seed 401 depth    +0.050 far     5.00 cm worst     5.00 cm pre-G8 ok=False (57s)
+  seed 401 depth    -0.050 far     5.00 cm worst     5.00 cm pre-G8 ok=False (58s)
+  seed 401 depth    +0.100 far    10.00 cm worst    10.00 cm pre-G8 ok=False (59s)
+  seed 401 depth    -0.100 far    10.00 cm worst    10.00 cm pre-G8 ok=False (60s)
+  seed 401 depth    +0.250 far    25.00 cm worst    25.00 cm pre-G8 ok=False (61s)
+  seed 401 depth    -0.250 far    25.00 cm worst    25.00 cm pre-G8 ok=False (62s)
+  seed 401 depth    +0.600 far    60.00 cm worst    60.00 cm pre-G8 ok=False (63s)
+  seed 401 depth    -0.600 far    60.00 cm worst    60.00 cm pre-G8 ok=False (64s)
+  seed 401 depth    +1.500 far   150.00 cm worst   150.00 cm pre-G8 ok=False (65s)
+  seed 401 depth    -1.500 far   150.00 cm worst   150.00 cm pre-G8 ok=False (66s)
+  seed 402 none     +0.000 far     0.00 cm worst     0.00 cm pre-G8 ok=True (3s)
+  seed 402 pitch    +0.005 far     2.60 cm worst     2.60 cm pre-G8 ok=True (3s)
+  seed 402 pitch    -0.005 far     2.61 cm worst     2.61 cm pre-G8 ok=True (4s)
+  seed 402 pitch    +0.010 far     5.20 cm worst     5.20 cm pre-G8 ok=True (5s)
+  seed 402 pitch    -0.010 far     5.22 cm worst     5.22 cm pre-G8 ok=True (6s)
+  seed 402 pitch    +0.020 far    10.38 cm worst    10.38 cm pre-G8 ok=True (7s)
+  seed 402 pitch    -0.020 far    10.45 cm worst    10.45 cm pre-G8 ok=True (8s)
+  seed 402 pitch    +0.050 far    25.82 cm worst    25.82 cm pre-G8 ok=True (9s)
+  seed 402 pitch    -0.050 far    26.27 cm worst    26.27 cm pre-G8 ok=True (10s)
+  seed 402 pitch    +0.100 far    51.20 cm worst    51.20 cm pre-G8 ok=True (11s)
+  seed 402 pitch    -0.100 far    53.00 cm worst    53.00 cm pre-G8 ok=True (12s)
+  seed 402 pitch    +0.250 far   124.81 cm worst   124.81 cm pre-G8 ok=False (13s)
+  seed 402 pitch    -0.250 far   136.10 cm worst   136.10 cm pre-G8 ok=False (14s)
+  seed 402 pitch    +0.600 far   283.09 cm worst   283.09 cm pre-G8 ok=False (16s)
+  seed 402 pitch    -0.600 far   348.76 cm worst   348.76 cm pre-G8 ok=False (17s)
+  seed 402 yaw      +0.005 far     0.05 cm worst     0.26 cm pre-G8 ok=True (18s)
+  seed 402 yaw      -0.005 far     0.05 cm worst     0.26 cm pre-G8 ok=True (19s)
+  seed 402 yaw      +0.010 far     0.10 cm worst     0.52 cm pre-G8 ok=True (20s)
+  seed 402 yaw      -0.010 far     0.10 cm worst     0.52 cm pre-G8 ok=True (21s)
+  seed 402 yaw      +0.020 far     0.19 cm worst     1.04 cm pre-G8 ok=True (22s)
+  seed 402 yaw      -0.020 far     0.19 cm worst     1.04 cm pre-G8 ok=True (23s)
+  seed 402 yaw      +0.050 far     0.48 cm worst     2.60 cm pre-G8 ok=True (24s)
+  seed 402 yaw      -0.050 far     0.48 cm worst     2.60 cm pre-G8 ok=True (25s)
+  seed 402 yaw      +0.100 far     0.96 cm worst     5.20 cm pre-G8 ok=True (26s)
+  seed 402 yaw      -0.100 far     0.96 cm worst     5.20 cm pre-G8 ok=True (27s)
+  seed 402 yaw      +0.250 far     2.42 cm worst    12.99 cm pre-G8 ok=False (28s)
+  seed 402 yaw      -0.250 far     2.42 cm worst    12.99 cm pre-G8 ok=False (29s)
+  seed 402 yaw      +0.600 far     5.91 cm worst    31.20 cm pre-G8 ok=False (30s)
+  seed 402 yaw      -0.600 far     5.91 cm worst    31.20 cm pre-G8 ok=False (31s)
+  seed 402 height   +0.010 far     9.92 cm worst     9.92 cm pre-G8 ok=True (31s)
+  seed 402 height   -0.010 far     9.92 cm worst     9.92 cm pre-G8 ok=True (32s)
+  seed 402 height   +0.020 far    19.85 cm worst    19.85 cm pre-G8 ok=True (33s)
+  seed 402 height   -0.020 far    19.85 cm worst    19.85 cm pre-G8 ok=True (34s)
+  seed 402 height   +0.050 far    49.62 cm worst    49.62 cm pre-G8 ok=False (35s)
+  seed 402 height   -0.050 far    49.62 cm worst    49.62 cm pre-G8 ok=False (36s)
+  seed 402 height   +0.100 far    99.23 cm worst    99.23 cm pre-G8 ok=False (37s)
+  seed 402 height   -0.100 far    99.23 cm worst    99.23 cm pre-G8 ok=False (38s)
+  seed 402 height   +0.250 far   248.08 cm worst   248.08 cm pre-G8 ok=False (39s)
+  seed 402 height   -0.250 far   248.08 cm worst   248.08 cm pre-G8 ok=False (40s)
+  seed 402 height   +0.600 far   595.40 cm worst   595.40 cm pre-G8 ok=False (40s)
+  seed 402 height   -0.600 far   595.40 cm worst   595.40 cm pre-G8 ok=False (41s)
+  seed 402 height   +1.500 far  1488.50 cm worst  1488.50 cm pre-G8 ok=False (42s)
+  seed 402 height   -1.500 far  1488.50 cm worst  1488.50 cm pre-G8 ok=False (43s)
+  seed 402 depth    +0.010 far     1.00 cm worst     1.00 cm pre-G8 ok=True (44s)
+  seed 402 depth    -0.010 far     1.00 cm worst     1.00 cm pre-G8 ok=True (45s)
+  seed 402 depth    +0.020 far     2.00 cm worst     2.00 cm pre-G8 ok=True (46s)
+  seed 402 depth    -0.020 far     2.00 cm worst     2.00 cm pre-G8 ok=True (46s)
+  seed 402 depth    +0.050 far     5.00 cm worst     5.00 cm pre-G8 ok=False (47s)
+  seed 402 depth    -0.050 far     5.00 cm worst     5.00 cm pre-G8 ok=False (48s)
+  seed 402 depth    +0.100 far    10.00 cm worst    10.00 cm pre-G8 ok=False (49s)
+  seed 402 depth    -0.100 far    10.00 cm worst    10.00 cm pre-G8 ok=False (50s)
+  seed 402 depth    +0.250 far    25.00 cm worst    25.00 cm pre-G8 ok=False (51s)
+  seed 402 depth    -0.250 far    25.00 cm worst    25.00 cm pre-G8 ok=False (52s)
+  seed 402 depth    +0.600 far    60.00 cm worst    60.00 cm pre-G8 ok=False (53s)
+  seed 402 depth    -0.600 far    60.00 cm worst    60.00 cm pre-G8 ok=False (54s)
+  seed 402 depth    +1.500 far   150.00 cm worst   150.00 cm pre-G8 ok=False (55s)
+  seed 402 depth    -1.500 far   150.00 cm worst   150.00 cm pre-G8 ok=False (56s)
+
+=== STACK ===
+ tol@720  z/dn   catch   false falseTot  unchk_good
+    0.10   3.0   0.833   0.000    0.087       1.000
+    0.10   4.0   0.833   0.000    0.087       1.000
+    0.10   5.0   0.833   0.000    0.087       1.000
+    0.10   6.0   0.833   0.000    0.087       1.000
+    0.10   8.0   0.833   0.000    0.087       1.000
+    0.15   3.0   0.833   0.000    0.087       1.000
+    0.15   4.0   0.833   0.000    0.087       1.000
+    0.15   5.0   0.833   0.000    0.087       1.000
+    0.15   6.0   0.833   0.000    0.087       1.000
+    0.15   8.0   0.833   0.000    0.087       1.000
+    0.20   3.0   0.833   0.000    0.087       1.000
+    0.20   4.0   0.833   0.000    0.087       1.000
+    0.20   5.0   0.833   0.000    0.087       1.000
+    0.20   6.0   0.833   0.000    0.087       1.000
+    0.20   8.0   0.833   0.000    0.087       1.000
+    0.25   3.0   0.833   0.000    0.087       1.000
+    0.25   4.0   0.833   0.000    0.087       1.000
+    0.25   5.0   0.833   0.000    0.087       1.000
+    0.25   6.0   0.833   0.000    0.087       1.000
+    0.25   8.0   0.833   0.000    0.087       1.000
+    0.35   3.0   0.833   0.000    0.087       1.000
+    0.35   4.0   0.833   0.000    0.087       1.000
+    0.35   5.0   0.833   0.000    0.087       1.000
+    0.35   6.0   0.833   0.000    0.087       1.000
+    0.35   8.0   0.833   0.000    0.087       1.000
+    0.50   3.0   0.833   0.000    0.087       1.000
+    0.50   4.0   0.833   0.000    0.087       1.000
+    0.50   5.0   0.833   0.000    0.087       1.000
+    0.50   6.0   0.833   0.000    0.087       1.000
+    0.50   8.0   0.833   0.000    0.087       1.000
+    0.75   3.0   0.917   0.000    0.087       0.000
+    0.75   4.0   0.917   0.000    0.087       0.000
+    0.75   5.0   0.903   0.000    0.087       0.000
+    0.75   6.0   0.861   0.000    0.087       0.000
+    0.75   8.0   0.833   0.000    0.087       0.130
+    1.00   3.0   0.833   0.000    0.087       0.000
+    1.00   4.0   0.833   0.000    0.087       0.000
+    1.00   5.0   0.833   0.000    0.087       0.000
+    1.00   6.0   0.833   0.000    0.087       0.000
+    1.00   8.0   0.833   0.000    0.087       0.000
+chosen: {'tol_px_720': 0.75, 'second': 3.0, 'catch': 0.9166666666666666, 'false': 0.0, 'false_total': 0.08695652173913043, 'n_wrong': 72, 'n_good': 69, 'n_good_pre_g8_ok': 63, 'far_unchecked_on_good': 0.0}
+
+=== PYRAMID ===
+ tol@720  z/dn   catch   false falseTot  unchk_good
+    0.10   2.0   0.833   0.000    0.087       1.000
+    0.10   3.0   0.833   0.000    0.087       1.000
+    0.10   4.0   0.833   0.000    0.087       1.000
+    0.10   6.0   0.833   0.000    0.087       1.000
+    0.10   9.0   0.833   0.000    0.087       1.000
+    0.15   2.0   0.833   0.000    0.087       1.000
+    0.15   3.0   0.833   0.000    0.087       1.000
+    0.15   4.0   0.833   0.000    0.087       1.000
+    0.15   6.0   0.833   0.000    0.087       1.000
+    0.15   9.0   0.833   0.000    0.087       1.000
+    0.20   2.0   0.833   0.000    0.087       1.000
+    0.20   3.0   0.833   0.000    0.087       1.000
+    0.20   4.0   0.833   0.000    0.087       1.000
+    0.20   6.0   0.833   0.000    0.087       1.000
+    0.20   9.0   0.833   0.000    0.087       1.000
+    0.25   2.0   0.875   0.000    0.087       1.000
+    0.25   3.0   0.833   0.000    0.087       1.000
+    0.25   4.0   0.833   0.000    0.087       1.000
+    0.25   6.0   0.833   0.000    0.087       1.000
+    0.25   9.0   0.833   0.000    0.087       1.000
+    0.35   2.0   0.917   0.000    0.087       0.101
+    0.35   3.0   0.903   0.000    0.087       1.000
+    0.35   4.0   0.833   0.000    0.087       1.000
+    0.35   6.0   0.833   0.000    0.087       1.000
+    0.35   9.0   0.833   0.000    0.087       1.000
+    0.50   2.0   0.958   0.000    0.087       0.000
+    0.50   3.0   0.958   0.000    0.087       0.014
+    0.50   4.0   0.944   0.000    0.087       0.986
+    0.50   6.0   0.861   0.000    0.087       1.000
+    0.50   9.0   0.833   0.000    0.087       1.000
+    0.75   2.0   0.917   0.000    0.087       0.000
+    0.75   3.0   0.917   0.000    0.087       0.000
+    0.75   4.0   0.917   0.000    0.087       0.029
+    0.75   6.0   0.917   0.000    0.087       1.000
+    0.75   9.0   0.833   0.000    0.087       1.000
+    1.00   2.0   0.847   0.000    0.087       0.000
+    1.00   3.0   0.847   0.000    0.087       0.000
+    1.00   4.0   0.847   0.000    0.087       0.000
+    1.00   6.0   0.833   0.000    0.087       0.986
+    1.00   9.0   0.833   0.000    0.087       1.000
+chosen: {'tol_px_720': 0.5, 'second': 2.0, 'catch': 0.9583333333333334, 'false': 0.0, 'false_total': 0.08695652173913043, 'n_wrong': 72, 'n_good': 69, 'n_good_pre_g8_ok': 63, 'far_unchecked_on_good': 0.0}
+pre-G8 baseline: {'catch': 0.8333333333333334, 'false': 0.08695652173913043, 'n_wrong': 72, 'n_good': 69}
+wrote ..\data\output\court_far_line_gate\g8r\heldout_registered.json
+
+real	3m1.941s
+user	0m0.015s
+sys	0m0.000s
