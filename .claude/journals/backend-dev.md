@@ -17,7 +17,13 @@ lock-scope forgery hole (scope vs `lock_unverified`) + test; (7) record qa's sma
 
 ## STATE
 
-STARTING. Read journal, CLAUDE.md, STATE.md, G8 prereg+results, QA AUDIT 2026-09-19. Plan fixed:
+RESUMED 2026-09-22 (founder Phase 1: PART 1 G8 re-decide at reach 2.25, then PART 2 G9 tracking gate
+under --subpixel, pre-registered on fresh seeds). Suite on 572fd6d: 412 pass/10 skip/4 fail = the 2
+pre-existing + 2 caused by WIP (test coupling in test_far_line_check; test_cost_separation asserted
+far lines become checked on CP1 true cam - at 2.25 they go UNCHECKED, which is qa's prediction).
+DECISION: BUILD ON 572fd6d (edits match the plan), fix the 2 tests.
+
+OLD PLAN (still valid): Read journal, CLAUDE.md, STATE.md, G8 prereg+results, QA AUDIT 2026-09-19. Plan fixed:
 
 - camera3d: add `FAR_REACH_MULT = 3.0`, `FAR_REACH_PX_720 = 2.25`; `far_line_stacks` default reach
   8.0 -> 2.25; `far_line_profile` reach defaults to `3 * far_tol` (registered coupling). 8.0 stays
@@ -47,3 +53,10 @@ NEXT IF RESUMED: see LOG for the last completed step.
 - G7 ANSWER: paint_check.ok catches 33/33 wrong cameras at 1/365; the fit's own cost is INVERTED.
 - G8 ANSWER (f3bddd6): far lines observable; held-out catch 0.9167 at 0 false flags; BAR 4 FAILED
   369/369 on CP1 at reach 8.0. qa: that reach was NOT registered. Full numbers in the evidence file.
+- 2026-09-22 RESUMED. Built on 572fd6d. Fixed 2 tests (reach coupling; CP1 true cam far lines
+  UNCHECKED at 2.25). Pyramid guard in gate tool (window < 0.5 px/level -> skip level; none -> unseen).
+  Sim stamp now records RESOLVED tracker cfg (was TrackConfig() defaults). setup_state: bare-string /
+  odd lock_unverified counts as evidence; 5 forgery tests in test_far_line_check (19 tests now).
+- FAULT A DONE: `--reach-mode fixed8` on 400-402 == published heldout artifact, 0/13,680 cells differ;
+  0.75|5 = 0.9167/0.0000. File: data/output/court_far_line_gate/g8r/heldout_fixed8.json
+- RUNNING: dev sweep registered reach -> g8r/dev_registered.json (for pyramid knobs + re-choice).

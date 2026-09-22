@@ -178,6 +178,12 @@ def pyramid_far(grey, cam, *, levels=3, tol_px_720=0.20, min_dn=6.0,
         best = None
         for lv, im in enumerate(pyr):
             sc = 2.0 ** lv
+            # A level whose window holds < 3 profile samples (ridge_offsets steps
+            # 0.5 px) cannot hold a peak at all; skip it rather than index past
+            # the profile. Only reachable at the REGISTERED window (3 x tol) with
+            # tol <= ~0.3 px @720 on level 2; a fixed 8.0 px window never hits it.
+            if reach_px_720 * s_scale / sc < 0.5:
+                continue
             # the same absolute search window as the stacked arm, so the two
              # differ only in mechanism
             off, found = camera3d.ridge_offsets(im, uv[idx] / sc, nrm,
@@ -185,6 +191,10 @@ def pyramid_far(grey, cam, *, levels=3, tol_px_720=0.20, min_dn=6.0,
             off = off * sc                       # back to level-0 pixels
             if best is None or found.sum() > best[0]:
                 best = (int(found.sum()), lv, off, found)
+        if best is None:                 # no level had a window wide enough
+            out[name] = {"frac": 0.0, "seen": False, "level": None, "n_det": 0,
+                         "n_samples": int(len(idx))}
+            continue
         n_det, lv, off, found = best
         seen = n_det >= max(1, int(math.ceil(min_frac_det * len(idx))))
         hits = found & (np.abs(off) <= tol)

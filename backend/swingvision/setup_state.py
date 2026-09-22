@@ -472,7 +472,17 @@ def normalize_camera(raw: Any) -> Optional[dict[str, Any]]:
     scope = cam.get("lock_scope")
     scope = scope if scope in LOCK_SCOPES else LOCK_UNKNOWN
     unver = cam.get("lock_unverified")
-    unver = [str(x) for x in unver] if isinstance(unver, (list, tuple)) else []
+    # Anything present that is not a list is still EVIDENCE that something was
+    # not checked: a bare string names one line, and an unreadable value names
+    # nothing but must not read as "nothing unverified" beside `whole_court`.
+    if isinstance(unver, (list, tuple)):
+        unver = [str(x) for x in unver]
+    elif isinstance(unver, str):
+        unver = [unver] if unver.strip() else []
+    elif unver is None:
+        unver = []
+    else:
+        unver = ["(unreadable lock_unverified)"]
     # The scope is a CLAIM; the unverified list is the EVIDENCE beside it. Until
     # 2026-09-19 nothing compared the two, so hand-setting `whole_court` while
     # still listing `far_baseline, far_service` produced "Every court line was

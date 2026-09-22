@@ -68,8 +68,14 @@ def test_ridge_residual_STILL_has_the_far_line_blind_spot_paint_check_lost(true_
     assert S.RIDGE_MIN_WIDTH_PX_720 == 0.67     # paint_check's PRE-G8 value
     pre = camera3d.paint_check(img, true_cam, far_lines=False)
     assert "far_baseline" in pre.unchecked and "far_service" in pre.unchecked
+    # G8 REMEDIATION (2026-09-22): at the REGISTERED window (3 x far_tol) the far
+    # lines on this cluttered CP1 scene find no ridge and stay `unchecked` - qa's
+    # 2026-09-19 finding - so the blind spot is only lost at the wider window the
+    # committed G8 run used, where the net tape is what gets "seen".
     now = camera3d.paint_check(img, true_cam, far_lines=True)
-    assert set(now.unchecked) < set(pre.unchecked) or not now.unchecked
+    assert set(camera3d.FAR_LINES) <= set(now.unchecked)
+    wide = camera3d.paint_check(img, true_cam, far_lines=True, far_kw={"reach_px_720": 8.0})
+    assert set(wide.unchecked) < set(pre.unchecked) or not wide.unchecked
 
 
 def test_wrong_label_comes_from_the_fitted_focal_not_from_truth():

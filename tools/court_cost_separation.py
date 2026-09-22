@@ -94,10 +94,15 @@ def ridge_residual(grey, cam, *, reach_px_720=RIDGE_REACH_PX_720, min_dn=RIDGE_M
 #   ok        the registered instrument, reach = 3 x far_tol = 2.25 px @720
 #   ok_reach8 the window the committed G8 run actually used
 #   ok_pyr    the founder's 3-level Gaussian pyramid, at the registered window
-# The pyramid's two knobs come from the DEVELOPMENT sweep under the registered
-# window (seeds 300-305), never from this scoring population.
+#   ok_z3     the registered window with far_min_z = 3, the value G8's own
+#             choice rule picks when the dev sweep is re-run at that window
+#             (z is NOT inert there: 0.917 at z 3-4 against 0.903 at z 5)
+# Every knob here comes from the DEVELOPMENT sweep re-run at the registered
+# window (seeds 300-305, data/output/court_far_line_gate/g8r/dev_registered.json)
+# by G8's registered rule, never from this scoring population.
 PYR_TOL_PX_720 = 0.50
-PYR_MIN_DN = 3.0
+PYR_MIN_DN = 2.0
+Z_RULE = 3.0
 G8_REACH_PX_720 = 8.0
 
 
@@ -114,6 +119,19 @@ def _pyr_flag(grey, cam, ok_pre_g8):
             "level": {nm: v[nm]["level"] for nm in seen}}
 
 
+def _far_checked_rate(rows, key):
+    """Fraction of rows whose FIT had both far lines checked by arm `key`."""
+    if key == "ok_pre_g8" or not rows:
+        return 0.0 if rows else float("nan")
+    if key == "ok_pyr":
+        got = [set(r["fit"]["pyr"]["seen"]) >= set(camera3d.FAR_LINES) for r in rows]
+    else:
+        k = {"ok_reach8": "far_unchecked_reach8", "ok_z3": "far_unchecked_z3"}.get(
+            key, "far_unchecked")
+        got = [not r["fit"].get(k) for r in rows]
+    return float(np.mean(got))
+
+
 def check_row(grey, cam):
     """paint_check (instrument 1) + ridge_residual (instrument 2) as one dict.
 
@@ -126,6 +144,7 @@ def check_row(grey, cam):
     c0 = camera3d.paint_check(grey, cam, far_lines=False)
     c8 = camera3d.paint_check(grey, cam, far_lines=True,
                               far_kw={"reach_px_720": G8_REACH_PX_720})
+    cz = camera3d.paint_check(grey, cam, far_lines=True, far_kw={"far_min_z": Z_RULE})
     pyr = _pyr_flag(grey, cam, c0.ok)
     # c.worst is renamed "too_few_lines" when the lines pass but the court does
     # not; take the worst FRACTION directly so it is always a number.
@@ -146,6 +165,8 @@ def check_row(grey, cam):
             "far_reach8": {k: c8.detail.get(k, {}).get("thin") for k in camera3d.FAR_LINES},
             "far_unchecked_reach8": sorted(set(c8.unchecked) & set(camera3d.FAR_LINES)),
             "ok_pyr": pyr["ok"], "pyr": pyr,
+            "ok_z3": bool(cz.ok),
+            "far_unchecked_z3": sorted(set(cz.unchecked) & set(camera3d.FAR_LINES)),
             "ridge_med": r["med"], "ridge_mean": r["mean"],
             "ridge_found": r["found"], "ridge_n": r["n"]}
 
@@ -400,6 +421,7 @@ def analyse(rows, split_seed=0, n_perm=1000, perm_seed=0):
     # on RIGHT cameras must stay <= 0.02.
     arms = {"pre_g8 (far lines off)": "ok_pre_g8",
             "registered reach 3 x tol": "ok",
+            "registered reach, rule-chosen z 3": "ok_z3",
             "G8-as-run reach 8.0": "ok_reach8",
             "pyramid, registered reach": "ok_pyr"}
     out["far_line_arms"] = {}
@@ -418,7 +440,11 @@ def analyse(rows, split_seed=0, n_perm=1000, perm_seed=0):
                                    else "far_unchecked", [])) > 0 for r in ok]))
             if key in ("ok", "ok_reach8") else None,
             "bar4_pass": bool((nw and (~f[wrong]).mean() >= 1.0 - 1e-9)
-                              and (~f[~wrong]).mean() <= 0.02)}
+                              and (~f[~wrong]).mean() <= 0.02),
+            # A pass bought by BLINDNESS is not a pass on the far lines: how often
+            # did this arm actually check BOTH far lines on a right camera's fit?
+            "far_both_checked_rate_right_fit": _far_checked_rate(
+                [r for r, w in zip(ok, wrong) if not w], key)}
     out["far_line_arms_note"] = (
         "BAR 4: catch 33/33 (here: all wrong cameras) and <= 2% false flags on the "
         "right cameras. Arms are paired - same image, same camera, same fit.")
@@ -483,6 +509,8 @@ def main():
                                "far_min_z": camera3d.FAR_MIN_Z,
                                "pyramid": {"tol_px_720": PYR_TOL_PX_720,
                                            "min_dn": PYR_MIN_DN,
+                                           "z_rule_arm": Z_RULE,
+                                           "knobs_from": "g8r/dev_registered.json",
                                            "reach_px_720": camera3d.FAR_REACH_MULT
                                            * PYR_TOL_PX_720}},
              "wrong_rule": a["wrong_rule"],

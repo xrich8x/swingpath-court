@@ -116,7 +116,9 @@ def test_the_sweep_scores_the_same_measurements_it_stacked(scene):
     scored something the shipped check does not compute."""
     cam, img, _ = scene
     direct = camera3d.far_line_profile(img, cam, far_tol_px_720=0.3, far_min_z=4.0)
-    st = camera3d.far_line_stacks(img, cam)
+    # the registered window follows the tolerance (G8: reach = 3 x far_tol), so a
+    # re-score of stacked profiles is only the same measurement at the same reach
+    st = camera3d.far_line_stacks(img, cam, reach_px_720=camera3d.FAR_REACH_MULT * 0.3)
     via = camera3d.score_far_stacks(st, far_tol_px_720=0.3, far_min_z=4.0,
                                     s_scale=WH[1] / 720.0)
     assert direct == via
@@ -167,3 +169,51 @@ def test_an_unknown_scope_string_is_refused():
     raw = cam.to_dict()
     raw["lock_scope"] = "totally_verified_trust_me"
     assert setup_state.normalize_camera(raw)["lock_scope"] == setup_state.LOCK_UNKNOWN
+
+
+# ------------------------------------------ the scope is cross-checked too --
+# qa 2026-09-19, claim 8: the CLAIM could never exceed the scope, but the SCOPE
+# was free text and nothing compared it with `lock_unverified` beside it.
+def _forged(scope, unver):
+    cam = camera3d.CourtCamera(800.0, [1.8, 0, 0], [-5, 1, 6], WH)
+    raw = cam.to_dict()
+    raw["lock_scope"] = scope
+    raw["lock_unverified"] = unver
+    raw["lock_claim"] = "Every court line was checked against the paint."
+    return setup_state.normalize_camera(raw)
+
+
+def test_whole_court_beside_unverified_lines_is_REFUSED_qa_attack_verbatim():
+    d = _forged("whole_court", ["far_baseline", "far_service"])
+    assert d["lock_scope"] == setup_state.LOCK_UNKNOWN
+    assert d["lock_scope_refused"] == "whole_court"
+    assert "Every court line" not in d["lock_claim"]
+    assert "NOT checked: far_baseline, far_service" in d["lock_claim"]
+
+
+def test_whole_court_beside_a_BARE_STRING_unverified_is_refused_too():
+    for unver in ("far_baseline", {"far_baseline": 1}, 7):
+        d = _forged("whole_court", unver)
+        assert d["lock_scope"] == setup_state.LOCK_UNKNOWN, unver
+        assert "Every court line" not in d["lock_claim"], unver
+
+
+def test_the_refusal_survives_a_second_read():
+    d = setup_state.normalize_camera(_forged("whole_court", ["far_baseline"]))
+    assert d["lock_scope"] == setup_state.LOCK_UNKNOWN
+    assert "Every court line" not in d["lock_claim"]
+
+
+def test_a_CONSISTENT_whole_court_block_still_says_so():
+    for unver in ([], None, ""):
+        d = _forged("whole_court", unver)
+        assert d["lock_scope"] == "whole_court", unver
+        assert "lock_scope_refused" not in d
+        assert d["lock_claim"] == "Every court line was checked against the paint."
+
+
+def test_the_claim_function_itself_never_says_whole_court_with_unverified_lines():
+    """Defensive: even a block that bypassed normalize_camera."""
+    c = setup_state.camera_lock_claim({"lock_scope": "whole_court",
+                                       "lock_unverified": ["far_service"]})
+    assert "Every court line" not in c and "far_service" in c

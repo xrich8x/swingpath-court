@@ -277,7 +277,7 @@ def run(seed=0, n=120, seed_sigma=14.78, verbose=True, knock_scale=1.0, ss=SS_DE
     res = {"camtrack": [], "lock_step": []}
     jumps = {"camtrack": [], "lock_step": []}
     prev = {"camtrack": None, "lock_step": None, "true": None}
-    status, locked = [], []
+    status, locked, scope = [], [], []
     frame = f0
     for i, tc in enumerate(truths):
         if i:
@@ -286,6 +286,7 @@ def run(seed=0, n=120, seed_sigma=14.78, verbose=True, knock_scale=1.0, ss=SS_DE
         st = tracker.step(img8, i / FPS)
         status.append(st.status)
         locked.append(bool(st.locked))
+        scope.append(st.lock_scope)
         if i:
             A, _ = calibration.court_lock_step(np.dstack([img8] * 3), Hb)
             Hb = A @ Hb
@@ -312,7 +313,12 @@ def run(seed=0, n=120, seed_sigma=14.78, verbose=True, knock_scale=1.0, ss=SS_DE
         "stamp": {"tool": "tools/court_track_sim.py", "seed": seed, "n_frames": n, "fps": FPS,
                   "image": [W, H], "knock_scale": knock_scale, "mount_m": MOUNT_M, "setback_m": SETBACK_M,
                   "hfov_deg": HFOV_DEG, "seed_sigma_px": seed_sigma,
-                  "tracker_cfg": vars(camtrack.TrackConfig()),
+                  # the RESOLVED config the tracker ran with, not the class
+                  # defaults: until 2026-09-22 this stamped TrackConfig() and so
+                  # recorded far_lines=False on runs made with --far-lines
+                  "tracker_cfg": dict(vars(tracker.cfg)),
+                  "far_reach_px_720": camera3d.FAR_REACH_PX_720,
+                  "far_tol_px_720": camera3d.FAR_TOL_PX_720,
                   "measured_against": "the exact synthetic camera that rendered each frame",
                   "supersample": ss, "subpixel": subpixel,
                   "renderer": f"flat court, 5 cm paint, {ss}x{ss} supersample, blur 0.9 px, "
@@ -322,6 +328,7 @@ def run(seed=0, n=120, seed_sigma=14.78, verbose=True, knock_scale=1.0, ss=SS_DE
         "setup_check": setup.extra.get("paint_check"),
         "status": status,
         "locked": locked,
+        "lock_scope": scope,
         "runs": {arm: {"frames": res[arm], "jumps": jumps[arm], "knock": int(KNOCK_S * FPS),
                        "locked": locked if arm == "camtrack" else None}
                  for arm in res},
