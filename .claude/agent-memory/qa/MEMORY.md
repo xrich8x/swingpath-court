@@ -11,6 +11,7 @@
 
 ## Court audits — the live record
 
+- [G8 remediation + G9, 2026-09-22](g9-and-g8-remediation-audit.md) — numbers reproduce; pyramid fails on the run-off STEP not the tape; G9 wrong locks = coherent flow outliers, not lag.
 - [G8 far-line instrument, 2026-09-19](g8-far-line-audit.md) — numbers reproduce, but the committed tool cannot rerun its own sweep and an undeclared 3.56x reach widening is what makes BAR 4 fail.
 - [G7 photometric separation, 2026-09-18](g7-separation-audit.md) — CONFIRMED and strengthened (independent geometric label: 34/34 at 0/364), but held-out "SEPARATES" holds on only 3 of 10 split seeds and nothing here can see the far baseline.
 - [Post-G3 tracker fixes, 2026-09-18](tracker-fixes-hold-on-held-out-seeds.md) — not seed-tuned (fresh seeds 2.41 cm vs dev 3.52 cm), still UNSCORED, still reports `locked` while 56-70 cm out on the far lines.

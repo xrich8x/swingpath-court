@@ -1897,3 +1897,219 @@ and 1,781 m on the large-knock arms).
   The knock is an instantaneous held step, the harshest form. A real knock rings.
 - G3's KILL stands. G9 does not reopen it and does not replace it: it is a different tracker, and it
   also KILLs.
+
+## QA AUDIT 2026-09-22: G8 remediation and G9
+
+qa, 2026-09-22, branch `camera3d-pnp-paintfit`, auditing `0783ff0`, `c2d4537` and `a3f6a2a`. This
+checks backend-dev's response to qa's own 2026-09-19 findings, so it was tested hard, not taken on
+trust. **Nothing above this heading was edited, and no source, tool, test or threshold was touched.**
+Every number here was re-derived from the committed raw artifacts or from my own runs at HEAD. The
+scratch scripts are my own instruments. They wrap the tracker by monkeypatching it in memory and
+never edit it. **All tracking numbers are measured against the exact synthetic camera that rendered
+each frame. All CP1 numbers are measured against CP1's exact rendering camera.**
+
+### Verdict per claim
+
+| # | claim | verdict |
+|---|---|---|
+| 1 | `--reach-mode fixed8` reproduces the published table | **CONFIRMED, and stronger than stated.** My run at HEAD gives **0 differing values out of 33,207** (every non-stamp value) against both `heldout_seeds400-401-402.json` and `g8r/heldout_fixed8.json`. My `registered` re-run also matches `g8r/heldout_registered.json` on **0 of 51,641**. |
+| 2 | Bar 1 0.9028, bar 2 0/63, bar 3 FAILS because `unseen` segments leave the denominator | **CONFIRMED, mechanism verified by running it, with one correction.** 65/72 at (0.75, z 5), 0/63. The mechanism is exactly `score_far_stacks`: `frac = hits / n_det`, and a segment with z below 5 is not detected. **Correction:** the two dropped segments are the FURTHEST off (−1.368 and −1.375 px), not "just past tolerance", and the offset range is −0.84 to −1.375 px, not −0.84 to −1.21. The effect is **systematic, not chance** (see §2). |
+| 3 | Bar 4 at 2.25 px has the same outcome as far lines OFF | **CONFIRMED by outcome.** `ok == ok_pre_g8` on **400/400** fitted, 400/400 true and 400/400 seed cameras, and `support` is identical on 400/400. The instrument is not literally inert: it checked one far line on 1 of 400 fits (a wrong one) and on 8 of 400 seed cameras. It never changed a verdict. |
+| 4 | Pyramid fails bar 4: 263/368, true camera 126/400; knobs from the sweep | **Numbers CONFIRMED, knob provenance CONFIRMED, cause REFUTED.** The knobs (0.50, min_dn 2.0) are the dev-sweep choice on seeds 300–305. They **tie** with (0.50, 3.0) at 0.9444 and win only by list order. All 262 far-line flags are on `far_baseline`, all at level 0. **The failure is not the net tape.** The tape is 12–14 px from the far baseline, outside the ±2.25 px window, and the pyramid fails the TRUE camera just as badly **with every piece of clutter removed**. The cause is the **court surface / run-off brightness step** at the court boundary (§3). |
+| 5 | `FAR_LINES_DEFAULT` stays False | **CONFIRMED**: it is the only reading the registered bars allow (bar 3 failed). My G9 work strengthens it: turning far lines on would convert one of G9's wrong locks into a **whole-court** claim (§4). |
+| 6 | The lock-claim hole is closed | **QUALIFIED.** My 2026-09-19 attack is refused, and so are a bare string, `{}`, `0` and a forged claim text; 19/19 `test_far_line_check.py` pass. **But `whole_court` is still accepted from any block that is consistent with itself** (§5). |
+| 7 | The stamp fix; any prior result with a wrong stamp | **QUALIFIED: the fix is right, but the committed error runs the OPPOSITE way to the description.** The file with the wrong stamp is `court_track_sim/seeds101-201_n120_sub.json` (§6). |
+| 8 | G9 committed before any scored run; seeds 500–505 unused | **CONFIRMED for G9**: `G9.json` stamps `c2d4537`, clean, written 20:53, after that commit at 20:40, and no `tools/` or `backend/` change followed. There is no trace of seeds 500–505 in the repo, its artifacts or the journals before `c2d4537`. Any use outside the repo is **UNVERIFIABLE**. The G8R gate artifacts, however, **predate `0783ff0`** (§1). |
+| 9 | KILL applied as registered, nothing re-bucketed | **CONFIRMED.** No `tools/` or `backend/` change between `c2d4537` and `a3f6a2a`. The evidence diff only adds lines (0 removed). Locked-but-wrong is exactly the 5 knock frames. The KILL rule in the tool matches the text: p90 over 10 cm, OR an unrecovered knock, OR any locked-but-wrong frame. |
+| 10 | 5/6 vs the earlier "1 in 3" | **QUALIFIED.** 5/6 is small-n (Wilson 95% **0.44–0.97**). The "1 in 3" came from the OLD, faulty renderer, so the two are not comparable. On the subpixel renderer the prior evidence was already **2/2** (seeds 101 and 201). Underneath, the **wrong-pose** rate is **6/6**; only the catch varies (§4). |
+| 11 | The failure is confined to the knock frame; why the check passes | **CONFIRMED that it is confined, and the stated mechanism is REFUTED.** The other 714 frames: largest error 2.59 cm, and no locked frame between 5 and 10 cm. Knock+1 frames are at 0.46–1.40 cm. It is **not a one-frame lag**. The pose measurement itself is bent by coherent outliers, and the check is blind or diluted exactly where they push the court (§4). |
+| 12 | Large knocks lost on every seed, zero false locks | **CONFIRMED on both halves.** 0/180 post-knock frames locked in each arm, and every one has status `lost` and scope `none`. Frames 0–59 are **bit-identical** to the main arm for seeds 500–502, so the paired design is real. |
+
+### 1. Reproduction and provenance
+
+Claim 1: see the table. Across all 13,680 cells (171 rows × 40 threshold pairs × 2 arms) and every
+other value in the file, the tool now reproduces its own published run.
+
+**Provenance slip (not a numbers problem).** `g8r/heldout_fixed8.json` (19:59),
+`dev_registered.json` (20:02), `heldout_registered.json` (20:03) and
+`court_track_sim/g8r/...reach2.25.json` (20:06:36) were all written **before** `0783ff0` was committed
+(20:06:31). The three gate files stamp the parent commit `501e793`. `court_far_line_gate.py` records
+no `dirty` flag, so its stamp cannot reveal an uncommitted tree. So "committed before the scored runs"
+(the `0783ff0` message and the G8 REMEDIATION text) is **not true for four of the five G8R
+artifacts**. Only `G8R_bar4` (`0783ff0`, clean, 20:33) and `G9.json` (`c2d4537`, clean, 20:53) are
+clean. **It is harmless for the numbers**: HEAD reproduces the three gate files to the last value,
+and my own run reproduces the bar-3 knock frames (62.27 / 49.11 cm). The G8R runs re-score an
+existing registration, not a new one. G9 itself is clean. Suggested follow-up, for backend-dev: add
+`dirty` to `court_far_line_gate`'s stamp.
+
+### 2. Bar 3: the mechanism is systematic
+
+This is seed 201, frame 60, the tracker's own camera, reproduced at HEAD. The G8 bar-3 A/B left
+this camera bit-identical in both arms.
+
+| far_baseline segment | 1 | 2 | 3 | 4 | 5 | 6 |
+|---|---|---|---|---|---|---|
+| offset at 8.0 px (px @1080) | −1.137 | −0.844 | **−1.368** | **−1.375** | −1.209 | −1.070 |
+| z at 8.0 | 6.2 | 13.8 | 27.7 | 23.9 | 36.6 | 9.5 |
+| at 2.25 px | seen, miss | hit | **z 0, dropped** | **z 0, dropped** | seen, miss | hit |
+
+The tolerance is 1.125 px. At 8.0: 2 hits out of 6 = 0.33, **FAIL**. At 2.25 the window is ±3.375 px
+and noise is estimated over |s| > 1.125 px. A ridge at −1.37 px sits inside that estimation band, so
+it inflates its own noise estimate and falls below z 5. Then 2 hits out of 4 = **0.50, which passes
+`>= min_line_frac`**, with scope `whole_court`. `far_service` also lands on exactly 0.50 (2 of 4).
+Seed 101 shows the same pattern: its far service line drops its worst segment (−1.388 px). **The
+further a segment's ridge sits past tolerance, the more likely it is dropped, anywhere between 1.125
+and 3.375 px.** Near that range the check does the opposite of what it should, and the pass lands
+exactly on the `>=` boundary.
+
+### 3. Bar 4 and the pyramid: the cause is the run-off step, not the net tape
+
+I scanned the materials in CP1's arm-P scene through the true camera, column by column. At every x
+tested, the **net tape is 12–14 px BELOW the far baseline**, and 3.5–7.5 px above the far service line.
+The far service line is also seen **through the net mesh**. The pyramid's window on the far baseline is
+±2.25 px @1080, so the tape cannot be inside it. The writeup's line "The net tape lies over the far
+baseline, so a ±1.5 px window cannot exclude it" is geometrically wrong.
+
+**One-variable control** (true camera, CP1 trials 0–3 of seed 0, pyramid at 0.50 / 2.0),
+far-baseline `frac`:
+
+| trial | arm P | P, clutter OFF | P, codec OFF |
+|---|---|---|---|
+| 0 | 0.853 | 0.926 | 1.000 |
+| 1 | **0.000** | **0.009** | **0.007** |
+| 2 | **0.008** | **0.000** | **0.000** |
+| 3 | **0.048** | **0.020** | **0.027** |
+
+Removing the net, tape, fence and trusses changes nothing. The per-point median offset is **+0.69 to
++1.0 px** against a 0.75 px tolerance. **Isolated with no noise, no codec and no clutter**, with the
+lens on and off, trials 1–2, here is the stacked ridge position of every line against the true
+projection:
+
+| line | far_baseline | doubles L / R | near_baseline | far_service, near_service, centre, singles |
+|---|---|---|---|---|
+| peak offset (px) | **+0.9 / +1.0** (centroid +1.22 / +1.59) | ±0.1 to ±0.2, **inward** | −0.05 to −0.08, **inward** | 0.00 |
+
+All four OUTER boundary lines are pulled toward the court interior. The lens makes no difference.
+CP1 renders the court surface at 95 DN and the run-off at 80 DN. **The 15 DN step at the court
+boundary drags each boundary line's ridge toward the bright side.** On the far baseline the paint is
+only 0.14 px wide, so the step dominates the ridge and moves it about 1 px, which is roughly 30 cm on
+the ground there.
+
+Consequences:
+- The pyramid's bar-4 failure is a **measurement BIAS on a clean scene**, not a confuser. The next
+  experiment backend-dev proposes ("exclude the net's image band") **would not fix it**.
+- **The tracking sim has NO run-off step** (`court_track_sim.render` paints the whole ground
+  `SURFACE_DN`). G8 bars 1–3 and all of G9 therefore ran on a scene without this bias. Any far-line
+  instrument proven on the sim is unproven on a court whose surround differs in brightness, and
+  on real courts it usually does.
+- It is plausibly also why the stacked profile at the registered window sees 0 of 400 true far
+  lines on CP1: a ridge about 1 px off sits in the noise-estimation band (§2). **Hypothesis, not
+  measured.**
+
+The 8.0 px window's failure (on `far_service`, 4.8–5.6 px from the tape) remains the tape, as qa
+found on 2026-09-19.
+
+### 4. Claim 11: why a court 41–65 cm out passes the paint check
+
+My replication of `court_track_sim.run` reproduces G9's knock-frame errors exactly (40.99 / 72.97 /
+61.29 / 63.87 / 61.09 / 64.92 cm) and the lock flags (only 501 unlocked).
+
+**(a) The pose is wrong because the MEASUREMENT is wrong, not because it lags.**
+- The Kalman prior (constant velocity) is **1.8° / ~10 m** off on the knock frame. The filter output
+  follows the raw measurement (the rotation error matches to three decimals, 0.258–0.290°), so the
+  gain is about 1 and nothing lags.
+- The raw `_pose_from` pose alone is already **35–62 cm** out. It corrects about 85% of the 1.8° step.
+- **The solver is not the cause either.** Started from the TRUE pose, `least_squares` converges to
+  the same wrong pose (34.8 / 62.3 / 51.4 / 54.9 / 51.5 / 54.7 cm) in 16–17 evaluations, well under
+  its `max_nfev` of 60. The Cauchy cost is LOWER at the wrong pose than at the truth (980 vs 993 on
+  seed 500, the same on all six). **The data prefer the wrong pose.**
+- On the knock frame, **11–14% of the flowed and snapped points (27–34) are gross outliers.** All of
+  them lie on the **LEFT sidelines** (22–29 on the far half, 5–6 on the near half). **All have the
+  same sign**, at a median of **−22.7 to −26.4 px** from the true line. That is a coherent mis-flow
+  under the +1° yaw / +1.5° pitch step, not noise. Frames 58, 59 and 61 have **0** such outliers
+  (one point, on seed 502 frame 61).
+- Cauchy with `f_scale` 3 px@720 (4.5 px) down-weights a 24 px residual but does not reject it. The
+  point keeps about 40% of the maximum influence, and 30 coherent points bend the pose.
+- A diagnostic trim that drops those points (oracle, or two-pass) **is not a fix**. It repairs
+  501 / 503 / 504 (to 1.3–1.9 cm), but on 500 / 502 / 505 it lands on a **2.0–2.2 m** pose.
+
+**(b) The check passes because that error lands where the check is blind or diluted.**
+
+| seed | worst | near cross lines | doubles_L near-half / far-half hit | pooled doubles_L | far lines ON, 2.25 / 8.0 |
+|---|---|---|---|---|---|
+| 500 | 41.0 cm | 1.0 | 1.0 / **1.0** | 1.0 | **PASS / PASS, scope whole_court** |
+| 501 | 73.0 cm | 1.0 | **0.536** / 0.0 | **0.263 → caught** | caught / caught |
+| 502 | 61.3 cm | 1.0 | 1.0 / 0.517 | 0.754 | caught / caught |
+| 503 | 63.9 cm | 1.0 | 1.0 / 0.483 | 0.737 | caught / caught |
+| 504 | 61.1 cm | 1.0 | 1.0 / 0.552 | 0.772 | caught / caught |
+| 505 | 64.9 cm | 1.0 | 1.0 / 0.207 | 0.596 | caught / caught |
+
+Three things let the wrong court through:
+1. **The far baseline and far service line are unchecked** (far lines OFF).
+2. **The sidelines are scored as whole 23.77 m lines** (`paintfit.paint_lines`: `doubles_L` runs
+   0 → 23.77 m) against `min_line_frac` 0.5. The outliers push the far half of the left sidelines
+   visibly off (hit 0.21–0.55), but the near half scores 1.0, and the pooled fraction (0.60–0.77)
+   passes. Seed 501 is caught only because its near half also fell (0.536).
+3. **Seed 500's error is below the check's pixel tolerance everywhere**: every line scores 1.0, and
+   so do the far lines at both windows (far baseline 0.80 / 0.67). A 41 cm far-baseline error is less
+   than 1.125 px at 1080p. **With the far-line instrument ON, seed 500 would be LOCKED with scope
+   `whole_court`**. That is bar 3's failure again, on a fresh seed.
+
+**What this decides.** No paint-check change on its own closes this:
+- Far lines ON catches 4 of 5 but upgrades seed 500 to a whole-court false claim.
+- Scoring near and far sideline halves separately at 0.5 catches only 2 of 5 (503, 505).
+- The strong signal is the shock itself. On the knock frame, flow survivors drop from about 305 to
+  219–244, the median residual rises from 0.06–0.10 to 0.40–0.64 px, and the coherent outliers
+  appear. **I looked only at frames 57–63 of seeds 500–505. That is not a score, and no remedy may
+  be scored on these seeds.**
+- backend-dev's remedy (a), a hold-off after a detected shock, is the direction the data point to.
+  It needs its own pre-registration on fresh seeds.
+- backend-dev's G9 text, "a pose that lags the step by one frame", is **refuted**.
+
+**Claim 10.** Every one of the 6 knock frames is more than 10 cm out (41–73 cm). The **wrong-pose rate
+is 6/6**, because the knock is the same step on every seed and only the sway phase changes. Whether
+the check catches it is a margin question (pooled `doubles_L` 0.26–0.77). 5/6 locked-but-wrong has a
+Wilson 95% interval of 0.44–0.97. Pooled with 101 and 201 on the same renderer it is 7/8 (0.53–0.98).
+**What it would take to know:** vary the knock (magnitude about 0.5–2×, yaw/pitch mix and sign,
+timing against the sway phase) on fresh seeds.
+- About **28** knocks give the rate to ±15% (62 for ±10%).
+- Showing a locked-but-wrong rate below 5% needs **59 consecutive clean knocks** (299 for below 1%).
+
+### 5. Claim 6: whole-court claims are still forgeable
+
+Refused now: `whole_court` beside `["far_baseline"]`, `"far_baseline"`, `{}` or `0`, and a forged
+`lock_claim` text. A second normalisation is stable. **Still accepted as "Every court line was
+checked against the paint.":**
+- `whole_court` with `lock_unverified` set to `[]`, absent, `None`, `""` or `"   "`.
+- `whole_court` + `[]` beside `paint_check: "FAIL:near_baseline"`. The sentence never carries
+  pass/fail.
+
+The block carries no evidence that can be re-checked, so only an inconsistent pair can be caught.
+`metrics_eligible` does not consult it, so this is QUALIFIED, not P0. The honest limit is: **the
+claim is a label, not a proof.**
+
+### 6. Claim 7: the stamp
+
+| committed file | stamp `tracker_cfg.far_lines` | what actually ran (`paint_check_far_lines`) |
+|---|---|---|
+| `court_track_sim/seeds101-201_n120_sub.json` (G8 bar 3, OFF arm, `f3bddd6`) | **True** | **False** |
+| `court_track_sim/seeds101-201_n120_sub_far.json` (G8 bar 3, ON arm, `f3bddd6`) | **key absent** | True |
+| `court_track_sim/g8r/...reach2.25.json` | True | True (correct) |
+| `court_track_sim/seeds0-1-2_n120.json` | predates the field | — |
+
+The committed error is the **reverse** of the one the fix describes ("far-lines-on runs were stamped
+off"): the OFF arm is stamped ON. The ON arm was written at 12:47 on 2026-09-19, before the field
+existed. The OFF arm was written at 12:58, when the working tree's default was True. **That is
+independent corroboration of 2026-09-19 Fault A.** The per-run field `paint_check_far_lines` is
+right in both files, so the G8 bar-3 A/B stands. Only the stamp is wrong.
+
+### 7. Anything borderline a human should look at
+
+- Bar 1 at the registered window passes **by one frame**. Effective n is 24 distinct geometries, and
+  3 of them miss (pitch ±0.05° on every seed, pitch −0.1° on one).
+- Bar 3's pass/fail and G9's catches sit on the **`>=` boundary of `min_line_frac` 0.5**.
+- The pyramid's registered knobs won a **tie by list order**.
+
+### STATE row this audit implies (text only; qa did not edit `docs/STATE.md`)
+
+| **QA audit of the G8 remediation and G9 - numbers CONFIRMED, two attributions REFUTED** - qa 2026-09-22 | Measured against the exact synthetic rendering camera (sim) and CP1's rendering camera. `fixed8` reproduces its table on 0 of 33,207 values; bar 3's "unseen leaves the denominator" is confirmed and SYSTEMATIC (the furthest-off segments are the ones dropped); bar 4 matches far-lines-OFF on 400/400. **REFUTED: the pyramid's CP1 failure is NOT the net tape** (the tape is 12-14 px from the far baseline). It is the court surface / run-off brightness step, which biases the far-baseline ridge +0.9-1.0 px with all clutter removed. The tracking sim has no such step. **REFUTED: G9's wrong locks are NOT a one-frame lag.** The raw pose measurement is bent by 27-34 coherent same-sign left-sideline outliers (about -24 px) on the knock frame only, and it passes because the far lines are unchecked and the whole-length sidelines are pooled at 0.5 (far half 0.21-0.55, pooled 0.60-0.77). Seed 500 passes even with far lines ON, as `whole_court`. Wrong-pose rate on the knock is 6/6; 5/6 locked has a Wilson interval of 0.44-0.97. Lock-claim forgery is still possible with any self-consistent block. The OFF-arm sim file of G8 bar 3 is stamped `far_lines: True`. The G8R gate artifacts predate `0783ff0` but reproduce bit-exactly | [evidence/court-camera3d.md](evidence/court-camera3d.md) |
