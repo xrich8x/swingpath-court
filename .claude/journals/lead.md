@@ -109,7 +109,7 @@ Then, before doing anything else, read in this order:
 
 ## NOW — what is running
 
-RUN-STATE: PAUSED-BY-FOUNDER — 2026-09-19 — "Pause the task I ahve to turn pc off" — still running: nothing (backend-dev stopped mid-task; its partial edits are committed as `572fd6d`, UNVERIFIED).
+RUN-STATE: RUNNING — cleared 2026-09-22 by the founder, who resumed with a four-phase plan (Phase 1: re-decide G8 at the registered 2.25 px window, then score the tracking fixes). Corrections given to the founder: the encoder does not touch the tracking sim; 2.25 px measured 0.90 catch, not 100%; net POSTS are CLOSED as a calibration reference - use the net TAPE; bounded state stands.
 
 **RESUME POINT — branch `camera3d-pnp-paintfit`, HEAD `572fd6d`, nothing pushed.**
 1. **Re-run the suite first** (`cd backend && pytest tests/`, baseline 414 pass / 10 skip / 2
@@ -257,6 +257,8 @@ C3 is the founder's visit. **Order: P2 finishes first**, per the founder.
   forever. Do not reopen the Sideloadly line without the founder.
 
 ## LOG — newest first (court only; older entries are in the archived journal)
+
+- **2026-09-22** — RESUMED by founder (a four-phase plan; Phase 1 dispatched to backend-dev).
 
 - **2026-09-19** — PAUSED by founder ("Pause the task I ahve to turn pc off"). Left running: nothing; backend-dev stopped mid-G8-re-decision, partial work committed UNVERIFIED as `572fd6d`.
 
