@@ -1045,3 +1045,64 @@ def fit_camera_checked(frames, seed: CourtCamera, *, restarts=RESTARTS, cfg=None
                             lock_unverified=list(chk.unchecked),
                             lock_claim=chk.claim())
     return res
+
+
+# --------------------------------------------- height-prior seeding (G12) --
+# The founder's Phase 2 (job 4, 2026-09-23; DECISIONS_PENDING item 3): G1's wrong
+# cameras are DISCRETE basins along a dolly-zoom (f -13.7% at height 3.39 m recurs
+# 5 times), predicted by the seed's height error. So launch the fit from several
+# fixed camera heights and let the INDEPENDENT on-paint check pick the winner -
+# never the fit's own cost, which G7 measured inverted (it prefers the wrong
+# camera). Setup only: 3 fits cost 3x, once.
+HEIGHT_PRIORS_M = (1.5, 2.5, 3.5)
+
+
+def at_height(cam: CourtCamera, height_m: float, scale_range=(0.3, 3.0)) -> CourtCamera | None:
+    """`cam` dolly-zoomed (`dolly_zoom`: the court centre keeps its image position
+    and size) until its centre is `height_m` above the court. None when that needs
+    a zoom outside `scale_range` or the camera does not look down."""
+    c = np.array([court.X_CENTER, court.NET_Y, 0.0])
+    R = cam.R
+    z_c = float((R @ c + cam.tvec)[2])
+    down = float(R[2][2])                 # optical axis, world z component
+    if z_c <= 0 or down >= -1e-6:
+        return None
+    s = 1.0 + (float(cam.position_m()[2]) - height_m) / (z_c * down)
+    if not scale_range[0] <= s <= scale_range[1]:
+        return None
+    return dolly_zoom(cam, s)
+
+
+def fit_camera_anchored(frames, seed: CourtCamera, *, heights=HEIGHT_PRIORS_M,
+                        cfg=None) -> PaintFitResult:
+    """One `fit_camera_on_paint` from `seed` moved to each prior height, and the
+    winner chosen by `paint_check` alone: a passing camera beats a failing one,
+    then the best worst-line fraction, then support. The fits' own costs are not
+    consulted. `camera.extra` records every anchor's outcome and which won; a FAIL
+    is a court the app must treat as NOT LOCKED."""
+    grey = np.clip(grey_mean(frames), 0, 255).astype(np.uint8)
+    tried, log = [], []
+    for h in heights:
+        start = at_height(seed, h)
+        if start is None:
+            log.append({"height_m": h, "fit": "anchor unreachable"})
+            continue
+        try:
+            res = fit_camera_on_paint(grey.astype(float), start, cfg=cfg)
+        except Exception as ex:
+            log.append({"height_m": h, "fit": f"failed: {ex!r}"})
+            continue
+        chk = paint_check(grey, res.camera)
+        wf = min((v[0] for v in chk.lines.values()), default=-1.0)
+        tried.append((chk, wf, res, h))
+        log.append({"height_m": h, "ok": bool(chk.ok), "worst_frac": float(wf),
+                    "support": float(chk.support), "f_px": float(res.camera.f_px),
+                    "fitted_height_m": float(res.camera.position_m()[2])})
+    if not tried:
+        raise RuntimeError("paint fit failed from every height prior")
+    chk, wf, res, h = max(tried, key=lambda t: (t[0].ok, t[1], np.nan_to_num(t[0].support, nan=-1.0)))
+    res.camera.extra.update(paint_check="pass" if chk.ok else f"FAIL:{chk.worst}",
+                            starts=len(tried), height_prior_m=h, anchors=log,
+                            lock_scope=chk.scope, lock_unverified=list(chk.unchecked),
+                            lock_claim=chk.claim())
+    return res

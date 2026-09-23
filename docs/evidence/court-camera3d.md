@@ -2346,3 +2346,63 @@ error per seed.
 - **(G11-3)** H1 is the risk: a small knock (0.5–0.8×) can put a line 10–20 cm out with few outliers.
   I predict **0–2** locked-but-wrong frames on the 30, so H1 **may FAIL**, and if it does, the
   failing frames are small knocks.
+
+## G12: height-prior seeding — PRE-REGISTRATION (job 4, the founder's Phase 2, 2026-09-23)
+
+lead, 2026-09-23. **Written and committed before any scored run.** Nothing above this heading is
+edited. (A 2-trial smoke on SPENT CP1 seed 0 only checked the tool runs; nothing was chosen from it.)
+
+### Why, and what changes
+
+G1: plain `r1_fit` from the keypoint PnP seed lands in a WRONG camera on 35/400 = 8.75% of CP1 arm-K
+trials, in discrete dolly-zoom basins that the seed's height error predicts. G7: the shipped
+`paint_check` catches all of them (33/33 on its own run), so today they are **honest failures to
+lock**, and `fit_camera_checked` already restarts along ±dolly when the check fails. The founder's
+Phase 2 is to launch the fit from **fixed height priors, 1.5 / 2.5 / 3.5 m**, and pick the winner by
+the independent on-paint check, **never** the fit's own cost (G7: it prefers the wrong camera).
+
+`camera3d.at_height(cam, h)` dolly-zooms the seed (court centre keeps its image position and size,
+`dolly_zoom`) until the camera is `h` above the court. `camera3d.fit_camera_anchored` runs
+`fit_camera_on_paint` from each and keeps: a passing `paint_check` over a failing one, then the best
+worst-line fraction, then support. Nothing on the shipped path changes; `fit_camera_checked` is still
+what setup calls.
+
+### Population and arms — paired on one image and one set of noisy keypoints
+
+`tools/court_height_prior_g12.py`: CP1 arm P scene, arm K's seed model (21 keypoints, σ 14.78 px,
+2 outliers of 100–300 px), built exactly as `court_cost_separation.run_trial`; **fresh seed 1100,
+n 200**. Three arms per trial: **plain** (`r1_fit`, G1's arm K), **checked** (shipped
+`fit_camera_checked`), **anchored** (`fit_camera_anchored`). WRONG = fitted f > 1% from the rendering
+camera's 805.54 px (G1's rule). Placement = C1's M readout (ground error through the fitted camera),
+against CP1's exact rendering camera. Locked = `paint_check(...).ok` at shipped defaults.
+
+### THE BARS
+
+- **K1.** anchored: **zero** trials that are locked AND wrong.
+- **K2.** anchored's wrong-camera rate (locked or not) is **below plain's** on the same trials **and
+  ≤ 2%**.
+- **K3.** anchored's count of locked-and-right setups is **≥ checked's** (it must not lose setups the
+  shipped path gets).
+- **K4.** On anchored's locked right cameras, every line's p90 ≤ **5 cm** (CP1's bar).
+
+**PASS** iff K1–K4. On PASS, a follow-up may make setup call `fit_camera_anchored`; not in this gate.
+
+### Scope limits, declared
+
+- **One mount.** CP1 renders a 3.0 m mount at a 6 m setback, so the priors are tested around one true
+  height; this does not show the 1.5 m or 3.5 m anchors ever being the right one. Varying the mount
+  is a different scene and is not claimed.
+- **Real footage is not in this session.** The clay item (clip `sAjkpeRq4P4` never locks; fitted
+  height 2.21–2.78 m against a human 3.33 m), the net-tape cross-check of that human calibration,
+  surface-colour masking and the 16-clip probe all need the clips in `data/incoming`, which exist only
+  on the founder's machine and are git-ignored. They are NOT attempted here.
+
+### Predictions, recorded before the run
+
+- **(G12-1)** plain is wrong on **5–12%** (G1: 8.75%); checked on **1–4%**; anchored on **0–2%**.
+- **(G12-2)** K1 PASS (the check has caught every wrong camera it has met on this scene).
+- **(G12-3)** K3 is the risk: from a 1.5 m start, a 3 m camera needs a large dolly (scale ~0.5 of
+  depth), and the fit may not travel that far, so anchored may win or tie only through its 2.5 / 3.5 m
+  starts. I predict anchored ≥ checked, by 0–6 setups.
+- **(G12-4)** K4 PASS: a converged anchored fit is the same fit as any other converged fit.
+- **(G12-5)** anchored costs about **3×** plain's wall time (three fits, no early stop).
