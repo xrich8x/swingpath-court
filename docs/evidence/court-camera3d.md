@@ -2113,3 +2113,74 @@ right in both files, so the G8 bar-3 A/B stands. Only the stamp is wrong.
 ### STATE row this audit implies (text only; qa did not edit `docs/STATE.md`)
 
 | **QA audit of the G8 remediation and G9 - numbers CONFIRMED, two attributions REFUTED** - qa 2026-09-22 | Measured against the exact synthetic rendering camera (sim) and CP1's rendering camera. `fixed8` reproduces its table on 0 of 33,207 values; bar 3's "unseen leaves the denominator" is confirmed and SYSTEMATIC (the furthest-off segments are the ones dropped); bar 4 matches far-lines-OFF on 400/400. **REFUTED: the pyramid's CP1 failure is NOT the net tape** (the tape is 12-14 px from the far baseline). It is the court surface / run-off brightness step, which biases the far-baseline ridge +0.9-1.0 px with all clutter removed. The tracking sim has no such step. **REFUTED: G9's wrong locks are NOT a one-frame lag.** The raw pose measurement is bent by 27-34 coherent same-sign left-sideline outliers (about -24 px) on the knock frame only, and it passes because the far lines are unchecked and the whole-length sidelines are pooled at 0.5 (far half 0.21-0.55, pooled 0.60-0.77). Seed 500 passes even with far lines ON, as `whole_court`. Wrong-pose rate on the knock is 6/6; 5/6 locked has a Wilson interval of 0.44-0.97. Lock-claim forgery is still possible with any self-consistent block. The OFF-arm sim file of G8 bar 3 is stamped `far_lines: True`. The G8R gate artifacts predate `0783ff0` but reproduce bit-exactly | [evidence/court-camera3d.md](evidence/court-camera3d.md) |
+
+## RUN-OFF SCENE (job 1, 2026-09-23): the tracking sim gets the colour step that breaks the far-line check — PRE-REGISTRATION
+
+lead, 2026-09-23, cloud session, branch `claude/swingpath-camera-handoff-rxd7rq` (fast-forwarded from
+`camera3d-pnp-paintfit` @ `b81815f`). **Written and committed before any scored run.** Nothing above
+this heading is edited.
+
+### Why
+
+qa's 2026-09-22 audit (§3 above) found that the far-baseline bias on CP1 is the **court/run-off
+brightness step** (95 / 80 DN), not the net tape, and that `court_track_sim.render` paints the whole
+ground one brightness. So G8 bars 1–3 and all of G9 were measured on a scene **without the thing that
+breaks the far-line check**. This adds the step to the sim and re-runs those bars on it.
+
+### The change (one variable)
+
+`court_track_sim.render(..., runoff_dn=None)`. With a number, ground outside
+`[X_LEFT_DOUBLES, X_RIGHT_DOUBLES] x [Y_NEAR_BASELINE, Y_FAR_BASELINE]` (the outer edges of the outer
+lines' paint, CP1's exact test) is painted `runoff_dn`; paint is drawn over it. **`None` is the
+default, so every earlier number stays where it was.** It draws no random numbers, so noise and
+sub-sample jitter are identical with and without it (pinned: `tests/test_track_sim_runoff.py`, which
+also proves `runoff_dn = SURFACE_DN` is bit-identical to `None`). The scene value is **CP1's, 80 DN**
+(`RUNOFF_DN_CP1`). `court_track_g9.py` and `court_far_line_gate.py` take `--runoff-dn` and stamp it;
+their registered constants are untouched.
+
+### What is re-run, and the bars applied — the ORIGINAL bars, unchanged
+
+Paired A/B, one variable (`runoff_dn` None → 80), every other setting as registered:
+
+| re-run | seeds / frames | bars applied | OFF arm |
+|---|---|---|---|
+| **G9** main / knock3 / knock4 | as registered (500–505; 500–502 ×3, ×4) | G9 B1–B4 and its verdict rule, verbatim | see "platform" |
+| **G8 bars 1–2** (`court_far_line_gate --reach-mode registered`, held-out) | 400, 401, 402 | bar 1 catch ≥ 90% at > 20 cm; bar 2 incremental false ≤ 2%; at the shipped cell (tol 0.75, z 5) | `g8r/heldout_registered.json` |
+| **G8 bar 3** (`court_track_sim --subpixel --far-lines`) | 101, 201, n 120 | both knock frames (frame 60) reported NOT locked | `g8r/seeds101-201_n120_sub_far_reach2.25.json` |
+
+**The result is a SECOND verdict on a DIFFERENT SCENE, reported beside the old one.** It does not
+overturn, re-decide or re-bucket G8 or G9; both stay as recorded. Also reported, no bar: the far-line
+instrument's `far_unchecked_on_good` rate, and the per-line p90 difference.
+
+**The profile check (job 1's "the far-baseline profile shows the step"), no bar:**
+`tools/court_runoff_profile.py` renders the base-pose true camera (G8/G9 geometry) at ss 2 and 4,
+with and without noise, with and without the step, and reports the far baseline's stacked profile
+over an 8 px@720 display window plus every line's ridge offset against the true projection.
+
+### Declared deviations
+
+1. **Seeds are reused on purpose.** The handoff says not to reuse spent seeds. This re-measures
+   existing gates on a changed scene; pairing on the registered seeds is what makes it a
+   one-variable A/B. **Nothing is tuned or chosen on these runs, and no remedy is scored on them.**
+   Jobs 2 and 3 score on fresh seeds.
+2. **Platform.** These run on Linux, Python 3.12, numpy 2.5.3, scipy 1.18.1, opencv 5.0.0, not the
+   Windows venv that produced G8/G9. **Parity rule, fixed now:** G9 seed 500 (main) is re-run here
+   with no run-off first. If every per-frame line error, lock flag and status matches `G9.json`
+   bit-for-bit, the committed artifacts serve as the OFF arms. If not, every OFF arm is re-run here
+   and only same-platform pairs are compared; the parity diff is reported either way.
+
+### Predictions, recorded before the run
+
+- **(RO-1) The step reaches the far baseline.** On the true camera, noiseless, the far baseline's
+  stacked ridge moves off the prediction by **≥ 0.5 px@1080 toward the court** with the step, where
+  without it it sits within 0.15 px. The near baseline and doubles sidelines move < 0.25 px; lines
+  with no run-off beside them (service, centre, singles) move < 0.02 px.
+- **(RO-2) G8 bars 1–2 on the step scene:** the far baseline goes **unseen** on most good cases (its
+  ridge lands in the noise wing, as qa found on CP1), `far_unchecked_on_good` rises from 0.000, and
+  **bar 1 FAILS** (catch < 0.90). Bar 2 passes (0 incremental false flags).
+- **(RO-3) G8 bar 3:** seed 201's knock frame stays locked (the step does not help the check), and
+  seed 101's is still caught.
+- **(RO-4) G9 on the step scene:** B1–B3 still pass (setup's paint fit models the step with
+  `kappa`), with the worst p90 rising above 1.45 cm but staying under 5 cm; **B4 still fails** with
+  4–6 locked-but-wrong knock frames (the cause is coherent flow outliers, not the scene). The large
+  knocks are still lost honestly. Verdict: **KILL**, as before.

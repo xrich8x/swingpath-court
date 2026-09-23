@@ -205,7 +205,7 @@ def pyramid_far(grey, cam, *, levels=3, tol_px_720=0.20, min_dn=6.0,
 
 
 # ------------------------------------------------------------------ cases --
-def cases(seed, ss, verbose=True, reach_mode="registered"):
+def cases(seed, ss, verbose=True, reach_mode="registered", runoff_dn=None):
     """Every ladder case for one seed, scored on every threshold pair. The verdict
     is the WHOLE `paint_check`, not the far lines alone - the G8 bar is "reported
     NOT locked", and the near lines are part of that."""
@@ -213,7 +213,8 @@ def cases(seed, ss, verbose=True, reach_mode="registered"):
     p0 = S.base_pitch()
     true_cam = S.camera(0.0, p0, 0.0)
     t0 = time.time()
-    img = np.clip(S.render(true_cam, rng, ss=ss, subpixel=True), 0, 255).astype(np.uint8)
+    img = np.clip(S.render(true_cam, rng, ss=ss, subpixel=True, runoff_dn=runoff_dn),
+                  0, 255).astype(np.uint8)
     t_render = time.time() - t0
     rows = []
     for cam, motion, mag in ladder(true_cam, p0):
@@ -322,11 +323,14 @@ def main():
     ap.add_argument("--reach-mode", choices=("registered", "fixed8"), default="registered",
                     help="registered = G8's own 3 x far_tol; fixed8 = the 8.0 px @720 "
                          "the committed G8 run used")
+    ap.add_argument("--runoff-dn", type=float, default=None,
+                    help="render the sim WITH a run-off step this bright (80 = CP1's scene); "
+                         "omitted = the scene every G8 number was measured on")
     ap.add_argument("--out", default=None)
     a = ap.parse_args()
     rows, t_render = [], []
     for s in a.seeds:
-        r, tr = cases(s, a.ss, reach_mode=a.reach_mode)
+        r, tr = cases(s, a.ss, reach_mode=a.reach_mode, runoff_dn=a.runoff_dn)
         rows += r
         t_render.append(tr)
     st = sweep_table(rows, "stack", TOL_GRID, Z_GRID)
@@ -334,6 +338,7 @@ def main():
     res = {"stamp": {"tool": "tools/court_far_line_gate.py", "seeds": a.seeds,
                      "commit": _sha(),
                      "ss": a.ss, "subpixel": True, "tag": a.tag,
+                     "runoff_dn": a.runoff_dn,
                      "reach_mode": a.reach_mode,
                      "reach_px_720": ("3 x tol per cell" if a.reach_mode == "registered"
                                       else REACH_FIXED_PX_720),

@@ -85,6 +85,19 @@ SS_DEFAULT = 2
 # what G8 scores the far-line instrument at, and it is a DIFFERENT SCENE: numbers
 # from it are not comparable with G3 or with the 100-102 / 200-202 tracking runs.
 SUBPIXEL_DEFAULT = False
+# The RUN-OFF colour step. None - the whole ground at SURFACE_DN - is what every
+# tracking number up to G9 was measured at, and it is kept as the default so none of
+# them move. Real courts, and CP1's renderer (95 court / 80 run-off, court_fit_cp1.py
+# `render_materials`), change colour at the OUTER lines: the court surface ends at the
+# outer paint edge (the ITF dimensions are to the outside of the lines), and the
+# run-off is darker. qa's 2026-09-22 audit (docs/evidence/court-camera3d.md, QA AUDIT
+# 2026-09-22 s3) found that step, not the net tape, is what biases the far-baseline
+# ridge +0.9-1.0 px on CP1 - and this sim had no step, so G8 bars 1-3 and G9 ran on a
+# scene without the thing that breaks the far-line check. `runoff_dn=80.0` is CP1's
+# value; it is a DIFFERENT SCENE and its numbers are reported beside the old ones,
+# never pooled with them.
+RUNOFF_DN_DEFAULT = None
+RUNOFF_DN_CP1 = 80.0
 OUT = REPO / "data" / "output" / "court_track_sim"
 
 
@@ -112,13 +125,18 @@ def base_pitch(wh=(W, H)):
 
 
 def render(cam: camera3d.CourtCamera, rng, contrast=110.0, psf=0.9, noise=True, ss=SS_DEFAULT,
-           subpixel=SUBPIXEL_DEFAULT):
+           subpixel=SUBPIXEL_DEFAULT, runoff_dn=RUNOFF_DN_DEFAULT):
     """Grey float image of the court, the far fence and its posts.
 
     `subpixel` switches to CP1's render order - jittered stratified sub-samples
     and the PSF applied BEFORE binning - which is what it takes to place paint
     thinner than a pixel at all. See SUBPIXEL_DEFAULT for the measurements.
-    False keeps every pre-G8 tracking number exactly where it was."""
+    False keeps every pre-G8 tracking number exactly where it was.
+
+    `runoff_dn` paints the ground OUTSIDE the outer lines' outer edges at that
+    brightness (CP1: 80 against the court's 95); None keeps one brightness for the
+    whole ground, bit-identical to every earlier run. It draws no random numbers,
+    so the noise and sub-sample jitter are the same with and without it."""
     from scipy import ndimage
     w, h = cam.image_wh
     pf = cam.to_paintfit()
@@ -143,6 +161,10 @@ def render(cam: camera3d.CourtCamera, rng, contrast=110.0, psf=0.9, noise=True, 
             gx = C[0] + tg * d[:, 0]
             gy = C[1] + tg * d[:, 1]
             val[hit_g] = SURFACE_DN
+            if runoff_dn is not None:
+                inside = ((gx >= court.X_LEFT_DOUBLES) & (gx <= court.X_RIGHT_DOUBLES)
+                          & (gy >= court.Y_NEAR_BASELINE) & (gy <= court.Y_FAR_BASELINE))
+                val[hit_g & ~inside] = runoff_dn
             paint = np.zeros(len(d), bool)
             for x0, x1, y0, y1 in RECTS:
                 paint |= hit_g & (gx >= x0) & (gx <= x1) & (gy >= y0) & (gy <= y1)
@@ -249,7 +271,8 @@ def summarise(runs):
 
 # ----------------------------------------------------------------- arms ----
 def run(seed=0, n=120, seed_sigma=14.78, verbose=True, knock_scale=1.0, ss=SS_DEFAULT,
-        subpixel=SUBPIXEL_DEFAULT, far_lines=camtrack.TrackConfig.far_lines):
+        subpixel=SUBPIXEL_DEFAULT, far_lines=camtrack.TrackConfig.far_lines,
+        runoff_dn=RUNOFF_DN_DEFAULT):
     r_path, r_img, r_seed = [np.random.default_rng(s) for s in
                              np.random.SeedSequence(seed).spawn(3)]
     p0 = base_pitch()
@@ -258,7 +281,7 @@ def run(seed=0, n=120, seed_sigma=14.78, verbose=True, knock_scale=1.0, ss=SS_DE
 
     # setup on frame 0 exactly as the product would: keypoints -> PnP -> paint fit
     t0 = time.time()
-    f0 = render(truths[0], r_img, ss=ss, subpixel=subpixel)
+    f0 = render(truths[0], r_img, ss=ss, subpixel=subpixel, runoff_dn=runoff_dn)
     kps = {nm: tuple(np.array(uv) + r_seed.normal(0, seed_sigma, 2))
            for nm, uv in zip(court.KEYPOINTS_3D,
                              truths[0].project(list(court.LANDMARKS_3D.values())))
@@ -281,7 +304,7 @@ def run(seed=0, n=120, seed_sigma=14.78, verbose=True, knock_scale=1.0, ss=SS_DE
     frame = f0
     for i, tc in enumerate(truths):
         if i:
-            frame = render(tc, r_img, ss=ss, subpixel=subpixel)
+            frame = render(tc, r_img, ss=ss, subpixel=subpixel, runoff_dn=runoff_dn)
         img8 = np.clip(frame, 0, 255).astype(np.uint8)
         st = tracker.step(img8, i / FPS)
         status.append(st.status)
@@ -320,9 +343,11 @@ def run(seed=0, n=120, seed_sigma=14.78, verbose=True, knock_scale=1.0, ss=SS_DE
                   "far_reach_px_720": camera3d.FAR_REACH_PX_720,
                   "far_tol_px_720": camera3d.FAR_TOL_PX_720,
                   "measured_against": "the exact synthetic camera that rendered each frame",
-                  "supersample": ss, "subpixel": subpixel,
+                  "supersample": ss, "subpixel": subpixel, "runoff_dn": runoff_dn,
                   "renderer": f"flat court, 5 cm paint, {ss}x{ss} supersample, blur 0.9 px, "
-                              "sensor noise, far fence with posts; no lens, no codec"},
+                              "sensor noise, far fence with posts; no lens, no codec; "
+                              + ("no run-off step" if runoff_dn is None else
+                                 f"run-off {runoff_dn:g} DN outside the outer lines")},
         "paint_check_far_lines": far_lines,
         "setup_worst_m": max(setup_err.values()),
         "setup_check": setup.extra.get("paint_check"),
@@ -349,14 +374,20 @@ def main():
     ap.add_argument("--ss", type=int, default=SS_DEFAULT,
                     help="renderer supersampling; 2 reproduces every pre-G8 number, "
                          "4 is what G8 needs to render sub-pixel paint at all")
+    ap.add_argument("--runoff-dn", type=float, default=RUNOFF_DN_DEFAULT,
+                    help=f"paint the run-off outside the outer lines this bright "
+                         f"({RUNOFF_DN_CP1:g} = CP1's scene); omitted = no step, every "
+                         f"earlier number")
     a = ap.parse_args()
     got = [run(s, a.n, knock_scale=a.knock_scale, ss=a.ss,
-               subpixel=a.subpixel, far_lines=a.far_lines) for s in a.seeds]
+               subpixel=a.subpixel, far_lines=a.far_lines, runoff_dn=a.runoff_dn)
+           for s in a.seeds]
     summ = {arm: summarise([g["runs"][arm] for g in got]) for arm in ("camtrack", "lock_step")}
     tag = "" if a.knock_scale == 1.0 else f"_knock{a.knock_scale:g}"
     tag += "" if a.ss == SS_DEFAULT else f"_ss{a.ss}"
     tag += "_sub" if a.subpixel else ""
     tag += "_far" if a.far_lines else ""
+    tag += "" if a.runoff_dn is None else f"_runoff{a.runoff_dn:g}"
     out = Path(a.out or OUT / f"seeds{'-'.join(map(str, a.seeds))}_n{a.n}{tag}.json")
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(json.dumps({"summary": summ, "runs": got}, indent=1), encoding="utf-8")

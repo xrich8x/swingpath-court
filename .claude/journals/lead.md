@@ -109,7 +109,7 @@ Then, before doing anything else, read in this order:
 
 ## NOW — what is running
 
-RUN-STATE: PAUSED-BY-FOUNDER — 2026-09-22 — "After QA does the checking lets pause and see if things work" — still running: nothing. Phase 1 done and audited; the founder is reviewing before Phase 2.
+RUN-STATE: RUNNING — 2026-09-23 — resumed by the founder's handoff ("Do A, but do it for me") — working in a cloud session on branch `claude/swingpath-camera-handoff-rxd7rq`, fast-forwarded from `camera3d-pnp-paintfit` @ `b81815f`. Queue: job 1 run-off step in the tracking sim; job 2 step-aware far-line check; job 3 knock-frame lock hold-off; job 4 Phase 2.
 
 **WHERE PHASE 1 LANDED (qa-audited 2026-09-22, see evidence QA AUDIT 2026-09-22):**
 - G8 at the registered 2.25 px window FAILS bar 3; bar 4 passes only because the check sees nothing on CP1. `FAR_LINES_DEFAULT` stays False.
@@ -264,6 +264,8 @@ C3 is the founder's visit. **Order: P2 finishes first**, per the founder.
   forever. Do not reopen the Sideloadly line without the founder.
 
 ## LOG — newest first (court only; older entries are in the archived journal)
+
+- **2026-09-23** — RESUMED by founder (handoff with four jobs; "Do A, but do it for me cuz im going to the gym"). Cloud session: Python 3.12 venv, numpy 2.5.3 / scipy 1.18.1 / opencv 5.0.0 — not the Windows venv, so numbers are re-baselined here before any comparison.
 
 - **2026-09-22** — PAUSED by founder ("After QA does the checking lets pause and see if things work"). Left running: nothing.
 

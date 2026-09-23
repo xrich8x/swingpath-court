@@ -109,7 +109,8 @@ def score(runs):
 
 def _job(j):
     return S.run(j["seed"], j["n"], verbose=False, knock_scale=j["knock_scale"], ss=SS,
-                 subpixel=SUBPIXEL, far_lines=camtrack.TrackConfig.far_lines)
+                 subpixel=SUBPIXEL, far_lines=camtrack.TrackConfig.far_lines,
+                 runoff_dn=j.get("runoff_dn"))
 
 
 def _sha():
@@ -132,8 +133,12 @@ def main():
     ap.add_argument("--n", type=int, default=N_FRAMES)
     ap.add_argument("--workers", type=int, default=max(1, (os.cpu_count() or 2) - 1))
     ap.add_argument("--out", default=None)
+    ap.add_argument("--runoff-dn", type=float, default=None,
+                    help="re-run G9's bars on the sim WITH a run-off step (80 = CP1's scene). "
+                         "Omitted = G9 as registered. A different scene: never pooled with G9")
     a = ap.parse_args()
-    jobs = [{"arm": arm, "seed": s, "n": a.n, "knock_scale": ARMS[arm]["knock_scale"]}
+    jobs = [{"arm": arm, "seed": s, "n": a.n, "knock_scale": ARMS[arm]["knock_scale"],
+             "runoff_dn": a.runoff_dn}
             for arm in a.arms for s in (a.seeds or ARMS[arm]["seeds"])]
     t0 = time.time()
     with ProcessPoolExecutor(min(a.workers, len(jobs))) as ex:
@@ -141,6 +146,7 @@ def main():
     sha, dirty = _sha()
     res = {"stamp": {"tool": "tools/court_track_g9.py", "gate": "G9", "commit": sha,
                      "dirty": dirty, "n_frames": a.n, "ss": SS, "subpixel": SUBPIXEL,
+                     "runoff_dn": a.runoff_dn,
                      "codec": None, "lens": None,
                      "tracker_cfg_resolved": got[0]["stamp"]["tracker_cfg"],
                      "far_lines_default": camera3d.FAR_LINES_DEFAULT,
