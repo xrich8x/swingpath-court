@@ -119,8 +119,8 @@ The cloud container cannot reach the clips (YouTube blocked by the environment's
 
 **STATE OF THE FOUR JOBS:**
 - Job 1 DONE (`c4fd618`): the run-off step breaks the TRACKER too (far_baseline p90 1.46 -> 9.68 cm; 48 steady wrong locks). Remedy hypothesis: snap with the step-aware model, needs its own pre-reg.
-- Job 2 = G10 (step-aware far-line check): cloud; CP1 stage (seed 1000 n400) then `tools/court_g10.py score`. Dev chose tol 0.35 px@720. Artifacts `data/output/g10/`.
-- Job 3 = G11 (shock hold-off): thresholds chosen on dev (n_ratio 0.95 + outlier 0.02; `data/output/g11/choice.json`). Scoring (varied 1200-1223 n90 + G9 protocol 1300-1305 n120, `--choice`, `--far-shipped`) runs AFTER G10's verdict. Tool: `tools/court_track_g11.py`.
+- Job 2 = G10 DONE, PASS (`0a00043`): all five bars. Shipped as the default in `d969233` (FAR_LINES_DEFAULT True, stepfit, tol 0.35 px@720). Caveat recorded: on the run-off scene the tracker's ~7 cm bias gives 4-5 steady whole_court locks at 10-12 cm per run.
+- Job 3 = G11 (shock hold-off): thresholds from dev (n_ratio 0.95 + outlier 0.02; `data/output/g11/choice.json`). SCORING RUNNING in the cloud since ~17:40 UTC on `d969233` (far lines shipped ON): `data/output/g11/score_*.json` then `G11.json`. Cloud session writes the results + STATE row and pushes.
 - Job 4 = G12 DONE, FAIL (`6d79714`): height priors 9.0% wrong vs shipped checked fit 4.0%; 0 locked-and-wrong anywhere. Clay / 16-clip real-footage items need the PC.
 
 **WHERE PHASE 1 LANDED (qa-audited 2026-09-22, see evidence QA AUDIT 2026-09-22):**
