@@ -2619,3 +2619,63 @@ blown by two to three orders of magnitude. **A PASS here is an accuracy result, 
 | G10-3 | S4: all four knock frames caught | **RIGHT** |
 | G10-4 | S5: all wrong caught, 0–4 right flagged, both far lines checked ≥ 95% | **RIGHT**: 32/32, 3 (all pre-existing), 99.5% / 100% |
 | G10-5 | cost 2–10 s per check | **RIGHT** |
+
+## G11 RESULTS — **FAIL as registered (H2, H3), but H1 — the job's own bar — PASSES: zero wrong locks over 30 knocks; every failing bar comes from ONE honestly-failed setup**
+
+lead, 2026-09-23. Scored under the G11 pre-registration (`999af22`); thresholds from the dev rule
+(`data/output/g11/choice.json`: `shock_n_ratio` 0.95 + `shock_outlier_frac` 0.02, resid off). Scoring
+runs stamp `716c66e` (`dirty: false`; a journal-only commit on top of `d969233`, the commit that
+shipped G10's far-line default), resolved tracker config `far_lines: True, far_mode: stepfit` — far
+lines **as shipped at the scoring commit**, as registered. Linux platform as declared. Measured against
+the exact synthetic camera that rendered each frame. Artifacts: `data/output/g11/`.
+
+**Development (`dev_varied_800-811.json`, far lines OFF, hold-off OFF):** 1 locked-but-wrong frame (seed
+804, 34.6 cm) without a hold-off. Steady frames: outlier fraction max 0.018 (p99 0.007), kept-point
+ratio min 0.964, residual ratio max 1.40; knock frames 0.72–0.82 / 5–15% outliers. The rule picked the
+lowest steady fire rate (0.0) with zero wrong locks.
+
+| bar | result |
+|---|---|
+| **H1** zero frames locked with any line > 10 cm, all 30 knocks | **PASS — 0** |
+| H2 G9 B1 every line p90 ≤ 5 cm (G9 protocol, 1300–1305) | **FAIL — 173 cm** |
+| H2 G9 B2 steady jump ≤ 2 px | **FAIL — 2.64 px** |
+| H2 G9 B3 every knock back within 15 frames | **FAIL — one never** |
+| H3 hold-off fires on ≤ 2% of steady frames | **FAIL — 68 / 2,700 = 2.5%** |
+
+**G11 FAILS as registered.** A failed gate stays failed.
+
+**Inspecting it (hard rule 9): all four failing numbers come from ONE run, seed 1300.** Its SETUP landed
+on a wrong camera, 157 cm out (G1's wrong-camera tail; G12 measured the shipped fit at 4.0%). The setup
+check said `FAIL:singles_L`, the tracker reported `lost` on 118 of 120 frames and **never claimed a
+lock**. That run alone gives B1's 1.73 m, B2's 2.64 px and B3's unrecovered knock, and it holds **67 of
+the 68** steady hold-off "fires": the scorer counts a shock signal on any frame, including frames that
+were never locked, where the hold-off changes nothing. For CONTEXT ONLY (not a re-bucketing; the
+verdict above stands): the other five G9-protocol runs are 1.41 cm p90, 0.13 px steady jump, 1-frame
+recovery; the other 29 runs fire on **1 of 2,633** steady frames (0.04%).
+
+**What stopped the wrong locks, frame by frame.** On the knock window (the knock frame and two after):
+- **All five G9-protocol knock frames (seeds 1301–1305, 54–88 cm out) are caught by the far-line
+  check itself** (scope `whole_court` computed, check failed): **G9's KILL case no longer occurs with
+  G10's step-fit on.** The shock signals fired there too, but the check had already refused the lock.
+- **The hold-off alone caught two frames the check PASSED:** seeds 1209 (28.0 cm) and 1216 (25.5 cm).
+  Without it those are locked-but-wrong.
+- It also held **two frames that were right** (seeds 1212, 1.3 cm; 1220, 0.8 cm): the availability cost.
+- Varied knocks: worst line p90 **1.67 cm** over all 24; recovery 0–1 frame on 21, 26 frames on one,
+  never on two (large knocks, lost honestly: 0 wrong locks).
+
+So H1 holds because the two remedies cover each other: the step-fit check catches the large
+knock-frame errors on the far half, and the shock hold-off catches the 25–30 cm ones inside its
+tolerance.
+
+#### Predictions, scored
+
+| | prediction | outcome |
+|---|---|---|
+| G11-1 | the rule picks `shock_outlier_frac` alone at 0.02–0.04 | **WRONG in part**: outlier 0.02 **plus** `n_ratio` 0.95 |
+| G11-2 | H2 and H3 PASS | **WRONG**: both FAIL, both from one honestly-failed setup (seed 1300) |
+| G11-3 | H1 at risk, 0–2 wrong locks, any failures from small knocks | **RIGHT on the count (0)**, so H1 passes |
+
+**What this does NOT establish.** 30 knocks at 0 wrong locks bounds the rate below ~10% (rule of three),
+not below 5% (that needs 59, qa). Default scene only: on the run-off scene the tracker's ~7 cm snap
+bias produces steady whole-court locks at 10–12 cm (G10 results), which neither remedy addresses. The
+hold-off is a separate commit from G10's default and is NOT switched on by default by this gate.
