@@ -2406,3 +2406,90 @@ against CP1's exact rendering camera. Locked = `paint_check(...).ok` at shipped 
   starts. I predict anchored ≥ checked, by 0–6 setups.
 - **(G12-4)** K4 PASS: a converged anchored fit is the same fit as any other converged fit.
 - **(G12-5)** anchored costs about **3×** plain's wall time (three fits, no early stop).
+
+## RUN-OFF SCENE RESULTS (job 1, 2026-09-23) — **the step breaks the TRACKER, not only the check: far baseline 1.46 → 9.68 cm p90, and 48 steady frames claim a lock 10–13 cm out**
+
+lead, 2026-09-23. Scored under the RUN-OFF SCENE pre-registration above (`85d610c`, clean, every
+artifact stamps it). Linux, Python 3.12, numpy 2.5.3, scipy 1.18.1, **opencv 4.13.0** (moved from 5.0.0
+before any scored run, to match the Windows `.venv`; declared). Measured against the exact synthetic
+camera that rendered each frame. Artifacts: `data/output/runoff_job1/`,
+`data/output/court_runoff_profile/runoff_profile.json`.
+
+### Platform parity (the pre-registered rule)
+
+G9 seed 500 re-run here is **not bit-identical** to `G9.json`: every per-frame line error differs, by up
+to 0.64 cm; setup differs in the 9th digit; every lock flag, status and scope is identical; the knock
+frame is 41.2 cm here against 41.0. So, as registered, **every OFF arm was re-run here** and only
+same-platform pairs are compared. The full OFF re-run matches Windows on every headline: main arm worst
+p90 **1.46 cm** (Windows 1.45), 5 locked-but-wrong knock frames at 41–64 cm (Windows 41–65), recovery 1
+frame on 6/6, identical setups; G8 bar 3 seed 201 locked `whole_court` at **49.13 cm** (Windows 49.11).
+
+### RO-1, the profile: **the step reaches the far baseline — RIGHT**
+
+Base-pose true camera, `court_runoff_profile.py`, subpixel render, ridge offset against the true
+projection (+ = toward the court):
+
+| line | no run-off | run-off 80 DN |
+|---|---|---|
+| far baseline, stacked per-segment peaks, noiseless ss 2 / ss 4 | 0.00 / −0.06 px | **+0.90 to +1.10 / +0.90 to +1.03 px** |
+| far baseline, with noise ss 2 / ss 4 | −0.04 to +0.09 / −0.10 to 0.00 px | **+0.90 to +1.22 / +0.88 to +1.06 px** |
+| doubles sidelines (median per-point) | −0.03 / +0.03 px | **+0.13 / −0.12 to −0.15 px (both inward)** |
+| near baseline | +0.02 to +0.05 px | −0.03 to +0.01 px |
+| service, centre, singles lines | — | **unchanged** (identical to 3 decimals, noiseless) |
+
+The pooled far-baseline profile: court side 95.9 DN, run-off side 80.0 DN, peak 96.5–96.8 DN, i.e. a
+**0.6–0.9 DN bump on a 16 DN step**, as qa measured on CP1 (0.7 on 15). The sim now carries the bias
+that defeats every ridge instrument.
+
+### G9 on the step scene — **KILL, and for a new reason: precision**
+
+| arm | scene | B1 worst line p90 | B2 steady jump | B3 recovery | B4 locked-but-wrong | verdict |
+|---|---|---|---|---|---|---|
+| main | no step (Linux) | 1.46 cm — PASS | 0.15 px | 1 frame ×6 | 5 (knock frames, 41–64 cm) | KILL |
+| main | **run-off 80** | **9.68 cm (`far_baseline`) — FAIL** | 0.31 px | 1 frame ×6 | **48** (steady frames, 10.0–12.9 cm, all `far_baseline` only) | **KILL** |
+| knock3 | no step / run-off | 130 m / 133 m | 1.88 / 1.88 | never ×3 / never ×3 | 0 / **8** | KILL / KILL |
+| knock4 | no step / run-off | 177 m / 982 m | 1.92 / 1.92 | never ×3 / **4, never, 1** | 0 / **14** | KILL / KILL |
+
+**The mechanism, measured.** Setup is unaffected: the paint fit models the step (`kappa`), and setup
+lands at 0.05–0.91 cm on all six seeds with the step (0.07–0.95 without). **From the first tracked
+frame the far baseline jumps to a median 7.0–7.8 cm out and stays there on every seed** (no step:
+0.50–0.87 cm). The far doubles sideline goes 0.08–0.15 → 1.14–1.39 cm. The tracker snaps each flowed
+point to the nearest symmetric bright ridge (`camera3d.ridge_offsets`), and RO-1 shows the step pulls
+both doubles sidelines' ridges ~0.13–0.15 px INWARD and the far baseline's ~1 px: the court looks
+narrower and shorter, and the pose bends to fit it. 48 steady frames are then locked while the far
+baseline is just past 10 cm, which the near-half check cannot see. The knock frames themselves are
+not locked on the step scene (none of the 48 is a knock frame).
+
+**So every tracking precision number before today was measured on a scene without the step, and the
+step costs the tracker ~7 cm on the far baseline in steady sway.** This is a tracker-side bias, the
+same bias class as the far-line check's, and it is not fixed by any far-line check: the remedy would
+be for the tracker to snap with the paint fit's step-aware model instead of a symmetric ridge. That is
+a hypothesis; it needs its own pre-registration.
+
+### G8 bars 1–3 on the step scene
+
+| bar | no step (Linux) | run-off 80 |
+|---|---|---|
+| 1. held-out catch > 20 cm (400–402, tol 0.75, z 5) | 0.9028 (65/72) PASS | **0.9028 (65/72) PASS** |
+| 2. incremental false flags | 0/63 PASS | 0/63 PASS |
+| far lines unchecked on good cases | 0.000 | **1.000** |
+| 3. seed 101 / 201 frame 60 NOT locked | caught / **LOCKED `whole_court`, 49.13 cm** — FAIL | caught / caught — but at **309 / 323 cm** out, scope `near_half` |
+
+Bars 1–2 pass on the step scene **with the far lines unchecked on every good case**: the stacked
+instrument is blind on a correct camera there, so its pass says nothing about the far half. Bar 3's two
+frames are caught on the step scene only because the (step-biased) tracker lands them 3 m out, where
+the near half fails too; it is not a far-line catch and is not evidence for the instrument.
+
+### Predictions, scored
+
+| | prediction | outcome |
+|---|---|---|
+| RO-1 | far-baseline ridge ≥ 0.5 px toward the court with the step; sidelines < 0.25 px; unaffected lines < 0.02 | **RIGHT**: +0.88 to +1.22 px; 0.13–0.17 px; unchanged |
+| RO-2 | far baseline unseen, `far_unchecked_on_good` rises, bar 1 FAILS, bar 2 passes | **RIGHT on blindness (0.000 → 1.000), WRONG on bar 1**: catch is unchanged at 0.9028 |
+| RO-3 | seed 201 stays locked, 101 caught | **WRONG**: both not locked, because the step-biased tracker puts them 3 m out |
+| RO-4 | B1–B3 pass with p90 rising but < 5 cm; B4 fails with 4–6 knock frames; KILL | **KILL RIGHT, reason WRONG**: B1 **fails at 9.68 cm**, and B4 fails on 48 STEADY frames, not on knock frames |
+
+**What this means.** Job 1's premise was that the sim lacked the thing that breaks the far-line check.
+It also lacked the thing that breaks the tracker. **Any tracking result on this sim without
+`--runoff-dn` is optimistic on the far half by about 7 cm**; the G9 KILL stands on both scenes. G10–G12
+below were registered on the default scene (G10 on both), and their results are read with this in view.
