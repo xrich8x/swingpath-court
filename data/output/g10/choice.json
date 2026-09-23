@@ -1,0 +1,111 @@
+{
+ "rule": "highest catch at > 20 cm among tolerances with incremental false <= 1%; ties to the larger tolerance (G8's rule, verbatim)",
+ "pooled_from": [
+  "/home/user/swingpath-court/data/output/g10/dev_norunoff.json",
+  "/home/user/swingpath-court/data/output/g10/dev_runoff80.json"
+ ],
+ "n_rows": 684,
+ "table": [
+  {
+   "tol_px_720": 0.1,
+   "second": 0.5,
+   "catch": 1.0,
+   "false": 0.2976190476190476,
+   "false_total": 0.358695652173913,
+   "n_wrong": 288,
+   "n_good": 276,
+   "n_good_pre_g8_ok": 252,
+   "far_unchecked_on_good": 0.0
+  },
+  {
+   "tol_px_720": 0.15,
+   "second": 0.5,
+   "catch": 1.0,
+   "false": 0.1388888888888889,
+   "false_total": 0.213768115942029,
+   "n_wrong": 288,
+   "n_good": 276,
+   "n_good_pre_g8_ok": 252,
+   "far_unchecked_on_good": 0.0
+  },
+  {
+   "tol_px_720": 0.2,
+   "second": 0.5,
+   "catch": 1.0,
+   "false": 0.0873015873015873,
+   "false_total": 0.16666666666666666,
+   "n_wrong": 288,
+   "n_good": 276,
+   "n_good_pre_g8_ok": 252,
+   "far_unchecked_on_good": 0.0
+  },
+  {
+   "tol_px_720": 0.25,
+   "second": 0.5,
+   "catch": 1.0,
+   "false": 0.06349206349206349,
+   "false_total": 0.14492753623188406,
+   "n_wrong": 288,
+   "n_good": 276,
+   "n_good_pre_g8_ok": 252,
+   "far_unchecked_on_good": 0.0
+  },
+  {
+   "tol_px_720": 0.35,
+   "second": 0.5,
+   "catch": 1.0,
+   "false": 0.0,
+   "false_total": 0.08695652173913043,
+   "n_wrong": 288,
+   "n_good": 276,
+   "n_good_pre_g8_ok": 252,
+   "far_unchecked_on_good": 0.0
+  },
+  {
+   "tol_px_720": 0.5,
+   "second": 0.5,
+   "catch": 0.9930555555555556,
+   "false": 0.0,
+   "false_total": 0.08695652173913043,
+   "n_wrong": 288,
+   "n_good": 276,
+   "n_good_pre_g8_ok": 252,
+   "far_unchecked_on_good": 0.0
+  },
+  {
+   "tol_px_720": 0.75,
+   "second": 0.5,
+   "catch": 0.9166666666666666,
+   "false": 0.0,
+   "false_total": 0.08695652173913043,
+   "n_wrong": 288,
+   "n_good": 276,
+   "n_good_pre_g8_ok": 252,
+   "far_unchecked_on_good": 0.0
+  },
+  {
+   "tol_px_720": 1.0,
+   "second": 0.5,
+   "catch": 0.8958333333333334,
+   "false": 0.0,
+   "false_total": 0.08695652173913043,
+   "n_wrong": 288,
+   "n_good": 276,
+   "n_good_pre_g8_ok": 252,
+   "far_unchecked_on_good": 0.0
+  }
+ ],
+ "choice": {
+  "tol_px_720": 0.35,
+  "second": 0.5,
+  "catch": 1.0,
+  "false": 0.0,
+  "false_total": 0.08695652173913043,
+  "n_wrong": 288,
+  "n_good": 276,
+  "n_good_pre_g8_ok": 252,
+  "far_unchecked_on_good": 0.0
+ },
+ "far_tol_px_720": 0.35,
+ "kill": false
+}
