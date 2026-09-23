@@ -109,7 +109,14 @@ Then, before doing anything else, read in this order:
 
 ## NOW — what is running
 
-RUN-STATE: RUNNING — 2026-09-23 — resumed by the founder's handoff ("Do A, but do it for me") — working in a cloud session on branch `claude/swingpath-camera-handoff-rxd7rq`, fast-forwarded from `camera3d-pnp-paintfit` @ `b81815f`. Queue: job 1 run-off step in the tracking sim; job 2 step-aware far-line check; job 3 knock-frame lock hold-off; job 4 Phase 2.
+RUN-STATE: RUNNING — 2026-09-23 — resumed by the founder's handoff ("Do A, but do it for me") — cloud session, branch `claude/swingpath-camera-handoff-rxd7rq`.
+
+**IN FLIGHT 2026-09-23 (cloud; Linux py3.12 venv + opencv 4.13 in the session scratchpad):**
+- Job 1 (run-off step, pre-reg `85d610c`): main tree; `data/output/runoff_job1/` (G9 OFF+ON, G8 bars 1-3 OFF+ON). Profile check done: far-baseline ridge +0.88..+1.22 px with the step. G9 OFF on Linux reproduces Windows (1.46 vs 1.45 cm, same 5 wrong locks).
+- Job 2 = G10 step-aware far-line check (pre-reg `eae1fa3`, scorer `e3fdff9`): worktree scratchpad/wt2 (branch job2-wip); pipeline -> `data/output/g10/`.
+- Job 3 = G11 shock hold-off (pre-reg `999af22`): worktree wt3 (job3-wip); dev 800-811 -> `data/output/g11/choice.json`; scoring (1200-1223 varied + 1300-1305 G9 protocol) waits on G10's far-line decision.
+- Job 4 = G12 height priors (pre-reg `d252026`): worktree wt4 (job4-wip); CP1 seed 1100 n200 -> `data/output/g12/`. Clay / 16 clips BLOCKED here: real clips only on the founder's PC.
+- All four pre-regs are pushed to the session branch (linear: 85d610c -> eae1fa3 -> e3fdff9 -> 999af22 -> d252026). The main working tree is still at 85d610c until job 1's runs finish (they import from it).
 
 **WHERE PHASE 1 LANDED (qa-audited 2026-09-22, see evidence QA AUDIT 2026-09-22):**
 - G8 at the registered 2.25 px window FAILS bar 3; bar 4 passes only because the check sees nothing on CP1. `FAR_LINES_DEFAULT` stays False.
