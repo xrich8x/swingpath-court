@@ -1,0 +1,150 @@
+{
+ "far_tol_px_720": 0.35,
+ "bars": {
+  "S1 catch >= 0.9 (runoff None)": true,
+  "S2 incremental false <= 0.02 (runoff None)": true,
+  "S3 both far lines checked on good >= 0.9 (runoff None)": true,
+  "S1 catch >= 0.9 (runoff 80.0)": true,
+  "S2 incremental false <= 0.02 (runoff 80.0)": true,
+  "S3 both far lines checked on good >= 0.9 (runoff 80.0)": true,
+  "S4 seed 101 frame 60 (runoff None) NOT locked (it is > 10 cm out)": true,
+  "S4 seed 201 frame 60 (runoff None) NOT locked (it is > 10 cm out)": true,
+  "S4 seed 101 frame 60 (runoff 80.0) NOT locked (it is > 10 cm out)": true,
+  "S4 seed 201 frame 60 (runoff 80.0) NOT locked (it is > 10 cm out)": true,
+  "S5 every wrong fit caught": true,
+  "S5 right fits flagged <= 0.02": true,
+  "S5 both far lines checked, right fits >= 0.9": true,
+  "S5 both far lines checked, true cameras >= 0.9": true
+ },
+ "detail": {
+  "heldout runoff None": {
+   "catch": 1.0,
+   "false": 0.0,
+   "false_total": 0.08695652173913043,
+   "n_wrong": 72,
+   "n_good": 69,
+   "n_good_pre_g8_ok": 63,
+   "far_unchecked_on_good": 0.0,
+   "far_both_checked_on_good": 1.0
+  },
+  "heldout runoff 80.0": {
+   "catch": 1.0,
+   "false": 0.0,
+   "false_total": 0.08695652173913043,
+   "n_wrong": 72,
+   "n_good": 69,
+   "n_good_pre_g8_ok": 63,
+   "far_unchecked_on_good": 0.0,
+   "far_both_checked_on_good": 1.0
+  },
+  "S4 seed 101 frame 60 (runoff None)": {
+   "worst_m": 0.5958052024144749,
+   "locked": false,
+   "scope": "whole_court",
+   "status": "tracking",
+   "tracker_cfg": {
+    "refit_s": 10.0,
+    "fail_frames": 2,
+    "recover_every": 5,
+    "sample_step_m": 0.4,
+    "min_tracked": 12,
+    "lost_frac": 0.35,
+    "fb_max_px": 1.0,
+    "ridge_px_720": 6.0,
+    "ridge_min_dn": 6.0,
+    "ransac_px_720": 3.0,
+    "q_rot": 100.0,
+    "q_pos": 100.0,
+    "r_floor_px": 0.1,
+    "far_lines": true,
+    "far_mode": "stepfit",
+    "far_tol_px_720": 0.35
+   }
+  },
+  "S4 seed 201 frame 60 (runoff None)": {
+   "worst_m": 0.49131784553453883,
+   "locked": false,
+   "scope": "whole_court",
+   "status": "tracking",
+   "tracker_cfg": {
+    "refit_s": 10.0,
+    "fail_frames": 2,
+    "recover_every": 5,
+    "sample_step_m": 0.4,
+    "min_tracked": 12,
+    "lost_frac": 0.35,
+    "fb_max_px": 1.0,
+    "ridge_px_720": 6.0,
+    "ridge_min_dn": 6.0,
+    "ransac_px_720": 3.0,
+    "q_rot": 100.0,
+    "q_pos": 100.0,
+    "r_floor_px": 0.1,
+    "far_lines": true,
+    "far_mode": "stepfit",
+    "far_tol_px_720": 0.35
+   }
+  },
+  "S4 seed 101 frame 60 (runoff 80.0)": {
+   "worst_m": 3.0939642233780056,
+   "locked": false,
+   "scope": "whole_court",
+   "status": "tracking",
+   "tracker_cfg": {
+    "refit_s": 10.0,
+    "fail_frames": 2,
+    "recover_every": 5,
+    "sample_step_m": 0.4,
+    "min_tracked": 12,
+    "lost_frac": 0.35,
+    "fb_max_px": 1.0,
+    "ridge_px_720": 6.0,
+    "ridge_min_dn": 6.0,
+    "ransac_px_720": 3.0,
+    "q_rot": 100.0,
+    "q_pos": 100.0,
+    "r_floor_px": 0.1,
+    "far_lines": true,
+    "far_mode": "stepfit",
+    "far_tol_px_720": 0.35
+   }
+  },
+  "S4 seed 201 frame 60 (runoff 80.0)": {
+   "worst_m": 3.2336811257732485,
+   "locked": false,
+   "scope": "near_half",
+   "status": "tracking",
+   "tracker_cfg": {
+    "refit_s": 10.0,
+    "fail_frames": 2,
+    "recover_every": 5,
+    "sample_step_m": 0.4,
+    "min_tracked": 12,
+    "lost_frac": 0.35,
+    "fb_max_px": 1.0,
+    "ridge_px_720": 6.0,
+    "ridge_min_dn": 6.0,
+    "ransac_px_720": 3.0,
+    "q_rot": 100.0,
+    "q_pos": 100.0,
+    "r_floor_px": 0.1,
+    "far_lines": true,
+    "far_mode": "stepfit",
+    "far_tol_px_720": 0.35
+   }
+  },
+  "S5 CP1 seed 1000": {
+   "catch": 1.0,
+   "n_caught": 32,
+   "n_wrong": 32,
+   "false_flag_right": 0.008152173913043478,
+   "n_flagged_right": 3,
+   "n_right": 368,
+   "true_camera_ok_rate": 1.0,
+   "far_both_checked_rate_right_fit": 0.9945652173913043,
+   "far_both_checked_rate_true": 1.0
+  }
+ },
+ "verdict": "PASS",
+ "failed": []
+}

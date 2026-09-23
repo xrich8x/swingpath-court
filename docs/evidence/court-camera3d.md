@@ -2553,3 +2553,69 @@ direction, the likely gain is small; the 4.0% it leaves are failures to lock, no
 
 **Scope, as declared:** one mount (CP1's 3.0 m), so a 1.5 m or 3.5 m court was never the right answer
 here; real footage (clay, the 16 clips) was not attempted in this session.
+
+## G10 RESULTS — **PASS on all five bars: the far lines are genuinely checked, on the cluttered scene too, with no new false flags**
+
+lead, 2026-09-23. Scored under the G10 pre-registration above; every artifact stamps `e3fdff9`
+(the scorer commit, directly on the pre-registration `eae1fa3`), `dirty: false`. Linux platform as
+declared. Measured against the exact synthetic camera that rendered each frame (sim) and CP1's exact
+rendering camera; CP1 wrong/right label recomputed from the run (32 wrong / 368 right of 400).
+Artifacts: `data/output/g10/`; verdict file `G10.json`.
+
+**Tolerance, by G8's rule on dev 600–605 (both scenes pooled): 0.35 px@720** (≈ 0.53 px@1080,
+≈ 19 cm on the ground at the far baseline). Dev table: catch 1.000 at every tolerance up to 0.35,
+incremental false 0.298 / 0.139 / 0.087 / 0.063 / **0.000** at 0.10 / 0.15 / 0.20 / 0.25 / **0.35**,
+then catch 0.993 / 0.917 / 0.896 at 0.50 / 0.75 / 1.00. Far lines unchecked on good cases: 0.000
+everywhere. KILL did not fire.
+
+| bar | no run-off | run-off 80 |
+|---|---|---|
+| **S1** held-out catch > 20 cm (700–702) | **1.000** (72/72) | **1.000** (72/72) |
+| **S2** incremental false flags | **0/63** | **0/63** |
+| **S3** both far lines checked on good cases | **1.000** | **1.000** |
+| **S4** seed 101 frame 60 NOT locked | caught (59.6 cm) | caught (309 cm) |
+| **S4** seed 201 frame 60 NOT locked | **caught (49.1 cm)** — the frame the stacked check locked as `whole_court` | caught (323 cm) |
+
+| **S5** CP1 arm K, seed 1000, n 400, at 0.35 | step-fit arm | stacked (registered window), same rows |
+|---|---|---|
+| wrong fits caught | **32/32** | 32/32 |
+| right fits flagged | **3/368 (0.82%)** | 3/368 |
+| true camera `ok` | 400/400 | 400/400 |
+| both far lines checked, right fits | **99.46%** | **0.00%** |
+| both far lines checked, true cameras | **100%** | 0% (qa's "blind") |
+
+**G10 PASSES (S1–S5).**
+
+**Inspecting the rejects (hard rule 9).** The 3 flagged right fits (trials 33, 83, 368) are **all already
+flagged by the pre-G8 check** on a near line (`near_baseline`, `centre_service`, `near_baseline`), so the
+step-fit adds **zero** new false flags on CP1. Two of them (33, 368) also fail the far baseline: their
+focal length is within 1% but their lines are not on the paint, the same kind of mislabel as G7's
+trial 32. **Recorded, labels not changed** (hard rule 8). On the 400 TRUE cameras the step-fit reads the
+far baseline at a median **−0.018 px**, |offset| p90 **0.078 px**, max **0.165 px** (2,400 stations):
+the ~1 px run-off bias of every ridge instrument is gone. Every CP1 number is identical at every
+tolerance 0.10–1.00: on this scene the wrong cameras are metres out and the right ones hundredths of a
+pixel, so no tolerance is close to deciding anything there.
+
+**What G10 does NOT cover — found while inspecting, no bar attached.** In S4's tracking runs on the
+**run-off** scene, with the step-fit ON, **4 and 5 steady frames per run (seeds 101 / 201) are locked,
+scope `whole_court`, while the far baseline is 10.1–12.3 cm out**; on the no-run-off scene, **0**. This is
+job 1's tracker bias (the symmetric-ridge snap puts the far baseline ~7 cm out on the step scene) landing
+just past 10 cm, inside the check's ~19 cm tolerance. The check is right that the far lines are on the
+paint to its tolerance; the tracker is not good to 10 cm there. **The fix belongs in the tracker's
+snap (job 1), not in the check.** With the stacked check these frames claimed only `near_half`; with the
+step-fit they claim `whole_court`. That is the trade qa warned about, and it is recorded here plainly.
+
+**Cost (reported, not gated):** one step-fit check is **2.6–3.1 s** on one idle CPU core at 1080p
+(8 segments, 1.5 px photometry window, during development), **~7 s** as registered (24 segments, 6.0
+px window) on a loaded core; almost all of it is the 41-point blur search. G8's 20 ms phone budget is
+blown by two to three orders of magnitude. **A PASS here is an accuracy result, not a phone-ready one.**
+
+#### Predictions, scored
+
+| | prediction | outcome |
+|---|---|---|
+| G10-1 | dev rule picks 0.25–0.35 px@720 | **RIGHT**: 0.35 |
+| G10-2 | S1 ≥ 0.95, S2 = 0, S3 ≥ 0.98 | **RIGHT**: 1.000, 0, 1.000 on both scenes |
+| G10-3 | S4: all four knock frames caught | **RIGHT** |
+| G10-4 | S5: all wrong caught, 0–4 right flagged, both far lines checked ≥ 95% | **RIGHT**: 32/32, 3 (all pre-existing), 99.5% / 100% |
+| G10-5 | cost 2–10 s per check | **RIGHT** |
