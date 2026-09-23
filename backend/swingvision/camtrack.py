@@ -29,7 +29,7 @@ tools/court_track_sim.py is the pre-registered measurement.
 from __future__ import annotations
 
 import math
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 import numpy as np
 
@@ -69,6 +69,19 @@ class TrackConfig:
     # ridge) or "stepfit" (the paint fit's step+paint model, job 2 2026-09-23)
     far_mode: str = camera3d.FAR_MODE_DEFAULT
     far_tol_px_720: float | None = None   # None = the instrument's own default
+    # SHOCK HOLD-OFF (job 3, 2026-09-23). G9: on 5 of 6 knock frames the pose was
+    # bent 41-65 cm by 27-34 coherent same-sign flow outliers and the paint check
+    # still passed it. On exactly those frames the tracker's OWN flow shows the
+    # shock: fewer points survive, the residual jumps, and outliers appear (qa
+    # 2026-09-22 s4). When any enabled signal fires, the frame is reported NOT
+    # locked. It changes ONLY the reported claim, never the pose or the tracker's
+    # state, so tracking precision cannot move. None = signal off; all None (the
+    # default) is every earlier number.
+    shock_n_ratio: float | None = None       # kept points / recent median below this
+    shock_resid_ratio: float | None = None   # median residual / recent median above this ...
+    shock_resid_floor_px_720: float = 0.2    # ... and above this absolute floor
+    shock_outlier_frac: float | None = None  # kept points past ransac_px of the raw pose
+    shock_window: int = 10                   # frames in the "recent" median
 
 
 @dataclass
@@ -84,8 +97,12 @@ class TrackStep:
     lock_scope: str = "none"          # whole_court | near_half | none
     lock_unverified: tuple = ()       # lines the check could NOT see this frame
     lock_worst: str | None = None     # the line that failed, when it failed
+    # the shock signals this frame (always recorded) and which ones fired
+    shock: dict = field(default_factory=dict)
 
     def claim(self) -> str:
+        if not self.locked and self.lock_worst == "shock_holdoff":
+            return "not locked (a shock was detected this frame; the pose is unverified)"
         if not self.locked:
             return f"not locked ({self.lock_worst or 'nothing checkable'})"
         if self.lock_scope == "whole_court":
@@ -235,7 +252,33 @@ class CameraTracker:
         inl = np.abs(r) <= thr
         if inl.sum() < self.cfg.min_tracked:
             return None
+        self._outlier_frac = float(1.0 - inl.mean())      # a shock signal (job 3)
         return sol.x[:3], sol.x[3:], float(np.sqrt(np.mean(r[inl] ** 2)))
+
+    def _shock(self, n, resid):
+        """This frame's shock signals against the recent history, and which of the
+        ENABLED ones fire. Reads only the tracker's own flow; no truth."""
+        c = self.cfg
+        hist = getattr(self, "_hist", [])
+        sig = {"n": int(n), "resid_px": resid,
+               "outlier_frac": getattr(self, "_outlier_frac", math.nan),
+               "n_ratio": math.nan, "resid_ratio": math.nan, "fired": []}
+        if len(hist) >= 3 and np.isfinite(resid):
+            hn = float(np.median([h[0] for h in hist]))
+            hr = float(np.median([h[1] for h in hist]))
+            sig["n_ratio"] = n / max(hn, 1.0)
+            sig["resid_ratio"] = resid / max(hr, 1e-3)
+            if c.shock_n_ratio is not None and sig["n_ratio"] < c.shock_n_ratio:
+                sig["fired"].append("n_ratio")
+            if (c.shock_resid_ratio is not None and sig["resid_ratio"] > c.shock_resid_ratio
+                    and resid > c.shock_resid_floor_px_720 * self.scale):
+                sig["fired"].append("resid_ratio")
+            if (c.shock_outlier_frac is not None
+                    and sig["outlier_frac"] > c.shock_outlier_frac):
+                sig["fired"].append("outlier_frac")
+        if np.isfinite(resid):
+            self._hist = (hist + [(n, resid)])[-c.shock_window:]
+        return sig
 
     def _check(self, grey, cam):
         """The full PaintCheck, not a bool: the caller needs WHAT was verified."""
@@ -279,9 +322,12 @@ class CameraTracker:
         grey = _grey8(frame)
         if self.prev is None:
             self.prev, self.t_prev, self.t_refit = grey, t, t
-            return self._stepped(self.cam, "tracking", 0, 0.0, self._check(grey, self.cam))
+            out = self._stepped(self.cam, "tracking", 0, 0.0, self._check(grey, self.cam))
+            out.shock = {"n": 0, "fired": []}          # no flow yet, so no signal
+            return out
         dt = max(t - self.t_prev, 1e-3)
         got, n = self._flow(grey, boxes)
+        self._outlier_frac = math.nan
         pose = self._pose_from(*got) if got is not None else None
         cand, resid = None, math.nan
         if pose is not None:
@@ -295,6 +341,7 @@ class CameraTracker:
             idx, img = got
             resid = float(np.median(np.abs(self._normal_resid(
                 cand, idx, cand.undistort(img)))))
+        shock = self._shock(n, resid) if cand is not None else {"n": int(n), "fired": []}
         chk = self._check(grey, cand) if cand is not None else None
         ok = chk is not None and chk.ok
         self.fail_run = 0 if ok else self.fail_run + 1
@@ -325,7 +372,13 @@ class CameraTracker:
                 self.kf.reset(self.good.rvec, self.good.tvec)
                 status = "lost"
         self.prev, self.t_prev = grey, t
-        return self._stepped(self.cam, status, n, resid, chk, ok)
+        out = self._stepped(self.cam, status, n, resid, chk, ok)
+        out.shock = shock
+        # the hold-off: the REPORT only. The pose, `self.good` and every counter
+        # above are exactly what they would have been without it.
+        if shock["fired"] and status == "tracking" and out.locked:
+            out.locked, out.lock_scope, out.lock_worst = False, "none", "shock_holdoff"
+        return out
 
     @staticmethod
     def _stepped(cam, status, n, resid, chk, ok=None):

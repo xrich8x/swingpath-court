@@ -2278,3 +2278,71 @@ tolerance; the per-station offset distribution on the true cameras.
 - **(G10-4)** S5: every wrong fit caught, **0–4** right fits flagged, both far lines checked on ≥ 95%.
 - **(G10-5)** Cost: **2–10 s** per check on one CPU core, dominated by the 41-point blur search.
   A PASS here is an accuracy result, not a phone-ready one.
+
+## G11: a shock hold-off, so a knock cannot claim a lock — PRE-REGISTRATION (job 3, 2026-09-23)
+
+lead, 2026-09-23. **Written and committed before any scored or development run.** Nothing above this
+heading is edited. (One smoke run on SPENT seed 100 checked the tool runs end to end; nothing was
+chosen from it.)
+
+### The remedy (logic, not perception)
+
+G9 KILLed on B4: 5 of 6 knock frames reported `locked` while 41–65 cm out. qa (2026-09-22 §4) showed
+the pose is bent by coherent flow outliers on the knock frame only, and that the tracker's own flow
+signals jump on exactly that frame. `camtrack.TrackConfig` gains three signals, each `None` (off) by
+default, so every earlier number stands:
+
+- `shock_n_ratio`: flowed-and-snapped points kept, over the median of the last 10 frames, **below** it;
+- `shock_resid_ratio`: the median normal residual over its recent median, **above** it (and above
+  0.2 px@720 absolute);
+- `shock_outlier_frac`: the fraction of kept points more than `ransac_px` (3 px@720) from the raw
+  pose, **above** it.
+
+When any enabled signal fires on a `tracking` frame that the paint check passed, that frame is
+reported `locked = False`, `lock_scope = "none"`, `lock_worst = "shock_holdoff"`. **It changes only
+the report**: pose, `good`, counters and recovery are untouched (`tests/test_shock_holdoff.py` proves
+bit-identical poses with the hold-off forced on every frame). Every frame's signals are logged
+whether or not the hold-off is on, so a threshold replay on logged runs **is** the online result.
+
+### Populations — fresh seeds
+
+- **VARIED knocks** (qa: "vary the knock… on fresh seeds"): per seed, from its own stream
+  (`SeedSequence([seed, 11])`, the sway is untouched): size **0.5–2.0×** G9's 1.80°, direction
+  uniform over all yaw/pitch mixes and signs, time uniform in **1.5–2.2 s**, held; 90 frames.
+- **G9 protocol**: G9's own knock (×1 at 2.0 s), 120 frames, for G9's precision bars.
+- **Development:** varied, seeds **800–811** (12 knocks), hold-off OFF, signals logged, far lines
+  **OFF** (declared: a stricter check can only remove locks, so thresholds that leave zero wrong locks
+  with far lines off leave zero with them on).
+- **Scoring:** varied seeds **1200–1223** (24 knocks, n 90) + G9 protocol seeds **1300–1305** (6
+  knocks, n 120) = **30 knocks**, the hold-off ON at the chosen thresholds, far lines **as shipped at
+  the scoring commit** (`TrackConfig()` defaults; stamped resolved). If G10 passes and its follow-up
+  flips the far-line defaults, G11 scores with them; otherwise with far lines off.
+
+### Threshold choice — fixed now
+
+Grid: `shock_n_ratio` ∈ {off, 0.95, 0.90, 0.85, 0.80} × `shock_resid_ratio` ∈ {off, 2, 3, 4, 6} ×
+`shock_outlier_frac` ∈ {off, 0.02, 0.04, 0.06, 0.08}, replayed on the development runs. **Rule:** among
+settings with **zero** locked-but-wrong frames (> 10 cm) on development AND a hold-off rate ≤ **1%**
+of steady frames (outside the 6 frames from each knock), the lowest steady rate; ties to more
+knock-window fires, then grid order. **KILL** if no setting qualifies: a hold-off alone cannot do it.
+
+### THE BARS — on the 30 scored knocks
+
+- **H1 (the job's bar).** **Zero** frames, over every frame of all 30 runs, reported `locked` while
+  any line is more than **10 cm** out. Each such frame is listed with its signals.
+- **H2 (precision still passes).** On the G9-protocol runs, G9's B1 (every line p90 ≤ 5 cm), B2
+  (steady jump ≤ 2 px) and B3 (every knock back within 5 cm in ≤ 15 frames), verbatim.
+- **H3 (availability).** The hold-off fires on ≤ **2%** of steady frames.
+
+**PASS** iff H1–H3. Reported, not gated: recovery and worst p90 on the varied runs (a 2× knock may
+be lost, as G9's ×3 was; losing it honestly is not a wrong lock); locked-frame counts; the setup
+error per seed.
+
+### Predictions, recorded before the run
+
+- **(G11-1)** The rule picks `shock_outlier_frac` alone at 0.02–0.04: steady frames show ~0%
+  outliers, and the knock frames 5–14%.
+- **(G11-2)** H2 and H3 PASS (the hold-off cannot move the pose; steady outliers are ~0).
+- **(G11-3)** H1 is the risk: a small knock (0.5–0.8×) can put a line 10–20 cm out with few outliers.
+  I predict **0–2** locked-but-wrong frames on the 30, so H1 **may FAIL**, and if it does, the
+  failing frames are small knocks.

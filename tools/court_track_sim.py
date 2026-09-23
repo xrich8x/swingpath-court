@@ -191,10 +191,12 @@ def render(cam: camera3d.CourtCamera, rng, contrast=110.0, psf=0.9, noise=True, 
 
 
 # --------------------------------------------------------------- motion ----
-def sway_path(n, rng, knock_s=KNOCK_S, knock_scale=1.0):
+def sway_path(n, rng, knock_s=KNOCK_S, knock_scale=1.0, knock_deg=(1.0, 1.5)):
     """Per-frame (yaw, pitch, roll, dx, dy, dz) offsets: a fence swaying in wind
     (sinusoids plus a slow random walk, ~0.3 deg and ~1 cm) and one knock at
-    `knock_s` (+1.5 deg pitch, +1 deg yaw, held; x `knock_scale`)."""
+    `knock_s` (+1.5 deg pitch, +1 deg yaw, held; x `knock_scale`). `knock_deg` =
+    (yaw, pitch) replaces those two numbers (job 3's varied knocks); the sway is
+    drawn first, so it is the same whatever the knock."""
     t = np.arange(n) / FPS
     out = np.zeros((n, 6))
     amp = np.radians([0.3, 0.3, 0.15])
@@ -207,8 +209,8 @@ def sway_path(n, rng, knock_s=KNOCK_S, knock_scale=1.0):
     for k in range(3, 6):
         out[:, k] = 0.01 * np.sin(2 * np.pi * rng.uniform(0.5, 2.0) * t + rng.uniform(0, 6.3))
     knock = t >= knock_s
-    out[knock, 0] += np.radians(1.0 * knock_scale)
-    out[knock, 1] += np.radians(1.5 * knock_scale)
+    out[knock, 0] += np.radians(knock_deg[0] * knock_scale)
+    out[knock, 1] += np.radians(knock_deg[1] * knock_scale)
     return out
 
 
@@ -272,11 +274,12 @@ def summarise(runs):
 # ----------------------------------------------------------------- arms ----
 def run(seed=0, n=120, seed_sigma=14.78, verbose=True, knock_scale=1.0, ss=SS_DEFAULT,
         subpixel=SUBPIXEL_DEFAULT, far_lines=camtrack.TrackConfig.far_lines,
-        runoff_dn=RUNOFF_DN_DEFAULT, far_mode=camtrack.TrackConfig.far_mode, track_cfg=None):
+        runoff_dn=RUNOFF_DN_DEFAULT, far_mode=camtrack.TrackConfig.far_mode, track_cfg=None,
+        knock_s=KNOCK_S, knock_deg=(1.0, 1.5)):
     r_path, r_img, r_seed = [np.random.default_rng(s) for s in
                              np.random.SeedSequence(seed).spawn(3)]
     p0 = base_pitch()
-    path = sway_path(n, r_path, knock_scale=knock_scale)
+    path = sway_path(n, r_path, knock_s=knock_s, knock_scale=knock_scale, knock_deg=knock_deg)
     truths = [camera(p[0], p0 + p[1], p[2], p[3], p[4], p[5]) for p in path]
 
     # setup on frame 0 exactly as the product would: keypoints -> PnP -> paint fit
@@ -301,7 +304,7 @@ def run(seed=0, n=120, seed_sigma=14.78, verbose=True, knock_scale=1.0, ss=SS_DE
     res = {"camtrack": [], "lock_step": []}
     jumps = {"camtrack": [], "lock_step": []}
     prev = {"camtrack": None, "lock_step": None, "true": None}
-    status, locked, scope = [], [], []
+    status, locked, scope, shock = [], [], [], []
     frame = f0
     for i, tc in enumerate(truths):
         if i:
@@ -311,6 +314,7 @@ def run(seed=0, n=120, seed_sigma=14.78, verbose=True, knock_scale=1.0, ss=SS_DE
         status.append(st.status)
         locked.append(bool(st.locked))
         scope.append(st.lock_scope)
+        shock.append(dict(getattr(st, "shock", {}) or {}))
         if i:
             A, _ = calibration.court_lock_step(np.dstack([img8] * 3), Hb)
             Hb = A @ Hb
@@ -335,7 +339,8 @@ def run(seed=0, n=120, seed_sigma=14.78, verbose=True, knock_scale=1.0, ss=SS_DE
                   f"({time.time() - t0:.0f}s)", flush=True)
     return {
         "stamp": {"tool": "tools/court_track_sim.py", "seed": seed, "n_frames": n, "fps": FPS,
-                  "image": [W, H], "knock_scale": knock_scale, "mount_m": MOUNT_M, "setback_m": SETBACK_M,
+                  "image": [W, H], "knock_scale": knock_scale, "knock_s": knock_s,
+                  "knock_deg": list(knock_deg), "mount_m": MOUNT_M, "setback_m": SETBACK_M,
                   "hfov_deg": HFOV_DEG, "seed_sigma_px": seed_sigma,
                   # the RESOLVED config the tracker ran with, not the class
                   # defaults: until 2026-09-22 this stamped TrackConfig() and so
@@ -355,7 +360,8 @@ def run(seed=0, n=120, seed_sigma=14.78, verbose=True, knock_scale=1.0, ss=SS_DE
         "status": status,
         "locked": locked,
         "lock_scope": scope,
-        "runs": {arm: {"frames": res[arm], "jumps": jumps[arm], "knock": int(KNOCK_S * FPS),
+        "shock": shock,
+        "runs": {arm: {"frames": res[arm], "jumps": jumps[arm], "knock": int(np.argmax(np.arange(n) / FPS >= knock_s)),
                        "locked": locked if arm == "camtrack" else None}
                  for arm in res},
     }
