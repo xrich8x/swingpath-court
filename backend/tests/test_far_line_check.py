@@ -60,19 +60,20 @@ def test_no_ridge_at_all_is_NOT_reported_as_a_failed_line():
 
 
 # --------------------------------------------------- the far lines are SEEN --
-def test_the_instrument_is_SHIPPED_OFF_and_says_so(scene):
-    """G8's non-degradation bar FAILED on CP1's cluttered scene (369 of 369 right
-    cameras flagged; the net tape captures the ridge), so the instrument ships
-    measured but OFF. Re-decided 2026-09-22 at the REGISTERED window (3 x
-    far_tol): bar 3 fails there instead (a 49 cm knock frame locks as whole_court)
-    and bar 4 passes only because the far lines go unchecked. A failed gate stays
-    failed - do not flip this default without a new pre-registration."""
+def test_the_step_fit_instrument_is_SHIPPED_ON_and_says_so(scene):
+    """History: G8's stacked instrument shipped OFF (it failed G8's bars 3 and 4 and
+    is blind on CP1's cluttered scene). G10 (2026-09-23) scored the STEP-AWARE
+    instrument and it passed all five bars, so the far lines are now checked by
+    default with it. The stacked instrument is still there as far_mode="stack",
+    and far_lines=False is still the pre-G8 check."""
     cam, img, _ = scene
-    assert camera3d.FAR_LINES_DEFAULT is False
+    assert camera3d.FAR_LINES_DEFAULT is True
+    assert camera3d.FAR_MODE_DEFAULT == "stepfit"
     d = camera3d.paint_check(img, cam)
-    assert set(camera3d.FAR_LINES) <= set(d.unchecked)
-    assert d.scope == "near_half" and not d.far_lines_checked
-    assert "far_baseline" in d.claim()
+    assert d.far_lines_checked and d.scope == "whole_court" and d.ok
+    off = camera3d.paint_check(img, cam, far_lines=False)
+    assert set(camera3d.FAR_LINES) <= set(off.unchecked)
+    assert off.scope == "near_half" and "far_baseline" in off.claim()
 
 
 def test_the_far_lines_move_from_unchecked_to_checked(scene):

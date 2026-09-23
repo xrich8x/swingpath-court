@@ -72,9 +72,12 @@ def test_ridge_residual_STILL_has_the_far_line_blind_spot_paint_check_lost(true_
     # lines on this cluttered CP1 scene find no ridge and stay `unchecked` - qa's
     # 2026-09-19 finding - so the blind spot is only lost at the wider window the
     # committed G8 run used, where the net tape is what gets "seen".
-    now = camera3d.paint_check(img, true_cam, far_lines=True)
+    # (these two are the STACKED instrument, pinned by name since the step-fit
+    # became the default on 2026-09-23)
+    now = camera3d.paint_check(img, true_cam, far_lines=True, far_mode="stack")
     assert set(camera3d.FAR_LINES) <= set(now.unchecked)
-    wide = camera3d.paint_check(img, true_cam, far_lines=True, far_kw={"reach_px_720": 8.0})
+    wide = camera3d.paint_check(img, true_cam, far_lines=True, far_mode="stack",
+                                far_kw={"reach_px_720": 8.0})
     assert set(wide.unchecked) < set(pre.unchecked) or not wide.unchecked
 
 

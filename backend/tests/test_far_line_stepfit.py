@@ -32,9 +32,11 @@ def true_meas(scene):
     return camera3d.far_line_stepfit_measure(img, cam)
 
 
-def test_the_default_is_unchanged():
-    assert camera3d.FAR_MODE_DEFAULT == "stack"
-    assert camera3d.FAR_LINES_DEFAULT is False
+def test_the_default_is_the_step_fit_at_the_g10_tolerance():
+    # flipped after G10 PASSED (2026-09-23); the tolerance is G8's rule on G10's dev
+    assert camera3d.FAR_MODE_DEFAULT == "stepfit"
+    assert camera3d.FAR_LINES_DEFAULT is True
+    assert camera3d.STEPFIT_TOL_PX_720 == 0.35
 
 
 def test_the_run_off_step_is_measured_as_kappa(true_meas):

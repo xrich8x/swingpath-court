@@ -508,7 +508,14 @@ FAR_REACH_PX_720 = FAR_REACH_MULT * FAR_TOL_PX_720
 # 2), so a confuser guard is a NEW experiment needing its own pre-registration.
 # Until then the instrument ships measured but OFF, and `PaintCheck.scope` says
 # out loud that the far lines were not verified.
-FAR_LINES_DEFAULT = False
+# RE-DECIDED 2026-09-23 by G10 (job 2): ON, with the STEP-AWARE instrument below
+# (`FAR_MODE_DEFAULT = "stepfit"`), the follow-up G10's pre-registration allowed on a
+# PASS. G10 passed all five bars: held-out sim catch 72/72 with 0 false flags on
+# both scenes, both known bad knock frames caught, and on CP1's cluttered scene the
+# far lines checked on 99.5% of right fits with 0 new false flags (the stacked
+# instrument, still available as far_mode="stack", checks them on 0%). Judged in
+# the tracker by G11. Everything above is the stacked instrument's history.
+FAR_LINES_DEFAULT = True
 FAR_DENSE_STEP_M = 0.02
 _FAR_DENSE = {}
 
@@ -715,6 +722,9 @@ def far_line_profile(grey, cam: CourtCamera, *, far_tol_px_720: float = FAR_TOL_
 STEPFIT_WINDOW_PX_720 = 3.0     # search half-window, fixed (not swept, not tol-coupled)
 STEPFIT_SEGMENTS = 24           # stations that straddle a crossing line are dropped
 STEPFIT_MIN_STATION_PX_720 = 16.0
+# chosen by G8's rule on G10's dev sweep (seeds 600-605, both scenes): the highest
+# catch at <= 1% false flags; ~0.53 px@1080, ~19 cm on the ground at the far baseline
+STEPFIT_TOL_PX_720 = 0.35
 # The photometry (blur sigma, kappa) is read on the near baseline and near service
 # line exactly as `paintfit.estimate_photometry` does, but through a WIDER window:
 # the paint fit's 1.5 px assumes a nearly-converged camera, while a check must read
@@ -819,7 +829,7 @@ def far_line_stepfit_measure(grey, cam: CourtCamera, *, window_px_720: float = S
     return out
 
 
-def score_stepfit(meas: dict, *, far_tol_px_720: float = FAR_TOL_PX_720, s_scale: float = 1.0,
+def score_stepfit(meas: dict, *, far_tol_px_720: float = STEPFIT_TOL_PX_720, s_scale: float = 1.0,
                   min_det_frac: float = 0.5, cfg=None) -> dict:
     """`far_line_stepfit_measure` output -> the per-line verdict dict, in the same
     shape as `score_far_stacks` ("frac", "seen", "n_seg", "n_det", "n_samples")
@@ -847,7 +857,7 @@ def score_stepfit(meas: dict, *, far_tol_px_720: float = FAR_TOL_PX_720, s_scale
     return out
 
 
-def far_line_stepfit(grey, cam: CourtCamera, *, far_tol_px_720: float = FAR_TOL_PX_720,
+def far_line_stepfit(grey, cam: CourtCamera, *, far_tol_px_720: float = STEPFIT_TOL_PX_720,
                      min_det_frac: float = 0.5, **kw) -> dict:
     """Measure and score in one call; the drop-in for `far_line_profile`."""
     meas = far_line_stepfit_measure(grey, cam, **kw)
@@ -856,7 +866,7 @@ def far_line_stepfit(grey, cam: CourtCamera, *, far_tol_px_720: float = FAR_TOL_
 
 
 FAR_MODES = ("stack", "stepfit")
-FAR_MODE_DEFAULT = "stack"
+FAR_MODE_DEFAULT = "stepfit"     # G10 PASS, 2026-09-23 (was "stack")
 
 
 @dataclass
