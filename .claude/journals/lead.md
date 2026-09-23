@@ -111,12 +111,17 @@ Then, before doing anything else, read in this order:
 
 RUN-STATE: RUNNING — 2026-09-23 — resumed by the founder's handoff ("Do A, but do it for me") — cloud session, branch `claude/swingpath-camera-handoff-rxd7rq`.
 
-**IN FLIGHT 2026-09-23 (cloud; Linux py3.12 venv + opencv 4.13 in the session scratchpad):**
-- Job 1 (run-off step, pre-reg `85d610c`): main tree; `data/output/runoff_job1/` (G9 OFF+ON, G8 bars 1-3 OFF+ON). Profile check done: far-baseline ridge +0.88..+1.22 px with the step. G9 OFF on Linux reproduces Windows (1.46 vs 1.45 cm, same 5 wrong locks).
-- Job 2 = G10 step-aware far-line check (pre-reg `eae1fa3`, scorer `e3fdff9`): worktree scratchpad/wt2 (branch job2-wip); pipeline -> `data/output/g10/`.
-- Job 3 = G11 shock hold-off (pre-reg `999af22`): worktree wt3 (job3-wip); dev 800-811 -> `data/output/g11/choice.json`; scoring (1200-1223 varied + 1300-1305 G9 protocol) waits on G10's far-line decision.
-- Job 4 = G12 height priors (pre-reg `d252026`): worktree wt4 (job4-wip); CP1 seed 1100 n200 -> `data/output/g12/`. Clay / 16 clips BLOCKED here: real clips only on the founder's PC.
-- All four pre-regs are pushed to the session branch (linear: 85d610c -> eae1fa3 -> e3fdff9 -> 999af22 -> d252026). The main working tree is still at 85d610c until job 1's runs finish (they import from it).
+**LOCAL HANDOFF 2026-09-23 ~17:00 UTC (founder: "swap back to local environment"; founder asleep, asked for REAL-FOOTAGE video snippets of 5 clips: 2 hard, 2 shell, 1 clay).**
+The cloud container cannot reach the clips (YouTube blocked by the environment's network policy; Drive search not enabled; the shell clips are the founder's own recordings anyway). So on the founder's PC:
+1. `git fetch origin` then `git checkout -b local-continue origin/claude/swingpath-camera-handoff-rxd7rq` (this branch has everything: jobs 1-4 code, pre-regs, results).
+2. `cd backend` then `.venv\Scripts\python.exe ..\tools\court_real_snippets.py` -> `data/output/court_real_snippets/{UHf0LeMU2pg,uR5q2cSM6AY,hillsborough_p02,flexi_joy_p01,sAjkpeRq4P4}.mp4` + `summary.json` (~10 s each; green = whole court verified, amber = near half only, red = not locked). Real footage has NO measured court: these show lock and stability, never accuracy. Show the founder the 5 mp4s.
+3. Do NOT re-run jobs 2/3 locally: the cloud session is still running them and pushes to the claude/ branch.
+
+**STATE OF THE FOUR JOBS:**
+- Job 1 DONE (`c4fd618`): the run-off step breaks the TRACKER too (far_baseline p90 1.46 -> 9.68 cm; 48 steady wrong locks). Remedy hypothesis: snap with the step-aware model, needs its own pre-reg.
+- Job 2 = G10 (step-aware far-line check): cloud; CP1 stage (seed 1000 n400) then `tools/court_g10.py score`. Dev chose tol 0.35 px@720. Artifacts `data/output/g10/`.
+- Job 3 = G11 (shock hold-off): thresholds chosen on dev (n_ratio 0.95 + outlier 0.02; `data/output/g11/choice.json`). Scoring (varied 1200-1223 n90 + G9 protocol 1300-1305 n120, `--choice`, `--far-shipped`) runs AFTER G10's verdict. Tool: `tools/court_track_g11.py`.
+- Job 4 = G12 DONE, FAIL (`6d79714`): height priors 9.0% wrong vs shipped checked fit 4.0%; 0 locked-and-wrong anywhere. Clay / 16-clip real-footage items need the PC.
 
 **WHERE PHASE 1 LANDED (qa-audited 2026-09-22, see evidence QA AUDIT 2026-09-22):**
 - G8 at the registered 2.25 px window FAILS bar 3; bar 4 passes only because the check sees nothing on CP1. `FAR_LINES_DEFAULT` stays False.
