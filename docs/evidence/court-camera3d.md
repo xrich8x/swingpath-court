@@ -2493,3 +2493,63 @@ the near half fails too; it is not a far-line catch and is not evidence for the 
 It also lacked the thing that breaks the tracker. **Any tracking result on this sim without
 `--runoff-dn` is optimistic on the far half by about 7 cm**; the G9 KILL stands on both scenes. G10–G12
 below were registered on the default scene (G10 on both), and their results are read with this in view.
+
+## G12 RESULTS — **FAIL: fixed height priors do WORSE than the shipped fit (9.0% wrong vs 4.0%), because they throw away the height the keypoints already carry**
+
+lead, 2026-09-23. Scored under the G12 pre-registration above (`d252026`); the artifact
+`data/output/g12/G12_seed1100_n200.json` stamps `a7cde66` (the journal-only commit on top of it),
+`dirty: false`, 200/200 trials scored, 0 errored. Linux platform as declared. Measured against CP1's
+exact rendering camera; WRONG = fitted f > 1% from 805.54 px; placement = C1's M readout.
+
+| arm | wrong cameras | locked | **locked AND wrong** | locked AND right | worst line p90, locked right | setup time p50 |
+|---|---|---|---|---|---|---|
+| plain `r1_fit` (G1's arm K) | 16 (8.0%) | 92.0% | **0** | 184 | 1.00 cm | 15 s |
+| **checked** (shipped `fit_camera_checked`) | **8 (4.0%)** | 96.0% | **0** | **192** | 1.08 cm | 16 s |
+| anchored (1.5 / 2.5 / 3.5 m) | 18 (9.0%) | 91.0% | **0** | 182 | 1.08 cm | 58 s |
+
+| bar | result |
+|---|---|
+| K1 anchored: zero locked-and-wrong | **PASS** (0 of 200; nor does any other arm lock a wrong camera) |
+| K2 anchored wrong rate < plain's AND ≤ 2% | **FAIL**: 9.0% against plain's 8.0% |
+| K3 anchored locked-and-right ≥ checked's | **FAIL**: 182 against 192 |
+| K4 anchored every line p90 ≤ 5 cm on its locked right cameras | **PASS** (1.08 cm) |
+
+**G12 FAILS (K2, K3). `fit_camera_anchored` stays off the shipped path.**
+
+**Why, measured.** Each anchor's own outcome, over all trials:
+
+| start height | converged to the RIGHT camera |
+|---|---|
+| 1.5 m | **1 of 188** (the fit stays near 1.5–1.9 m) |
+| 2.5 m | 103 of 200 |
+| 3.5 m | 176 of 200 |
+
+The true camera is at 3.0 m. A dolly-zoom to a fixed height moves the SEED's focal length with it, and
+the fit does not travel back: from 1.5 m it almost never reaches 3.0 m, and from 2.5 m half the fits
+settle in a wrong basin. The wrong basins are the same discrete ones G1 found, recurring across trials
+(f ≈ 730 px at 3.0 m ×29, ≈ 930–950 px at 2.6 m ×17, ≈ 1070 px at 3.0 m ×7). The trial table: the
+anchored arm is wrong on 11 trials where the shipped checked fit is right, and right on none where
+checked is wrong. **The keypoint PnP seed already carries a usable height** (its height error is what
+G1 found predicts the basin), and replacing it with a fixed prior discards that information.
+`fit_camera_checked` keeps the seed and restarts along ±dolly only when the check fails, which halves
+plain's wrong rate here (8.0% → 4.0%) at almost no cost.
+
+**The honest-failure property holds in every arm**: 0 of 600 setups is locked on a wrong camera; every
+wrong camera is caught by `paint_check` and reported NOT locked (G7's result, reproduced on a fresh seed).
+
+**What it suggests (hypothesis, not scored):** height priors as ADDITIONAL restarts beside the
+unmodified seed, not as replacements for it. Since checked already restarts along the same dolly
+direction, the likely gain is small; the 4.0% it leaves are failures to lock, not silent errors.
+
+#### Predictions, scored
+
+| | prediction | outcome |
+|---|---|---|
+| G12-1 | plain 5–12%, checked 1–4%, anchored 0–2% wrong | plain 8.0% RIGHT; checked 4.0% RIGHT (at the edge); **anchored 9.0% WRONG** |
+| G12-2 | K1 PASS | **RIGHT** (0/200) |
+| G12-3 | anchored ≥ checked by 0–6 setups; the 1.5 m anchor may not travel | **WRONG on the count** (182 vs 192), **RIGHT on the mechanism** (1.5 m: 1 of 188) |
+| G12-4 | K4 PASS | **RIGHT** (1.08 cm) |
+| G12-5 | about 3× plain's time | **RIGHT**: 3.8× (58 vs 15 s) |
+
+**Scope, as declared:** one mount (CP1's 3.0 m), so a 1.5 m or 3.5 m court was never the right answer
+here; real footage (clay, the 16 clips) was not attempted in this session.
