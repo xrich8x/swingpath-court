@@ -65,6 +65,10 @@ class TrackConfig:
     # but flagged 369 of 369 right cameras on CP1's scene; at the registered
     # window it catches 101 and LOCKS 201 with scope whole_court.
     far_lines: bool = camera3d.FAR_LINES_DEFAULT
+    # which far-line instrument runs when far_lines is on: "stack" (G8's stacked
+    # ridge) or "stepfit" (the paint fit's step+paint model, job 2 2026-09-23)
+    far_mode: str = camera3d.FAR_MODE_DEFAULT
+    far_tol_px_720: float | None = None   # None = the instrument's own default
 
 
 @dataclass
@@ -235,7 +239,10 @@ class CameraTracker:
 
     def _check(self, grey, cam):
         """The full PaintCheck, not a bool: the caller needs WHAT was verified."""
-        return camera3d.paint_check(grey, cam, far_lines=self.cfg.far_lines)
+        kw = ({} if self.cfg.far_tol_px_720 is None
+              else {"far_kw": {"far_tol_px_720": self.cfg.far_tol_px_720}})
+        return camera3d.paint_check(grey, cam, far_lines=self.cfg.far_lines,
+                                    far_mode=self.cfg.far_mode, **kw)
 
     def _fit(self, frame, seed, grey):
         try:

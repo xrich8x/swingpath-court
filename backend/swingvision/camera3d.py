@@ -686,6 +686,179 @@ def far_line_profile(grey, cam: CourtCamera, *, far_tol_px_720: float = FAR_TOL_
                             s_scale=cam.image_wh[1] / 720.0, min_det_frac=min_det_frac)
 
 
+# ------------------------------------ the STEP-AWARE far-line instrument ---
+# Why this exists: at the far baseline the paint is ~0.14 px wide and sits ON the
+# court/run-off colour step, so its cross-section is a ~0.7 DN bump riding on a
+# ~15 DN step. Every ridge finder above (stacked profile, pyramid) looks for a
+# symmetric peak and reads that shape ~1 px off (qa 2026-09-22 s3; job 1's
+# run-off scene reproduces it, +0.9-1.2 px). The paint fit already models exactly
+# this shape: `paintfit._design` in "kappa" mode is a blurred paint box plus a
+# blurred step at the paint's OUTER edge, tied by one ratio kappa = paint /
+# (surface - run-off) measured on the strong NEAR baseline. On a boundary line the
+# step is then not a confuser but signal: it sits at the line's outer edge, so it
+# moves with the line. This reuses that model unchanged, on long stations (one per
+# along-line segment), and asks where it puts each segment's paint relative to
+# the camera's own prediction. With no step (kappa unmeasurable), `_mode_for`
+# falls back to the free-amplitude box, as the paint fit does.
+#
+# Classification per segment, fixed with the pre-registration (job 2, 2026-09-23):
+#   unseen - the model is not significant against a flat profile (paintfit's own
+#            `min_dsse`), its paint amplitude is not positive, or its offset is
+#            uncertain (`sig_c >= max_sig_c`) while INSIDE the window;
+#   miss   - significant, and the offset is past tolerance - INCLUDING a fit that
+#            ran to the edge of its search window. G8's bar-3 failure was a far
+#            ridge falling out of view and leaving the denominator; here a fit that
+#            wants to leave the window is a measured miss, never a non-observation;
+#   hit    - significant, |offset| <= tol, `sig_c < max_sig_c`.
+# A line is SEEN when at least half its segments are not unseen, and its fraction
+# is hits / (hits + misses), decided by paint_check's own `min_line_frac`.
+STEPFIT_WINDOW_PX_720 = 3.0     # search half-window, fixed (not swept, not tol-coupled)
+STEPFIT_SEGMENTS = 24           # stations that straddle a crossing line are dropped
+STEPFIT_MIN_STATION_PX_720 = 16.0
+# The photometry (blur sigma, kappa) is read on the near baseline and near service
+# line exactly as `paintfit.estimate_photometry` does, but through a WIDER window:
+# the paint fit's 1.5 px assumes a nearly-converged camera, while a check must read
+# the photometry of a camera that may be a few px off. Sigma and kappa describe the
+# image, not the camera, so the window only has to contain the line.
+STEPFIT_PHOTO_WINDOW_PX_720 = 6.0
+
+
+def _photometry(img, pf, lines, feats, cfg, window_px):
+    """`paintfit.estimate_photometry` with the search window as a parameter."""
+    parts = []
+    for name in ("near_baseline", "near_service"):
+        li = [L.name for L in lines].index(name)
+        L = lines[li]
+        S = paintfit.make_stations(pf, L, ("line", li), (0, 1), 4.0, window_px, cfg.sig_init,
+                                   feats, cfg)
+        if S is None:
+            continue
+        P, _ = paintfit._profiles(img, S, L, cfg.sig_init, False, cfg)
+        if P is None:
+            continue
+        mode = "step" if L.outer else "free"
+        c0, *_ = paintfit.scan_profiles(P, cfg.sig_init, mode, None, cfg.fine_step)
+        parts.append((L, P, mode, c0))
+    if not parts:
+        return cfg.sig_init, None
+    tot = []
+    for sg in cfg.sig_grid:
+        e = 0.0
+        for L, P, mode, c0 in parts:
+            e += float(np.nansum(paintfit.refine_profiles(P, sg, mode, None, c0, iters=3)[3]))
+        tot.append(e)
+    sig = float(cfg.sig_grid[int(np.argmin(tot))])
+    kappa = None
+    for L, P, mode, c0 in parts:
+        if mode != "step":
+            continue
+        c, sc, beta, sse, s2 = paintfit.refine_profiles(P, sig, mode, None, c0)
+        rho = beta[:, 2]
+        good = np.isfinite(sc) & (sc < cfg.max_sig_c) & (np.abs(rho) > cfg.kappa_min_step_dn)
+        if good.sum() >= 10 and abs(np.median(rho[good])) > cfg.kappa_min_step_dn:
+            kappa = float(np.median(beta[good, 1] / rho[good]))
+    return sig, kappa
+
+
+def far_line_stepfit_measure(grey, cam: CourtCamera, *, window_px_720: float = STEPFIT_WINDOW_PX_720,
+                             segments: int = STEPFIT_SEGMENTS,
+                             min_station_px_720: float = STEPFIT_MIN_STATION_PX_720,
+                             photometry: tuple | None = None, cfg=None) -> dict:
+    """{"sig", "kappa", "lines": {name: {"c", "sig_c", "sigf", "amp", "win", "mode",
+    "n_try"}}} - the paint fit's line model fitted at the camera's OWN prediction
+    of each far line, one long station per segment. Measured once; scored per
+    tolerance by `score_stepfit`, so a sweep does not re-read the image.
+
+    Reads the image only at offsets FROM the prediction and takes no far-line
+    position from the model it checks. `photometry` = (sigma_px, kappa) skips the
+    estimate from the near lines (e.g. the setup fit's); None measures it here, on
+    this image, at this camera's near lines."""
+    cfg = cfg or paintfit.FitConfig
+    img = np.asarray(grey, float)
+    pf = cam.to_paintfit()
+    lines = paintfit.paint_lines()
+    marks = paintfit.centre_marks()
+    feats = paintfit._features(pf, lines, marks)
+    w, h = cam.image_wh
+    s_scale = h / 720.0
+    if photometry is None:
+        sig, kappa = _photometry(img, pf, lines, feats, cfg,
+                                 STEPFIT_PHOTO_WINDOW_PX_720 * s_scale)
+    else:
+        sig, kappa = photometry
+    W = window_px_720 * s_scale
+    tape_curve, tape_hw = paintfit.measure_tape(img, pf, feats, W, sig, cfg)
+    out = {"sig": float(sig), "kappa": None if kappa is None else float(kappa), "lines": {}}
+    for li, L in enumerate(lines):
+        if L.name not in FAR_LINES:
+            continue
+        q = paintfit._visible_poly(pf, paintfit._ground_pts3(L, np.linspace(0, 1, 400)))
+        if q is None:
+            continue
+        inf = (q[:, 0] >= 2) & (q[:, 0] < w - 3) & (q[:, 1] >= 2) & (q[:, 1] < h - 3)
+        if inf.sum() < 2:
+            continue
+        qi = q[inf]
+        arc = float(np.sum(np.linalg.norm(np.diff(qi, axis=0), axis=1)))
+        spacing = max(arc / segments, min_station_px_720 * s_scale)
+        S = paintfit.make_stations(pf, L, ("line", li), (0.0, 1.0), spacing, W, sig, feats, cfg)
+        if S is None:
+            continue
+        P, idx = paintfit._profiles(img, S, L, sig, False, cfg, tape_curve, tape_hw)
+        if P is None:
+            continue
+        mode = paintfit._mode_for(L, False, kappa)
+        c0, _, sse0, _ = paintfit.scan_profiles(P, sig, mode, kappa, cfg.fine_step)
+        c, sig_c, beta, sse, s2 = paintfit.refine_profiles(P, sig, mode, kappa, c0)
+        with np.errstate(invalid="ignore", divide="ignore"):
+            sigf = (sse0 - sse) / s2
+        out["lines"][L.name] = {
+            "c": c.tolist(), "sig_c": sig_c.tolist(), "sigf": sigf.tolist(),
+            "amp": paintfit._paint_amp(beta, mode, kappa).tolist(),
+            "win": S.win[idx].tolist(), "mode": mode, "n_try": int(len(idx))}
+    return out
+
+
+def score_stepfit(meas: dict, *, far_tol_px_720: float = FAR_TOL_PX_720, s_scale: float = 1.0,
+                  min_det_frac: float = 0.5, cfg=None) -> dict:
+    """`far_line_stepfit_measure` output -> the per-line verdict dict, in the same
+    shape as `score_far_stacks` ("frac", "seen", "n_seg", "n_det", "n_samples")
+    plus the per-segment class. Pure arithmetic on the measurement."""
+    cfg = cfg or paintfit.FitConfig
+    tol = far_tol_px_720 * s_scale
+    out = {}
+    for name, m in meas["lines"].items():
+        c, sc, sf = np.asarray(m["c"]), np.asarray(m["sig_c"]), np.asarray(m["sigf"])
+        amp, win = np.asarray(m["amp"]), np.asarray(m["win"])
+        sig = np.isfinite(sf) & (sf > cfg.min_dsse) & (amp > 0) & np.isfinite(c)
+        edge = np.abs(c) >= win - 0.02
+        cls = np.where(~sig, "unseen",
+                       np.where(edge, "miss",
+                                np.where(~(np.isfinite(sc) & (sc < cfg.max_sig_c)), "unseen",
+                                         np.where(np.abs(c) <= tol, "hit", "miss"))))
+        n_hit, n_miss = int((cls == "hit").sum()), int((cls == "miss").sum())
+        n_det = n_hit + n_miss
+        nseg = len(c)
+        seen = nseg > 0 and n_det >= max(1, int(np.ceil(min_det_frac * nseg)))
+        out[name] = {"frac": float(n_hit / n_det) if n_det else 0.0, "seen": bool(seen),
+                     "n_seg": nseg, "n_det": n_det, "n_samples": m["n_try"],
+                     "class": cls.tolist(), "off": [round(float(x), 4) for x in c],
+                     "mode": m["mode"]}
+    return out
+
+
+def far_line_stepfit(grey, cam: CourtCamera, *, far_tol_px_720: float = FAR_TOL_PX_720,
+                     min_det_frac: float = 0.5, **kw) -> dict:
+    """Measure and score in one call; the drop-in for `far_line_profile`."""
+    meas = far_line_stepfit_measure(grey, cam, **kw)
+    return score_stepfit(meas, far_tol_px_720=far_tol_px_720,
+                         s_scale=cam.image_wh[1] / 720.0, min_det_frac=min_det_frac)
+
+
+FAR_MODES = ("stack", "stepfit")
+FAR_MODE_DEFAULT = "stack"
+
+
 @dataclass
 class PaintCheck:
     ok: bool
@@ -716,7 +889,8 @@ def paint_check(grey, cam: CourtCamera, *, tol_px_720: float = 1.5, min_dn: floa
                 min_line_frac: float = 0.5, min_width_px_720: float = 0.67,
                 min_samples: int = 6, min_across: int = 2, min_along: int = 2,
                 step_m: float = 0.4, far_lines: bool = FAR_LINES_DEFAULT,
-                far_kw: dict | None = None) -> PaintCheck:
+                far_kw: dict | None = None, far_mode: str = FAR_MODE_DEFAULT,
+                far_scored: dict | None = None) -> PaintCheck:
     """Does `cam` put the court ON THE PAINT? For every painted line whose
     projected paint is at least `min_width_px_720` wide, the fraction of its
     in-frame samples with a paint ridge within `tol_px_720` of where `cam` puts
@@ -757,8 +931,19 @@ def paint_check(grey, cam: CourtCamera, *, tol_px_720: float = 1.5, min_dn: floa
         tol = tol_px_720 * s
         off, found = ridge_offsets(grey, uv[use], nrm[use], 3.0 * tol, min_dn)
         hits[use] = found & (np.abs(off) <= tol)
-    far = (far_line_profile(grey, cam, min_width_px_720=min_width_px_720,
-                            **(far_kw or {})) if far_lines else {})
+    if far_mode not in FAR_MODES:
+        raise ValueError(f"far_mode {far_mode!r} not in {FAR_MODES}")
+    if not far_lines:
+        far = {}
+    elif far_scored is not None:
+        # an already-SCORED far-line dict (a sweep re-scoring one measurement per
+        # threshold); it must come from this image and this camera
+        far = far_scored
+    elif far_mode == "stepfit":
+        # the whole far line, not just its sub-pixel part: the model knows its width
+        far = far_line_stepfit(grey, cam, **(far_kw or {}))
+    else:
+        far = far_line_profile(grey, cam, min_width_px_720=min_width_px_720, **(far_kw or {}))
     for i, nm in enumerate(names):
         m = use & (ids == i)
         wide = (float(hits[m].mean()), int(m.sum())) if m.sum() >= min_samples else None

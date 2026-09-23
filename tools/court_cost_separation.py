@@ -132,6 +132,28 @@ def _far_checked_rate(rows, key):
     return float(np.mean(got))
 
 
+STEP_TOL_GRID = (0.10, 0.15, 0.20, 0.25, 0.35, 0.50, 0.75, 1.00)
+
+
+def _step_arm(grey, cam):
+    """Job 2's step-aware far-line arm (camera3d.far_line_stepfit), measured ONCE on
+    this image and camera and scored at every tolerance of the dev sweep's grid,
+    so the registered tolerance and the rest of the curve come from one read."""
+    m = camera3d.far_line_stepfit_measure(grey, cam)
+    out = {"step_photometry": [m["sig"], m["kappa"]], "ok_step": {}, "far_step": {},
+           "far_unchecked_step": {}}
+    for tol in STEP_TOL_GRID:
+        sc = camera3d.score_stepfit(m, far_tol_px_720=tol, s_scale=cam.image_wh[1] / 720.0)
+        c = camera3d.paint_check(grey, cam, far_lines=True, far_scored=sc)
+        k = f"{tol}"
+        out["ok_step"][k] = bool(c.ok)
+        out["far_step"][k] = {nm: c.detail.get(nm, {}).get("thin") for nm in camera3d.FAR_LINES}
+        out["far_unchecked_step"][k] = sorted(set(c.unchecked) & set(camera3d.FAR_LINES))
+    out["step_off"] = {nm: v["off"] for nm, v in sc.items()}
+    out["step_class_at_1.00"] = {nm: v["class"] for nm, v in sc.items()}
+    return out
+
+
 def check_row(grey, cam):
     """paint_check (instrument 1) + ridge_residual (instrument 2) as one dict.
 
@@ -151,7 +173,8 @@ def check_row(grey, cam):
     worst_frac = min(v[0] for v in c.lines.values()) if c.lines else float("nan")
     wf0 = min(v[0] for v in c0.lines.values()) if c0.lines else float("nan")
     r = ridge_residual(grey, cam)
-    return {"support": c.support, "ok": bool(c.ok), "worst": c.worst,
+    step = _step_arm(grey, cam) if os.environ.get("CCS_STEPFIT") == "1" else {}
+    return {**step, "support": c.support, "ok": bool(c.ok), "worst": c.worst,
             "worst_frac": float(worst_frac), "n_lines": len(c.lines),
             "lines": {k: v[0] for k, v in c.lines.items()},
             "unchecked": list(c.unchecked),
@@ -445,6 +468,22 @@ def analyse(rows, split_seed=0, n_perm=1000, perm_seed=0):
             # did this arm actually check BOTH far lines on a right camera's fit?
             "far_both_checked_rate_right_fit": _far_checked_rate(
                 [r for r, w in zip(ok, wrong) if not w], key)}
+    # job 2: the step-aware arm at every tolerance of its grid (one measurement)
+    if all("ok_step" in r["fit"] and "ok_step" in r["true"] for r in ok):
+        out["stepfit_arm"] = {}
+        for k in ok[0]["fit"]["ok_step"]:
+            f = np.array([r["fit"]["ok_step"][k] for r in ok])
+            t = np.array([r["true"]["ok_step"][k] for r in ok])
+            both_f = np.array([not r["fit"]["far_unchecked_step"][k] for r in ok])
+            both_t = np.array([not r["true"]["far_unchecked_step"][k] for r in ok])
+            out["stepfit_arm"][k] = {
+                "catch": float((~f[wrong]).mean()) if nw else float("nan"),
+                "n_caught": int((~f[wrong]).sum()), "n_wrong": int(nw),
+                "false_flag_right": float((~f[~wrong]).mean()),
+                "n_flagged_right": int((~f[~wrong]).sum()), "n_right": int((~wrong).sum()),
+                "true_camera_ok_rate": float(t.mean()),
+                "far_both_checked_rate_right_fit": float(both_f[~wrong].mean()),
+                "far_both_checked_rate_true": float(both_t.mean())}
     out["far_line_arms_note"] = (
         "BAR 4: catch 33/33 (here: all wrong cameras) and <= 2% false flags on the "
         "right cameras. Arms are paired - same image, same camera, same fit.")
@@ -469,7 +508,11 @@ def main():
     ap.add_argument("--n-perm", type=int, default=1000)
     ap.add_argument("--out", default=None)
     ap.add_argument("--analyse", default=None, help="re-analyse an existing rows file")
+    ap.add_argument("--stepfit", action="store_true",
+                    help="also measure job 2's step-aware far-line arm on every camera")
     args = ap.parse_args()
+    if args.stepfit:
+        os.environ["CCS_STEPFIT"] = "1"         # inherited by the worker processes
 
     if args.analyse:
         d = json.loads(Path(args.analyse).read_text(encoding="utf-8"))
@@ -513,6 +556,10 @@ def main():
                                            "knobs_from": "g8r/dev_registered.json",
                                            "reach_px_720": camera3d.FAR_REACH_MULT
                                            * PYR_TOL_PX_720}},
+             "stepfit": {"window_px_720": camera3d.STEPFIT_WINDOW_PX_720,
+                         "segments": camera3d.STEPFIT_SEGMENTS,
+                         "photo_window_px_720": camera3d.STEPFIT_PHOTO_WINDOW_PX_720,
+                         "tol_grid_px_720": list(STEP_TOL_GRID)} if args.stepfit else None,
              "wrong_rule": a["wrong_rule"],
              "measured_against": "the exact rendering camera (court_fit_cp1.truth_camera); "
                                  "the wrong/right label is its focal length"}

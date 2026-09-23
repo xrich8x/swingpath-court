@@ -205,7 +205,28 @@ def pyramid_far(grey, cam, *, levels=3, tol_px_720=0.20, min_dn=6.0,
 
 
 # ------------------------------------------------------------------ cases --
-def cases(seed, ss, verbose=True, reach_mode="registered", runoff_dn=None):
+STEP_TOL_GRID = TOL_GRID
+STEP_SECOND = (0.5,)     # min_det_frac, not swept: the shipped paint_check rule
+
+
+def _cases_job(j):
+    seed, ss, verbose, reach_mode, runoff_dn, arms = j
+    return cases(seed, ss, verbose=verbose, reach_mode=reach_mode, runoff_dn=runoff_dn,
+                 arms=arms)
+
+
+def _dirty():
+    import subprocess
+    try:
+        return bool(subprocess.run(["git", "status", "--porcelain", "--", "backend", "tools"],
+                                   cwd=REPO, capture_output=True, text=True,
+                                   timeout=15).stdout.strip())
+    except Exception:
+        return None
+
+
+def cases(seed, ss, verbose=True, reach_mode="registered", runoff_dn=None,
+          arms=("stack", "pyramid")):
     """Every ladder case for one seed, scored on every threshold pair. The verdict
     is the WHOLE `paint_check`, not the far lines alone - the G8 bar is "reported
     NOT locked", and the near lines are part of that."""
@@ -224,8 +245,22 @@ def cases(seed, ss, verbose=True, reach_mode="registered", runoff_dn=None):
                "far_half_err_m": far_half_err,
                "worst_err_m": worst_err, "pre_g8_ok": bool(base.ok),
                "pre_g8_unchecked": list(base.unchecked),
-               "stack": {}, "pyramid": {}}
-        for tol in TOL_GRID:
+               "stack": {}, "pyramid": {}, "stepfit": {}}
+        if "stepfit" in arms:
+            # measured ONCE per camera, scored per tolerance (job 2, 2026-09-23)
+            m = camera3d.far_line_stepfit_measure(img, cam)
+            row["stepfit_photometry"] = [m["sig"], m["kappa"]]
+            for tol in STEP_TOL_GRID:
+                for mdf in STEP_SECOND:
+                    sc = camera3d.score_stepfit(m, far_tol_px_720=tol,
+                                                s_scale=cam.image_wh[1] / 720.0,
+                                                min_det_frac=mdf)
+                    c = camera3d.paint_check(img, cam, far_lines=True, far_scored=sc)
+                    far_flag = any(c.detail.get(nm, {}).get("thin", (1.0,))[0] < 0.5
+                                   for nm in FAR)
+                    row["stepfit"][f"{tol}|{mdf}"] = [bool(c.ok), bool(far_flag),
+                                                      sorted(set(c.unchecked) & set(FAR))]
+        for tol in (TOL_GRID if "stack" in arms else ()):
             for z in Z_GRID:
                 # `far_lines=True` is LOAD-BEARING: camera3d.FAR_LINES_DEFAULT is
                 # False, so without it this tool scores the pre-G8 check in every
@@ -238,7 +273,7 @@ def cases(seed, ss, verbose=True, reach_mode="registered", runoff_dn=None):
                                for nm in FAR)
                 row["stack"][f"{tol}|{z}"] = [bool(c.ok), bool(far_flag),
                                               sorted(set(c.unchecked) & set(FAR))]
-        for tol in PYR_TOL_GRID:
+        for tol in (PYR_TOL_GRID if "pyramid" in arms else ()):
             for dn in PYR_DN_GRID:
                 v = pyramid_far(img, cam, tol_px_720=tol, min_dn=dn,
                                 reach_px_720=reach_for(tol, reach_mode))
@@ -326,19 +361,34 @@ def main():
     ap.add_argument("--runoff-dn", type=float, default=None,
                     help="render the sim WITH a run-off step this bright (80 = CP1's scene); "
                          "omitted = the scene every G8 number was measured on")
+    ap.add_argument("--arms", nargs="+", default=["stack", "pyramid"],
+                    choices=("stack", "pyramid", "stepfit"),
+                    help="stack + pyramid reproduce every G8 table; stepfit is job 2's arm")
+    ap.add_argument("--workers", type=int, default=1, help="seeds in parallel")
     ap.add_argument("--out", default=None)
     a = ap.parse_args()
     rows, t_render = [], []
-    for s in a.seeds:
-        r, tr = cases(s, a.ss, reach_mode=a.reach_mode, runoff_dn=a.runoff_dn)
+    jobs = [(s, a.ss, False, a.reach_mode, a.runoff_dn, tuple(a.arms)) for s in a.seeds]
+    if a.workers > 1:
+        from concurrent.futures import ProcessPoolExecutor
+        with ProcessPoolExecutor(min(a.workers, len(jobs))) as ex:
+            got = list(ex.map(_cases_job, jobs))
+    else:
+        got = [_cases_job(j) for j in jobs]
+    for r, tr in got:
         rows += r
         t_render.append(tr)
-    st = sweep_table(rows, "stack", TOL_GRID, Z_GRID)
-    py = sweep_table(rows, "pyramid", PYR_TOL_GRID, PYR_DN_GRID)
+    st =sweep_table(rows, "stack", TOL_GRID, Z_GRID) if "stack" in a.arms else []
+    py = sweep_table(rows, "pyramid", PYR_TOL_GRID, PYR_DN_GRID) if "pyramid" in a.arms else []
+    sf = sweep_table(rows, "stepfit", STEP_TOL_GRID, STEP_SECOND) if "stepfit" in a.arms else []
     res = {"stamp": {"tool": "tools/court_far_line_gate.py", "seeds": a.seeds,
-                     "commit": _sha(),
-                     "ss": a.ss, "subpixel": True, "tag": a.tag,
+                     "commit": _sha(), "dirty": _dirty(),
+                     "ss": a.ss, "subpixel": True, "tag": a.tag, "arms": a.arms,
                      "runoff_dn": a.runoff_dn,
+                     "stepfit": {"window_px_720": camera3d.STEPFIT_WINDOW_PX_720,
+                                 "segments": camera3d.STEPFIT_SEGMENTS,
+                                 "photo_window_px_720": camera3d.STEPFIT_PHOTO_WINDOW_PX_720}
+                     if "stepfit" in a.arms else None,
                      "reach_mode": a.reach_mode,
                      "reach_px_720": ("3 x tol per cell" if a.reach_mode == "registered"
                                       else REACH_FIXED_PX_720),
@@ -352,13 +402,20 @@ def main():
                      "min_line_frac": 0.5},
            "pre_g8_baseline": baseline(rows),
            "stack_sweep": st, "pyramid_sweep": py,
-           "stack_choice": choose(st), "pyramid_choice": choose(py),
+           "stack_choice": choose(st) if st else None,
+           "pyramid_choice": choose(py) if py else None,
            "rows": rows}
+    if sf:
+        res["stepfit_sweep"] = sf
+        res["stepfit_choice"] = choose(sf)
     out = Path(a.out or OUT / f"{a.tag}_seeds{'-'.join(map(str, a.seeds))}.json")
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(json.dumps(res, indent=1), encoding="utf-8")
     for nm, tab, ch in (("STACK", st, res["stack_choice"]),
-                        ("PYRAMID", py, res["pyramid_choice"])):
+                        ("PYRAMID", py, res["pyramid_choice"]),
+                        ("STEPFIT", sf, res.get("stepfit_choice"))):
+        if not tab:
+            continue
         print(f"\n=== {nm} ===")
         print(f"{'tol@720':>8}{'z/dn':>6}{'catch':>8}{'false':>8}{'falseTot':>9}"
               f"{'unchk_good':>12}")

@@ -272,7 +272,7 @@ def summarise(runs):
 # ----------------------------------------------------------------- arms ----
 def run(seed=0, n=120, seed_sigma=14.78, verbose=True, knock_scale=1.0, ss=SS_DEFAULT,
         subpixel=SUBPIXEL_DEFAULT, far_lines=camtrack.TrackConfig.far_lines,
-        runoff_dn=RUNOFF_DN_DEFAULT):
+        runoff_dn=RUNOFF_DN_DEFAULT, far_mode=camtrack.TrackConfig.far_mode, track_cfg=None):
     r_path, r_img, r_seed = [np.random.default_rng(s) for s in
                              np.random.SeedSequence(seed).spawn(3)]
     p0 = base_pitch()
@@ -294,8 +294,9 @@ def run(seed=0, n=120, seed_sigma=14.78, verbose=True, knock_scale=1.0, ss=SS_DE
               f"f {setup.f_px:.1f} (true {truths[0].f_px:.1f}), {time.time() - t0:.0f}s",
               flush=True)
 
-    tracker = camtrack.CameraTracker(
-        setup, cfg=camtrack.TrackConfig(far_lines=far_lines))
+    cfg = dict(track_cfg or {})
+    cfg.update(far_lines=far_lines, far_mode=far_mode)
+    tracker = camtrack.CameraTracker(setup, cfg=camtrack.TrackConfig(**cfg))
     Hb = setup.ground_homography()
     res = {"camtrack": [], "lock_step": []}
     jumps = {"camtrack": [], "lock_step": []}
@@ -374,19 +375,27 @@ def main():
     ap.add_argument("--ss", type=int, default=SS_DEFAULT,
                     help="renderer supersampling; 2 reproduces every pre-G8 number, "
                          "4 is what G8 needs to render sub-pixel paint at all")
+    ap.add_argument("--far-mode", choices=camera3d.FAR_MODES, default=camtrack.TrackConfig.far_mode,
+                    help="which far-line instrument --far-lines runs")
+    ap.add_argument("--far-tol", type=float, default=None,
+                    help="far-line tolerance px @720 (default: the instrument's own)")
     ap.add_argument("--runoff-dn", type=float, default=RUNOFF_DN_DEFAULT,
                     help=f"paint the run-off outside the outer lines this bright "
                          f"({RUNOFF_DN_CP1:g} = CP1's scene); omitted = no step, every "
                          f"earlier number")
     a = ap.parse_args()
     got = [run(s, a.n, knock_scale=a.knock_scale, ss=a.ss,
-               subpixel=a.subpixel, far_lines=a.far_lines, runoff_dn=a.runoff_dn)
+               subpixel=a.subpixel, far_lines=a.far_lines, runoff_dn=a.runoff_dn,
+               far_mode=a.far_mode,
+               track_cfg=None if a.far_tol is None else {"far_tol_px_720": a.far_tol})
            for s in a.seeds]
     summ = {arm: summarise([g["runs"][arm] for g in got]) for arm in ("camtrack", "lock_step")}
     tag = "" if a.knock_scale == 1.0 else f"_knock{a.knock_scale:g}"
     tag += "" if a.ss == SS_DEFAULT else f"_ss{a.ss}"
     tag += "_sub" if a.subpixel else ""
     tag += "_far" if a.far_lines else ""
+    tag += "" if a.far_mode == "stack" else f"_{a.far_mode}"
+    tag += "" if a.far_tol is None else f"_tol{a.far_tol:g}"
     tag += "" if a.runoff_dn is None else f"_runoff{a.runoff_dn:g}"
     out = Path(a.out or OUT / f"seeds{'-'.join(map(str, a.seeds))}_n{a.n}{tag}.json")
     out.parent.mkdir(parents=True, exist_ok=True)

@@ -2184,3 +2184,97 @@ over an 8 px@720 display window plus every line's ridge offset against the true 
   `kappa`), with the worst p90 rising above 1.45 cm but staying under 5 cm; **B4 still fails** with
   4–6 locked-but-wrong knock frames (the cause is coherent flow outliers, not the scene). The large
   knocks are still lost honestly. Verdict: **KILL**, as before.
+
+## G10: a far-line check that models the step — PRE-REGISTRATION (job 2, 2026-09-23)
+
+lead, 2026-09-23. **Written and committed before any scored run.** Nothing above this heading is
+edited.
+
+### The instrument: `camera3d.far_line_stepfit` (far_mode `"stepfit"`)
+
+At the far baseline the paint (~0.14 px) sits ON the court/run-off step, so its cross-section is a
+~0.7 DN bump on a ~15 DN step. Every instrument tried so far looks for a symmetric ridge and reads that
+shape ~1 px off (qa 2026-09-22 §3; job 1's profile check, +0.88 to +1.22 px). The paint fit already
+models exactly this shape, and this reuses its model **unchanged** (`paintfit.make_stations`,
+`_profiles`, `scan_profiles`, `refine_profiles`, `measure_tape`):
+
+- **Model per station:** `paintfit._design` in `"kappa"` mode: a blurred paint box plus a blurred step
+  at the paint's OUTER edge, tied by `kappa = paint / (surface − run-off)`. With no measurable step,
+  `paintfit._mode_for` falls back to the free-amplitude box, as the paint fit does. The net tape is a
+  modelled nuisance near the far service line, as in the fit.
+- **Photometry** (blur sigma, kappa): `paintfit.estimate_photometry`'s procedure on the near baseline
+  and near service line at the checked camera's prediction, through a **6.0 px@720** window
+  (`STEPFIT_PHOTO_WINDOW_PX_720`) instead of the fit's 1.5 px, because a check must read a camera that
+  may be a few px off. Sigma and kappa describe the image, not the camera.
+- **Stations:** the far line's in-frame length / **24** (`STEPFIT_SEGMENTS`), at least 16 px@720;
+  stations that straddle a crossing line are dropped by the fit's own rule. **Search half-window
+  3.0 px@720** (`STEPFIT_WINDOW_PX_720`), fixed, not swept and not coupled to the tolerance.
+- **Per station:** *unseen* if the model is not significant against a flat profile (`min_dsse` 25),
+  its paint amplitude is not positive, or (inside the window) `sig_c >= 0.5`; **miss** if significant
+  and |offset| > tol, **including an offset that runs to the window edge**; *hit* otherwise.
+  **This is the change that answers G8 bar 3**: a fit that wants to leave the window is a measured
+  miss, never a non-observation that leaves the denominator.
+- **Per line:** seen if at least half its stations are not unseen; fraction = hits / (hits + misses);
+  paint_check's shipped `min_line_frac` 0.5 decides. It reads no far-line position from the camera it
+  checks: it fits at offsets FROM the camera's prediction.
+
+`FAR_LINES_DEFAULT` stays `False` and `FAR_MODE_DEFAULT` stays `"stack"` in this commit. Nothing on the
+default path moves (tests: `test_far_line_stepfit.py`, and the existing suites pass unchanged).
+
+### Development, already done, declared
+
+Smoke runs, on **spent** seeds only, set two knobs before this registration: the photometry window
+(1.5 → 6.0 px@720, because 1.5 px gave garbage photometry for cameras a few px off on the near lines)
+and the station count (8 → 24, because crossing lines dropped 6 of 8 far-baseline stations). Sim seed 0
+(ladder of 9 cameras, both scenes), CP1 arm P seed 0 trials 0–2. On CP1 those trials read the true
+camera's far baseline at −0.07 to +0.06 px and far service at −0.07 to +0.17 px, every segment seen.
+**No tolerance was chosen from them.**
+
+### The tolerance: G8's procedure
+
+`court_far_line_gate.py --arms stepfit`, the G8 ladder (pitch, yaw, height, depth; 7 magnitudes, both
+signs), **fresh development seeds 600–605**, run on **both scenes** (no run-off; run-off 80 DN) and
+pooled. Grid `far_tol_px_720` ∈ {0.10, 0.15, 0.20, 0.25, 0.35, 0.50, 0.75, 1.00}. **G8's choice rule,
+verbatim:** the highest catch at > 20 cm among tolerances whose incremental false-flag rate is ≤ 1%;
+ties to the LARGER tolerance. **KILL** if no tolerance reaches 50% catch at ≤ 10% false flags.
+
+### THE BARS — all at the chosen tolerance; each scene separately where there are two
+
+1. **S1 CATCH (sim, held-out).** Seeds **700–702**, ladder, each scene: ≥ **90%** of cases with a far
+   line > 20 cm reported NOT locked (whole `paint_check.ok`).
+2. **S2 FALSE FLAG (sim, held-out).** Same runs: incremental false flags ≤ **2%** (G8's definition).
+3. **S3 OBSERVABILITY (sim, held-out).** Same runs: on the good cases, both far lines CHECKED (not
+   `unchecked`) on ≥ **90%**. A pass bought by blindness is not a pass.
+4. **S4 THE KNOWN BAD FRAMES.** `court_track_sim --subpixel --far-lines --far-mode stepfit
+   --far-tol <chosen>`, seeds **101 and 201**, n 120, **both scenes**: every frame-60 knock frame
+   whose worst line is > 10 cm out is reported NOT locked (G8 bar 3's two frames, on each scene).
+5. **S5 THE CLUTTERED SCENE.** `court_cost_separation.py --stepfit`, CP1 arm P / arm K population
+   (lens, net, tape, fence, trusses, real libx265), **fresh seed 1000, n 400**, labels recomputed from
+   the run as G7 did (fitted f > 1% off = wrong). At the chosen tolerance: **every** wrong fit reported
+   NOT ok; ≤ **2%** of right fits flagged; and both far lines checked on ≥ **90%** of right fits AND
+   ≥ **90%** of true cameras.
+
+**PASS** = S1–S5 all hold. Then, and only then, a follow-up commit may set `FAR_MODE_DEFAULT =
+"stepfit"`, `FAR_LINES_DEFAULT = True` and the chosen tolerance; that change is judged by job 3's gate,
+not this one. **Otherwise FAIL**, the defaults stay, and the failing bar is named.
+
+**Reported, not gated:** median wall time per check (G8's 20 ms phone budget is certain to be blown
+by a per-frame photometry search; the size of the miss is recorded); the far-line catch at every
+tolerance; the per-station offset distribution on the true cameras.
+
+### Declared deviations
+
+- **Platform:** Linux, Python 3.12, numpy 2.5.3, scipy 1.18.1, opencv 4.13.0 (matching the Windows
+  `.venv`), ffmpeg 7.0.2 static with libx265. Not the Windows machine; G9 seed 500 reproduces there to
+  within 0.64 cm per frame with identical lock flags, not bit-exactly.
+- **CP1 seed 1000, not seed 0:** seed 0 was G7/G8's scored population and its first trials were used in
+  this smoke. The bar is otherwise G8 bar 4's, plus the observability clause.
+
+### Predictions, recorded before the run
+
+- **(G10-1)** The dev rule picks **0.25–0.35 px@720** (≈ 0.4–0.5 px@1080).
+- **(G10-2)** S1 ≥ 0.95 and S2 = 0 on both scenes; S3 ≥ 0.98.
+- **(G10-3)** S4: all four knock frames caught (they are 49–73 cm out; ≥ 1.3 px at the far baseline).
+- **(G10-4)** S5: every wrong fit caught, **0–4** right fits flagged, both far lines checked on ≥ 95%.
+- **(G10-5)** Cost: **2–10 s** per check on one CPU core, dominated by the 41-point blur search.
+  A PASS here is an accuracy result, not a phone-ready one.
